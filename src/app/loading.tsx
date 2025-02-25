@@ -2,7 +2,7 @@
 import { motion } from 'framer-motion'
 
 const Loading = () => {
-  const text = "Provent Accountants"
+  const text = "PROVEN ACCOUNTANTS"
   
   const letterVariants = {
     initial: { opacity: 0, y: 20 },
