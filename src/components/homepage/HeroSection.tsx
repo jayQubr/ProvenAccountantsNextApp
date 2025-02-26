@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/react'
 import { MinusSmallIcon, PlusSmallIcon } from '@heroicons/react/24/outline'
 import {
@@ -14,105 +15,101 @@ import {
 import Image from 'next/image';
 import logo from '@/assets/PROVEN-LOGO-1.png';
 import Header from '../shared/Header'
+import IntroductionModal from '../features/IntroductionModal'
 
 const features = [
   {
-    name: 'Push to deploy.',
-    description: 'Lorem ipsum, dolor sit amet consectetur adipisicing elit aute id magna.',
+    name: 'Business Structure & Registration',
+    description: 'We help you select the best business structure based on your requirements - Sole Proprietor, Partnership, Company or Trust.',
     icon: CloudArrowUpIcon,
   },
   {
-    name: 'SSL certificates.',
-    description: 'Anim aute id magna aliqua ad ad non deserunt sunt. Qui irure qui lorem cupidatat commodo.',
+    name: 'Software Setup & Selection',
+    description: 'We select software that best suits your needs based on cost, ease of operation, and specific requirements.',
     icon: LockClosedIcon,
   },
   {
-    name: 'Simple queues.',
-    description: 'Ac tincidunt sapien vehicula erat auctor pellentesque rhoncus.',
+    name: 'Book-keeping & Accounting Services',
+    description: 'We offer a wide range of book-keeping and accountancy services for all business structures.',
     icon: ArrowPathIcon,
   },
   {
-    name: 'Advanced security.',
-    description: 'Lorem ipsum, dolor sit amet consectetur adipisicing elit aute id magna.',
+    name: 'Taxation, Reporting & Payroll',
+    description: 'We provide tax return lodging, BAS, IAS, payroll solutions and ASIC compliance packages.',
     icon: FingerPrintIcon,
   },
   {
-    name: 'Powerful API.',
-    description: 'Anim aute id magna aliqua ad ad non deserunt sunt. Qui irure qui lorem cupidatat commodo.',
+    name: 'Business Review & Advise',
+    description: 'Our team includes technical experts who can help with business re-engineering and removing unproductive processes.',
     icon: Cog6ToothIcon,
   },
   {
-    name: 'Database backups.',
-    description: 'Ac tincidunt sapien vehicula erat auctor pellentesque rhoncus. ',
+    name: 'Training & Support',
+    description: 'We provide comprehensive training and ongoing support for all our services and solutions.',
     icon: ServerIcon,
   },
 ]
 const tiers = [
   {
-    name: 'Hobby',
-    id: 'tier-hobby',
+    name: 'Small Business',
+    id: 'tier-small-business',
     href: '#',
-    priceMonthly: '$19',
-    description: "The perfect plan if you're just getting started with our product.",
-    features: ['25 products', 'Up to 10,000 subscribers', 'Advanced analytics', '24-hour support response time'],
+    priceMonthly: 'From $99',
+    description: "Perfect for small businesses and sole traders just getting started.",
+    features: ['Business registration', 'Basic bookkeeping', 'BAS lodgment', 'Annual tax returns', 'Email support'],
     featured: false,
   },
   {
     name: 'Enterprise',
     id: 'tier-enterprise',
     href: '#',
-    priceMonthly: '$49',
-    description: 'Dedicated support and infrastructure for your company.',
+    priceMonthly: 'Custom',
+    description: 'Comprehensive accounting solutions for established businesses.',
     features: [
-      'Unlimited products',
-      'Unlimited subscribers',
-      'Advanced analytics',
-      'Dedicated support representative',
-      'Marketing automations',
-      'Custom integrations',
+      'Complete bookkeeping',
+      'Financial statements',
+      'Tax planning & strategy',
+      'Dedicated accountant',
+      'Business advisory services',
+      'ASIC compliance',
     ],
     featured: true,
   },
 ]
 const faqs = [
   {
-    question: "What's the best thing about Switzerland?",
+    question: "What services do Proven Accountants offer?",
     answer:
-      "I don't know, but the flag is a big plus. Lorem ipsum dolor sit amet consectetur adipisicing elit. Quas cupiditate laboriosam fugiat.",
+      "We offer a comprehensive range of accounting services including business structure & registration, software selection & setup, bookkeeping & accounting, payroll, taxation, business review & advice, and training & support.",
   },
-  // More questions...
+  {
+    question: "How can I schedule an appointment?",
+    answer:
+      "You can schedule an appointment through our website by clicking on 'Schedule an Appointment', calling us at 1300 811 002, or emailing us at info@provenaccountants.com.au.",
+  },
+  {
+    question: "What are your operating hours?",
+    answer:
+      "We're open from 10:00 am to 6:00 pm, Monday to Saturday. For appointments outside these hours, please call us to make arrangements.",
+  },
 ]
-const footerNavigation = {
-  solutions: [
-    { name: 'Marketing', href: '#' },
-    { name: 'Analytics', href: '#' },
-    { name: 'Automation', href: '#' },
-    { name: 'Commerce', href: '#' },
-    { name: 'Insights', href: '#' },
-  ],
-  support: [
-    { name: 'Submit ticket', href: '#' },
-    { name: 'Documentation', href: '#' },
-    { name: 'Guides', href: '#' },
-  ],
-  company: [
-    { name: 'About', href: '#' },
-    { name: 'Blog', href: '#' },
-    { name: 'Jobs', href: '#' },
-    { name: 'Press', href: '#' },
-  ],
-  legal: [
-    { name: 'Terms of service', href: '#' },
-    { name: 'Privacy policy', href: '#' },
-    { name: 'License', href: '#' },
-  ],
-}
 
 function classNames(...classes:any) {
   return classes.filter(Boolean).join(' ')
 }
 
 const HeroSection = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Open the modal when the component mounts
+  useEffect(() => {
+    // Small delay to ensure the modal opens after the page has loaded
+    const timer = setTimeout(() => {
+      setIsModalOpen(true);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="bg-white">
@@ -124,7 +121,7 @@ const HeroSection = () => {
         <div className="relative isolate overflow-hidden bg-gray-900 pb-16 pt-14 sm:pb-20">
           <img
             alt=""
-            src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2830&q=80&blend=111827&sat=-100&exp=15&blend-mode=multiply"
+            src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?ixlib=rb-4.0.3&auto=format&fit=crop&w=2830&q=80&blend=111827&sat=-100&exp=15&blend-mode=multiply"
             className="absolute inset-0 -z-10 size-full object-cover"
           />
           <div
@@ -143,31 +140,28 @@ const HeroSection = () => {
             <div className="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
               <div className="hidden sm:mb-8 sm:flex sm:justify-center">
                 <div className="relative rounded-full px-3 py-1 text-sm/6 text-gray-400 ring-1 ring-white/10 hover:ring-white/20">
-                  Announcing our next round of funding.{' '}
+                  Professional accounting services for your business{' '}
                   <a href="#" className="font-semibold text-white">
                     <span aria-hidden="true" className="absolute inset-0" />
-                    Read more <span aria-hidden="true">&rarr;</span>
+                    Learn more <span aria-hidden="true">&rarr;</span>
                   </a>
                 </div>
               </div>
               <div className="text-center">
                 <h1 className="text-balance text-5xl font-semibold tracking-tight text-white sm:text-7xl">
-                  Data to enrich your online business
+                  PROVEN ACCOUNTANTS
                 </h1>
                 <p className="mt-8 text-pretty text-lg font-medium text-gray-400 sm:text-xl/8">
-                  Anim aute id magna aliqua ad ad non deserunt sunt. Qui irure qui lorem cupidatat commodo. Elit sunt
-                  amet fugiat veniam occaecat.
+                  Boutique firm tailoring services to suit your business needs. Professional, qualified & experienced accountants.
                 </p>
                 <div className="mt-10 flex items-center justify-center gap-x-6">
                   <a
                     href="#"
-                    className="rounded-md bg-indigo-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+                    className="rounded-md bg-sky-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-sky-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
                   >
-                    Get started
+                    Our Services
                   </a>
-                  <a href="#" className="text-sm/6 font-semibold text-white">
-                    Learn more <span aria-hidden="true">→</span>
-                  </a>
+                  <IntroductionModal isOpen={isModalOpen} setIsOpen={setIsModalOpen} />
                 </div>
               </div>
             </div>
@@ -175,7 +169,7 @@ const HeroSection = () => {
             {/* Logo cloud */}
             <div className="mx-auto grid max-w-lg grid-cols-4 items-center gap-x-8 gap-y-10 sm:max-w-xl sm:grid-cols-6 sm:gap-x-10 lg:mx-0 lg:max-w-none lg:grid-cols-5">
               <img
-                alt="Transistor"
+                alt="CPA Australia"
                 src="https://tailwindui.com/plus-assets/img/logos/158x48/transistor-logo-white.svg"
                 width={158}
                 height={48}
@@ -229,20 +223,19 @@ const HeroSection = () => {
         <div className="mt-32 sm:mt-56">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <div className="mx-auto max-w-2xl sm:text-center">
-              <h2 className="text-base/7 font-semibold text-indigo-600">Everything you need</h2>
+              <h2 className="text-base/7 font-semibold text-indigo-600">Our Services</h2>
               <p className="mt-2 text-pretty text-4xl font-semibold tracking-tight text-gray-900 sm:text-balance sm:text-5xl">
-                No server? No problem.
+                Year-Round Accounting and Tax Planning Advisors
               </p>
               <p className="mt-6 text-lg/8 text-gray-600">
-                Lorem ipsum, dolor sit amet consectetur adipisicing elit. Maiores impedit perferendis suscipit eaque,
-                iste dolor cupiditate blanditiis.
+                We are a team of professionally qualified & experienced people who customize services as per your requirements and budgets.
               </p>
             </div>
           </div>
           <div className="relative overflow-hidden pt-16">
             <div className="mx-auto max-w-7xl px-6 lg:px-8">
               <img
-                alt="App screenshot"
+                alt="Accounting services"
                 src="https://tailwindui.com/plus-assets/img/component-images/project-app-screenshot.png"
                 width={2432}
                 height={1442}
@@ -285,8 +278,8 @@ const HeroSection = () => {
             <div className="-mt-8 w-full max-w-2xl xl:-mb-8 xl:w-96 xl:flex-none">
               <div className="relative aspect-[2/1] h-full md:-mx-8 xl:mx-0 xl:aspect-auto">
                 <img
-                  alt=""
-                  src="https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=2102&q=80"
+                  alt="Satisfied client"
+                  src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-1.2.1&auto=format&fit=crop&w=2102&q=80"
                   className="absolute inset-0 size-full rounded-2xl bg-gray-800 object-cover shadow-2xl"
                 />
               </div>
@@ -307,14 +300,12 @@ const HeroSection = () => {
                 </svg>
                 <blockquote className="text-xl/8 font-semibold text-white sm:text-2xl/9">
                   <p>
-                    Gravida quam mi erat tortor neque molestie. Auctor aliquet at porttitor a enim nunc suscipit
-                    tincidunt nunc. Et non lorem tortor posuere. Nunc eu scelerisque interdum eget tellus non nibh
-                    scelerisque bibendum.
+                    "Proven Accountants has been instrumental in helping our business grow. Their expertise in tax planning and business advisory has saved us both time and money. We highly recommend their services."
                   </p>
                 </blockquote>
                 <figcaption className="mt-8 text-base">
-                  <div className="font-semibold text-white">Judith Black</div>
-                  <div className="mt-1 text-gray-400">CEO of Tuple</div>
+                  <div className="font-semibold text-white">Sarah Johnson</div>
+                  <div className="mt-1 text-gray-400">Small Business Owner</div>
                 </figcaption>
               </figure>
             </div>
@@ -338,11 +329,10 @@ const HeroSection = () => {
           <div className="mx-auto max-w-2xl sm:text-center">
             <h2 className="text-base/7 font-semibold text-indigo-600">Pricing</h2>
             <p className="mt-2 text-pretty text-4xl font-semibold tracking-tight text-gray-900 sm:text-balance sm:text-5xl">
-              Choose the right plan for you
+              Tailored accounting packages
             </p>
             <p className="mt-6 text-lg/8 text-gray-600">
-              Choose an affordable plan that’s packed with the best features for engaging your audience, creating
-              customer loyalty, and driving sales.
+              We offer customized accounting packages to suit your business needs and budget. Contact us for special pricing options.
             </p>
           </div>
           <div className="mx-auto mt-16 grid max-w-lg grid-cols-1 items-center gap-y-6 sm:mt-20 sm:gap-y-0 lg:max-w-4xl lg:grid-cols-2">
@@ -454,34 +444,60 @@ const HeroSection = () => {
         <div className="mx-auto max-w-7xl px-6 py-16 sm:py-24 lg:px-8 lg:py-32">
           <div className="xl:grid xl:grid-cols-3 xl:gap-8">
             <Image
-              alt="Company name"
+              alt="Proven Accountants"
               src={logo}
               className="h-9 w-auto"
             />
             <div className="mt-16 grid grid-cols-2 gap-8 xl:col-span-2 xl:mt-0">
               <div className="md:grid md:grid-cols-2 md:gap-8">
                 <div>
-                  <h3 className="text-sm/6 font-semibold text-white">Solutions</h3>
+                  <h3 className="text-sm/6 font-semibold text-white">Services</h3>
                   <ul role="list" className="mt-6 space-y-4">
-                    {footerNavigation.solutions.map((item) => (
-                      <li key={item.name}>
-                        <a href={item.href} className="text-sm/6 text-gray-400 hover:text-white">
-                          {item.name}
-                        </a>
-                      </li>
-                    ))}
+                    <li>
+                      <a href="#" className="text-sm/6 text-gray-400 hover:text-white">
+                        Business Structure & Registration
+                      </a>
+                    </li>
+                    <li>
+                      <a href="#" className="text-sm/6 text-gray-400 hover:text-white">
+                        Software Setup & Selection
+                      </a>
+                    </li>
+                    <li>
+                      <a href="#" className="text-sm/6 text-gray-400 hover:text-white">
+                        Book-keeping & Accounting
+                      </a>
+                    </li>
+                    <li>
+                      <a href="#" className="text-sm/6 text-gray-400 hover:text-white">
+                        Taxation & Reporting
+                      </a>
+                    </li>
+                    <li>
+                      <a href="#" className="text-sm/6 text-gray-400 hover:text-white">
+                        Business Review & Advise
+                      </a>
+                    </li>
                   </ul>
                 </div>
                 <div className="mt-10 md:mt-0">
                   <h3 className="text-sm/6 font-semibold text-white">Support</h3>
                   <ul role="list" className="mt-6 space-y-4">
-                    {footerNavigation.support.map((item) => (
-                      <li key={item.name}>
-                        <a href={item.href} className="text-sm/6 text-gray-400 hover:text-white">
-                          {item.name}
-                        </a>
-                      </li>
-                    ))}
+                    <li>
+                      <a href="#" className="text-sm/6 text-gray-400 hover:text-white">
+                        Contact Us
+                      </a>
+                    </li>
+                    <li>
+                      <a href="#" className="text-sm/6 text-gray-400 hover:text-white">
+                        Schedule an Appointment
+                      </a>
+                    </li>
+                    <li>
+                      <a href="#" className="text-sm/6 text-gray-400 hover:text-white">
+                        FAQs
+                      </a>
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -489,29 +505,47 @@ const HeroSection = () => {
                 <div>
                   <h3 className="text-sm/6 font-semibold text-white">Company</h3>
                   <ul role="list" className="mt-6 space-y-4">
-                    {footerNavigation.company.map((item) => (
-                      <li key={item.name}>
-                        <a href={item.href} className="text-sm/6 text-gray-400 hover:text-white">
-                          {item.name}
-                        </a>
-                      </li>
-                    ))}
+                    <li>
+                      <a href="#" className="text-sm/6 text-gray-400 hover:text-white">
+                        About Us
+                      </a>
+                    </li>
+                    <li>
+                      <a href="#" className="text-sm/6 text-gray-400 hover:text-white">
+                        Who We Are
+                      </a>
+                    </li>
+                    <li>
+                      <a href="#" className="text-sm/6 text-gray-400 hover:text-white">
+                        Why Choose Us
+                      </a>
+                    </li>
                   </ul>
                 </div>
                 <div className="mt-10 md:mt-0">
-                  <h3 className="text-sm/6 font-semibold text-white">Legal</h3>
+                  <h3 className="text-sm/6 font-semibold text-white">Contact</h3>
                   <ul role="list" className="mt-6 space-y-4">
-                    {footerNavigation.legal.map((item) => (
-                      <li key={item.name}>
-                        <a href={item.href} className="text-sm/6 text-gray-400 hover:text-white">
-                          {item.name}
-                        </a>
-                      </li>
-                    ))}
+                    <li className="text-sm/6 text-gray-400">
+                      1300 811 002
+                    </li>
+                    <li className="text-sm/6 text-gray-400">
+                      info@provenaccountants.com.au
+                    </li>
+                    <li className="text-sm/6 text-gray-400">
+                      10:00 am - 6:00 pm
+                    </li>
+                    <li className="text-sm/6 text-gray-400">
+                      Monday to Saturday
+                    </li>
                   </ul>
                 </div>
               </div>
             </div>
+          </div>
+          <div className="mt-8 border-t border-white/10 pt-8">
+            <p className="text-xs text-gray-400">
+              © 2024 Proven Accountants. All rights reserved. ABN: 31623798827 | Liability limited by a scheme approved under Professional Standards Legislation.
+            </p>
           </div>
         </div>
       </footer>
