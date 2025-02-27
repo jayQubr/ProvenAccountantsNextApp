@@ -217,7 +217,7 @@ const LoginPage = () => {
               </div>
             </div>
 
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 text-center">
+            <h2 className="text-2xl font-bold text-gray-900">
               {showForgotPassword
                 ? 'Reset Password'
                 : isLogin
@@ -225,7 +225,7 @@ const LoginPage = () => {
                   : 'Create your account'}
             </h2>
 
-            <p className="text-center text-gray-600 dark:text-gray-400 mb-6">
+            <p className="text-center text-gray-600">
               {showForgotPassword
                 ? 'Enter your email to receive a password reset link'
                 : isLogin
@@ -234,22 +234,22 @@ const LoginPage = () => {
             </p>
 
             {error && (
-              <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-start">
-                <BellAlertIcon className="h-5 w-5 text-red-500 dark:text-red-400 mt-0.5 mr-3 flex-shrink-0" />
-                <p className="text-red-700 dark:text-red-300 text-sm">{error}</p>
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start">
+                <BellAlertIcon className="h-5 w-5 text-red-500 mt-0.5 mr-3 flex-shrink-0" />
+                <p className="text-red-700 text-sm">{error}</p>
               </div>
             )}
 
             {success && (
-              <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                <p className="text-green-700 dark:text-green-300 text-sm">{success}</p>
+              <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-green-700 text-sm">{success}</p>
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-5">
               {!isLogin && !showForgotPassword && (
                 <div>
-                  <label htmlFor="displayName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label htmlFor="displayName" className="block text-sm font-medium text-gray-700 mb-1">
                     Full Name
                   </label>
                   <div className="relative">
@@ -263,7 +263,7 @@ const LoginPage = () => {
                       required
                       value={displayName}
                       onChange={(e) => setDisplayName(e.target.value)}
-                      className="pl-10 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 py-2.5 text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 dark:focus:ring-sky-400 focus:border-transparent sm:text-sm"
+                        className="pl-10 block w-full rounded-lg border border-gray-300 bg-white py-2.5 text-gray-900 focus:ring-2 focus:ring-sky-500 focus:border-transparent sm:text-sm"
                       placeholder="John Doe"
                     />
                   </div>
@@ -271,7 +271,7 @@ const LoginPage = () => {
               )}
 
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                   Email address
                 </label>
                 <div className="relative">
@@ -286,7 +286,7 @@ const LoginPage = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     autoComplete="email"
-                    className="pl-10 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 py-2.5 text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 dark:focus:ring-sky-400 focus:border-transparent sm:text-sm"
+                    className="pl-10 block w-full rounded-lg border border-gray-300 bg-white py-2.5 text-gray-900 focus:ring-2 focus:ring-sky-500 focus:border-transparent sm:text-sm"
                     placeholder="you@example.com"
                   />
                 </div>
@@ -295,14 +295,14 @@ const LoginPage = () => {
               {!showForgotPassword && (
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                       Password
                     </label>
                     {isLogin && (
                       <button
                         type="button"
                         onClick={() => switchMode('reset')}
-                        className="text-sm font-medium text-sky-600 dark:text-sky-400 hover:text-sky-500 dark:hover:text-sky-300"
+                        className="text-sm font-medium text-sky-600 hover:text-sky-500"
                       >
                         Forgot password?
                       </button>
@@ -320,7 +320,7 @@ const LoginPage = () => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       autoComplete={isLogin ? "current-password" : "new-password"}
-                      className="pl-10 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 py-2.5 text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 dark:focus:ring-sky-400 focus:border-transparent sm:text-sm"
+                      className="pl-10 block w-full rounded-lg border border-gray-300 bg-white py-2.5 text-gray-900 focus:ring-2 focus:ring-sky-500 focus:border-transparent sm:text-sm"
                       placeholder={isLogin ? "Your password" : "Create a password"}
                     />
                   </div>
@@ -329,7 +329,7 @@ const LoginPage = () => {
 
               {!isLogin && !showForgotPassword && (
                 <div>
-                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
                     Confirm Password
                   </label>
                   <div className="relative">
@@ -344,7 +344,7 @@ const LoginPage = () => {
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       autoComplete="new-password"
-                      className="pl-10 block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 py-2.5 text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 dark:focus:ring-sky-400 focus:border-transparent sm:text-sm"
+                      className="pl-10 block w-full rounded-lg border border-gray-300 bg-white py-2.5 text-gray-900 focus:ring-2 focus:ring-sky-500 focus:border-transparent sm:text-sm"
                       placeholder="Confirm your password"
                     />
                   </div>
@@ -381,10 +381,10 @@ const LoginPage = () => {
                 <div className="mt-6">
                   <div className="relative">
                     <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-gray-300 dark:border-gray-600" />
+                      <div className="w-full border-t border-gray-300" />
                     </div>
                     <div className="relative flex justify-center text-sm">
-                      <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">Or continue with</span>
+                      <span className="px-2 bg-white text-gray-500">Or continue with</span>
                     </div>
                   </div>
 
@@ -392,7 +392,7 @@ const LoginPage = () => {
                     <button
                       onClick={handleGoogleSignIn}
                       disabled={isLoading}
-                      className="w-full flex items-center justify-center gap-3 py-2.5 px-4 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm bg-white dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:opacity-70 disabled:cursor-not-allowed transition-colors duration-200"
+                      className="w-full flex items-center justify-center gap-3 py-2.5 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:opacity-70 disabled:cursor-not-allowed transition-colors duration-200"
                     >
                       <svg
                         className="h-5 w-5"
@@ -423,12 +423,12 @@ const LoginPage = () => {
                 </div>
 
                 <div className="mt-8">
-                  <div className="bg-sky-50 dark:bg-sky-900/10 rounded-lg p-4 border border-sky-100 dark:border-sky-800/30">
+                  <div className="bg-sky-50 rounded-lg p-4 border border-sky-100">
                     <div className="flex items-start">
                       <BuildingOfficeIcon className="h-5 w-5 text-sky-500 mt-0.5 mr-3 flex-shrink-0" />
                       <div>
-                        <h3 className="text-sm font-medium text-gray-900 dark:text-white">Why choose Proven Accountants?</h3>
-                        <ul className="mt-2 text-xs text-gray-600 dark:text-gray-300 space-y-1">
+                        <h3 className="text-sm font-medium text-gray-900">Why choose Proven Accountants?</h3>
+                        <ul className="mt-2 text-xs text-gray-600 space-y-1">
                           <li className="flex items-center">
                             <span className="inline-block h-1.5 w-1.5 rounded-full bg-sky-500 mr-2"></span>
                             Over 14 years of experience in accounting & tax advice
@@ -447,12 +447,12 @@ const LoginPage = () => {
                   </div>
                 </div>
 
-                <p className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                <p className="mt-6 text-center text-sm text-gray-500">
                   {isLogin ? "Don't have an account? " : "Already have an account? "}
                   <button
                     type="button"
                     onClick={() => switchMode(isLogin ? 'register' : 'login')}
-                    className="font-medium text-sky-600 dark:text-sky-400 hover:text-sky-500 dark:hover:text-sky-300"
+                    className="font-medium text-sky-600 hover:text-sky-500"
                   >
                     {isLogin ? 'Sign up now' : 'Sign in'}
                   </button>
@@ -461,11 +461,11 @@ const LoginPage = () => {
             )}
 
             {showForgotPassword && (
-              <p className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
+              <p className="mt-8 text-center text-sm text-gray-500">
                 <button
                   type="button"
                   onClick={() => switchMode('login')}
-                  className="font-medium text-sky-600 dark:text-sky-400 hover:text-sky-500 dark:hover:text-sky-300"
+                  className="font-medium text-sky-600 hover:text-sky-500"
                 >
                   Back to sign in
                 </button>
@@ -473,22 +473,22 @@ const LoginPage = () => {
             )}
           </div>
 
-          <p className="mt-6 text-center text-xs text-gray-500 dark:text-gray-400">
+          <p className="mt-6 text-center text-xs text-gray-500">
             By signing in, you agree to our{' '}
-            <Link href="/terms" className="text-sky-600 dark:text-sky-400 hover:underline">
+            <Link href="/terms" className="text-sky-600 hover:underline">
               Terms of Service
             </Link>{' '}
             and{' '}
-            <Link href="/privacy" className="text-sky-600 dark:text-sky-400 hover:underline">
+            <Link href="/privacy" className="text-sky-600 hover:underline">
               Privacy Policy
             </Link>
           </p>
 
           <div className="mt-4 text-center">
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-gray-500">
               ABN: 31623798827 | Liability limited by a scheme approved under professional standards legislation
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-xs text-gray-500 mt-1">
               © 2015 - {new Date().getFullYear()} by Provens, All Rights Reserved
             </p>
           </div>

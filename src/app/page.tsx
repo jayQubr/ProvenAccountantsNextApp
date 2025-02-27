@@ -1,10 +1,10 @@
-import HomeLayout from "./(homeLayout)/layout";
-import HomePage from "./(homeLayout)/home/page";
+import HomeLayout from "./(appLayout)/home/pages";
+import AppLayout from "./(appLayout)/layout";
 
 export default function Home() {
   return (
-    <HomeLayout>
-      <HomePage />
-    </HomeLayout>
+    <AppLayout>
+      <HomeLayout />
+    </AppLayout>
   );
 }

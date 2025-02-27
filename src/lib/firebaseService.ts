@@ -111,8 +111,13 @@ export const resetPassword = async (email: string) => {
 };
 
 // User profile services
-export const getCurrentUser = (): User | null => {
-    return auth.currentUser;
+export const getCurrentUser = async () => {
+    return new Promise((resolve, reject) => {
+        const unsubscribe = auth.onAuthStateChanged((user) => {
+            unsubscribe();
+            resolve(user);
+        }, reject);
+    });
 };
 
 export const getUserProfile = async (uid: string) => {
