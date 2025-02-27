@@ -223,7 +223,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
           </div>
         </motion.div>
 
-        <main className="py-10">
+        <main className="py-4 md:py-10">
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
