@@ -18,10 +18,7 @@ const navigation = [
 
 const Header = () => {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
-    useEffect(() => {
-        const currentUser = getCurrentUser();
-        setCurrentUser(currentUser);
-    }, []);
+
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     const handleLogout = async () => {
