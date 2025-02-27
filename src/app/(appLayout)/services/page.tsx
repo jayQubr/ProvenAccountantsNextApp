@@ -118,7 +118,7 @@ const Services = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-2 md:py-8 max-w-6xl">
+    <div className="container mx-auto px-2 md:px-4 py-4 md:py-8 max-w-6xl">
       <motion.div 
         className="mb-6 md:mb-10 text-center"
         initial={{ opacity: 0, y: -20 }}

@@ -228,7 +228,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.4 }}
-            className="px-4 sm:px-6 lg:px-8"
+            className="px-2 md:px-4 sm:px-6 lg:px-8"
           >
             {children}
           </motion.div>
