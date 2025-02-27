@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
 import { CalendarIcon, Cog6ToothIcon, DocumentDuplicateIcon, FolderIcon, HomeIcon, UsersIcon, XMarkIcon, UserCircleIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
@@ -9,7 +9,6 @@ import { auth } from '@/lib/firebaseConfig'
 import { useRouter } from 'next/navigation';
 import logo from '@/assets/PROVEN-LOGO-1.png';
 import Image from 'next/image'
-import { motion } from 'framer-motion';
 
 const classNames = (...classes: any) => {
     return classes.filter(Boolean).join(' ')
@@ -28,6 +27,24 @@ const navigation = [
 const Sidebar = ({ sidebarOpen, setSidebarOpen }: any) => {
     const pathname = usePathname()
     const router = useRouter()
+    const [showSidebar, setShowSidebar] = useState(false)
+
+    useEffect(() => {
+        if (sidebarOpen) {
+            setShowSidebar(true)
+        } else {
+            setShowSidebar(false)
+        }
+    }, [sidebarOpen])
+    
+    useEffect(() => {
+        handleClose()
+    }, [pathname]);
+    
+
+    const handleClose = () => {
+        setSidebarOpen(false)
+    }
     
     const handleLogout = async () => {
         try {
@@ -40,16 +57,17 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: any) => {
 
     return (
         <>
-            <Transition.Root show={sidebarOpen} as={Fragment}>
-                <Dialog as="div" className="relative z-50 lg:hidden" onClose={setSidebarOpen}>
+            <Transition.Root show={showSidebar} as={Fragment}>
+                <Dialog as="div" className="relative z-50 lg:hidden" onClose={handleClose} static>
                     <Transition.Child
                         as={Fragment}
-                        enter="transition-opacity ease-linear duration-300"
+                        enter="transition-opacity ease-linear duration-200"
                         enterFrom="opacity-0"
                         enterTo="opacity-100"
-                        leave="transition-opacity ease-linear duration-300"
+                        leave="transition-opacity ease-linear duration-200"
                         leaveFrom="opacity-100"
                         leaveTo="opacity-0"
+                        
                     >
                         <div className="fixed inset-0 bg-gray-900/80" />
                     </Transition.Child>
@@ -57,25 +75,25 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: any) => {
                     <div className="fixed inset-0 flex">
                         <Transition.Child
                             as={Fragment}
-                            enter="transition ease-in-out duration-300 transform"
+                            enter="transition ease-in-out duration-200 transform"
                             enterFrom="-translate-x-full"
                             enterTo="translate-x-0"
-                            leave="transition ease-in-out duration-300 transform"
+                            leave="transition ease-in-out duration-200 transform"
                             leaveFrom="translate-x-0"
                             leaveTo="-translate-x-full"
                         >
                             <Dialog.Panel className="relative mr-16 flex w-full max-w-xs flex-1">
                                 <Transition.Child
                                     as={Fragment}
-                                    enter="ease-in-out duration-300"
+                                    enter="ease-in-out duration-200"
                                     enterFrom="opacity-0"
                                     enterTo="opacity-100"
-                                    leave="ease-in-out duration-300"
+                                    leave="ease-in-out duration-150"
                                     leaveFrom="opacity-100"
                                     leaveTo="opacity-0"
                                 >
                                     <div className="absolute left-full top-0 flex w-16 justify-center pt-5">
-                                        <button type="button" className="-m-2.5 p-2.5" onClick={() => setSidebarOpen(false)}>
+                                        <button type="button" className="-m-2.5 p-2.5" onClick={handleClose}>
                                             <span className="sr-only">Close sidebar</span>
                                             <XMarkIcon className="h-6 w-6 text-white" aria-hidden="true" />
                                         </button>
@@ -83,12 +101,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: any) => {
                                 </Transition.Child>
                                 
                                 {/* Sidebar component for mobile */}
-                                <motion.div 
-                                    initial={{ x: -300 }}
-                                    animate={{ x: 0 }}
-                                    transition={{ duration: 0.3, ease: "easeOut" }}
-                                    className="flex grow flex-col gap-y-5 overflow-y-auto bg-gradient-to-b from-sky-700 to-sky-900 px-6 pb-4"
-                                >
+                                <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-gradient-to-b from-sky-700 to-sky-900 px-6 pb-4 shadow-lg">
                                     <div className="flex h-16 shrink-0 items-center space-x-3">
                                         <div className="bg-white p-1.5 rounded-md shadow-md">
                                             <Image
@@ -148,7 +161,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: any) => {
                                             </li>
                                         </ul>
                                     </nav>
-                                </motion.div>
+                                </div>
                             </Dialog.Panel>
                         </Transition.Child>
                     </div>
@@ -157,7 +170,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: any) => {
 
             {/* Static sidebar for desktop */}
             <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
-                <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-gradient-to-b from-sky-700 to-sky-900 px-6 pb-4">
+                <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-gradient-to-b from-sky-700 to-sky-900 px-6 pb-4 shadow-lg">
                     <div className="flex h-16 shrink-0 items-center space-x-3">
                         <div className="bg-white p-1.5 rounded-md shadow-md">
                             <Image

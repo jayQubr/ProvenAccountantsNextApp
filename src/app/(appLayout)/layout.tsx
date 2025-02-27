@@ -10,7 +10,6 @@ import { getUserProfile } from '@/lib/firebaseService';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 
-// User type definition
 interface UserData {
   uid: string;
   email: string | null;
@@ -37,7 +36,6 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
     }},
   ];
 
-  // Get page title based on current path
   const getPageTitle = useCallback(() => {
     const pathSegments = pathname.split('/').filter(Boolean);
     const lastSegment = pathSegments[pathSegments.length - 1] || '';
@@ -55,7 +53,6 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
     return titles[lastSegment as keyof typeof titles] || 'Proven Accountants';
   }, [pathname]);
 
-  // Get user initials for avatar fallback
   const getInitials = useCallback(() => {
     if (!user?.displayName) return 'U';
     return user.displayName
@@ -66,13 +63,10 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
       .substring(0, 2);
   }, [user?.displayName]);
 
-  // Listen for authentication state changes - only once on component mount
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
       if (authUser) {
-        // User is signed in
         try {
-          // Get additional user data from Firestore
           const userProfileResult = await getUserProfile(authUser.uid);
           
           if (userProfileResult.success) {
@@ -84,7 +78,6 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
               ...userProfileResult.data
             });
           } else {
-            // Fallback to basic auth user data
             setUser({
               uid: authUser.uid,
               email: authUser.email,
@@ -93,8 +86,6 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
             });
           }
         } catch (error) {
-          console.error("Error fetching user profile:", error);
-          // Fallback to basic auth user data
           setUser({
             uid: authUser.uid,
             email: authUser.email,
@@ -103,18 +94,15 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
           });
         }
       } else {
-        // User is signed out
         setUser(null);
         router.push('/login');
       }
       setLoading(false);
     });
 
-    // Cleanup subscription on unmount
     return () => unsubscribe();
   }, [router]);
 
-  // Handle menu item click
   const handleMenuItemClick = (item: any) => {
     if (item.action) {
       item.action();
@@ -131,9 +119,8 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  // If no user is logged in, don't render the layout
   if (!user) {
-    return null; // The useEffect will redirect to login
+    return null;
   }
 
   return (
