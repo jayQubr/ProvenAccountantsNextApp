@@ -7,6 +7,15 @@
   --foreground: #171717;
 }
 
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .h-safe-bottom {
+    height: env(safe-area-inset-bottom);
+  }
+  
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
 
 body {
   color: var(--foreground);

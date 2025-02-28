@@ -9,6 +9,8 @@ import { auth } from '@/lib/firebaseConfig';
 import { getUserProfile } from '@/lib/firebaseService';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import MobileBottomNav from '@/components/features/MobileBottomNav';
+import Link from 'next/link';
 
 interface UserData {
   uid: string;
@@ -38,15 +40,35 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
 
   const getPageTitle = useCallback(() => {
     const pathSegments = pathname.split('/').filter(Boolean);
+    
+    // Check if we're on a service detail page
+    if (pathSegments.length >= 2 && pathSegments[0] === 'services' && pathSegments[1]) {
+      // Map service slugs to their display names
+      const serviceNames: {[key: string]: string} = {
+        'ato-registration': 'ATO Registration',
+        'business-registration': 'Business Registration',
+        'company-registration': 'Company Registration',
+        'trust-registration': 'Trust Registration',
+        'notice-assessment': 'Notice Assessment',
+        'tax-return-copy': 'Tax Return Copy',
+        'bas-lodgement-copy': 'BAS Lodgement Copy',
+        'ato-portal-copy': 'ATO Portal Copy',
+        'payment-plan': 'Payment Plan',
+        'update-address': 'Update Address'
+      };
+      
+      return serviceNames[pathSegments[1]] || 'Service Details';
+    }
+    
     const lastSegment = pathSegments[pathSegments.length - 1] || '';
     
     const titles = {
       'dashboard': 'Dashboard',
       'services': 'Services',
       'appointments': 'Appointments',
-      'requests': 'My Requests',
-      'bookings': 'My Bookings',
-      'profile': 'My Profile',
+      'my-requests': 'My Requests',
+      'my-bookings': 'My Bookings',
+      'my-profile': 'My Profile',
       'settings': 'Settings',
     };
     
@@ -124,7 +146,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    <div>
+    <div className="min-h-screen bg-gray-50">
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
       <div className="lg:pl-72">
         <motion.div 
@@ -162,7 +184,15 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
               {pathname !== '/dashboard' && pathname !== '/' && (
                 <div className="hidden sm:flex items-center ml-4 text-sm text-gray-500">
                   <span className="mx-2 text-gray-300">/</span>
-                  <span>{getPageTitle()}</span>
+                  {pathname.startsWith('/services/') ? (
+                    <>
+                      <Link href="/services" className="text-sky-600 hover:text-sky-700">Services</Link>
+                      <span className="mx-2 text-gray-300">/</span>
+                      <span>{getPageTitle()}</span>
+                    </>
+                  ) : (
+                    <span>{getPageTitle()}</span>
+                  )}
                 </div>
               )}
             </motion.div>
@@ -223,7 +253,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
           </div>
         </motion.div>
 
-        <main className="py-4 md:py-10">
+        <main className="pb-16 md:pb-0">
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -234,6 +264,9 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
           </motion.div>
         </main>
       </div>
+      
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav />
     </div>
   )
 }

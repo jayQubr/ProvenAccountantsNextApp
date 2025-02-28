@@ -17,11 +17,11 @@ const classNames = (...classes: any) => {
 const navigation = [
     { name: 'Dashboard', href: '/', icon: HomeIcon },
     { name: 'Services', href: '/services', icon: UsersIcon },
-    { name: 'Appointments', href: '#', icon: CalendarIcon },
-    { name: 'My Requests', href: '#', icon: FolderIcon },
-    { name: 'My Bookings', href: '#', icon: DocumentDuplicateIcon },
-    { name: 'My Profile', href: '#', icon: UserCircleIcon },
-    { name: 'Settings', href: '#', icon: Cog6ToothIcon },
+    { name: 'Appointments', href: '/appointments', icon: CalendarIcon },
+    { name: 'My Requests', href: '/my-requests', icon: FolderIcon },
+    { name: 'My Bookings', href: '/my-bookings', icon: DocumentDuplicateIcon },
+    { name: 'My Profile', href: '/my-profile', icon: UserCircleIcon },
+    { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
 ]
 
 const Sidebar = ({ sidebarOpen, setSidebarOpen }: any) => {
@@ -120,7 +120,9 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: any) => {
                                             <li>
                                                 <ul role="list" className="-mx-2 space-y-1">
                                                     {navigation.map((item) => {
-                                                        const isActive = pathname === item.href
+                                                        const isActive = item.href === '/' 
+                                                            ? pathname === item.href 
+                                                            : pathname === item.href || pathname.startsWith(`${item.href}/`);
                                                         return (
                                                             <li key={item.name}>
                                                                 <Link
@@ -189,7 +191,9 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: any) => {
                             <li>
                                 <ul role="list" className="-mx-2 space-y-1">
                                     {navigation.map((item) => {
-                                        const isActive = pathname === item.href
+                                        const isActive = item.href === '/' 
+                                            ? pathname === item.href 
+                                            : pathname === item.href || pathname.startsWith(`${item.href}/`);
                                         return (
                                             <li key={item.name}>
                                                 <Link
