@@ -1,21 +1,17 @@
-'use client'
+'use client';
+
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { ArrowLeftIcon } from '@heroicons/react/24/outline'
 import { IdentificationIcon } from '@heroicons/react/24/outline'
-import PhoneInput from 'react-phone-number-input/input'
-import 'react-phone-number-input/style.css'
 import CustomInput from '@/components/ui/CustomInput'
 import CustomCheckbox from '@/components/ui/CustomCheckbox'
+import PersonalInformation from '@/components/features/PersonaInformation'
 
 const BusinessRegistrationPage = () => {
   const router = useRouter()
   const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    dateOfBirth: '',
-    phone: '+61',
     postalAddress: '',
     postalCode: '',
     abn: '',
@@ -45,43 +41,9 @@ const BusinessRegistrationPage = () => {
     }
   }
 
-  const handlePhoneChange = (value: string | undefined) => {
-    setFormData(prev => ({
-      ...prev,
-      phone: value || ''
-    }))
-    
-    // Clear error when field is edited
-    if (errors.phone) {
-      setErrors(prev => {
-        const newErrors = { ...prev }
-        delete newErrors.phone
-        return newErrors
-      })
-    }
-  }
-
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
-    
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = 'Full name is required'
-    }
-    
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required'
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid'
-    }
-    
-    if (!formData.dateOfBirth.trim()) {
-      newErrors.dateOfBirth = 'Date of birth is required'
-    }
-    
-    if (!formData.phone || formData.phone === '+61') {
-      newErrors.phone = 'Phone number is required'
-    }
-    
+
     if (!formData.postalAddress.trim()) {
       newErrors.postalAddress = 'Postal address is required'
     }
@@ -176,33 +138,7 @@ const BusinessRegistrationPage = () => {
         transition={{ duration: 0.4, delay: 0.1 }}
       >
         <div className="p-6 space-y-6">
-          {/* Personal Information Section */}
-          <div>
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Personal Information</h2>
-            <div className="space-y-4">
-              <CustomInput label="Full Name of Applicant/Authorized Person" name="fullName" value={formData.fullName} onChange={handleChange} errors={errors.fullName} placeholder="Enter your full name" />
-              <CustomInput label="Email" type="email" name="email" value={formData.email} onChange={handleChange} errors={errors.email} placeholder="Enter your email address" />
-              <CustomInput label="Date of Birth of Applicant/Authorized Person" type="date" name="dateOfBirth" value={formData.dateOfBirth} onChange={handleChange} errors={errors.dateOfBirth} placeholder="Enter your date of birth" />
-              <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                  Telephone/Mobile <span className="text-red-500">*</span>
-                </label>
-                <div className={`flex items-center px-4 py-3 rounded-lg border ${errors.phone ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'} focus-within:ring-2 focus-within:ring-sky-500 focus-within:border-sky-500 transition-colors`}>
-                  <PhoneInput
-                    country="AU"
-                    value={formData.phone}
-                    onChange={handlePhoneChange}
-                    className="w-full bg-transparent outline-none"
-                    placeholder="Enter phone number"
-                  />
-                </div>
-                {errors.phone && (
-                  <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
-                )}
-              </div>
-            </div>
-          </div>
-          
+          <PersonalInformation/>
           {/* Address Information Section */}
           <div>
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Address Information</h2>
@@ -274,5 +210,4 @@ const BusinessRegistrationPage = () => {
     </div>
   )
 }
-
-export default BusinessRegistrationPage
+export default BusinessRegistrationPage;
