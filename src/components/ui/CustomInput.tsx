@@ -21,7 +21,18 @@ const CustomInput = ({ label, name, value, onChange, errors, placeholder, type =
             <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">
                 {label} <span className="text-red-500">*</span>
             </label>
-            
+            {type === "textarea" ? (
+                <textarea
+                    id={name}
+                    name={name}
+                    value={value}
+                    onChange={(e) => onChange(e as any)}
+                    className={`w-full px-4 py-3 rounded-lg border ${errors ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'} focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 transition-colors`}
+                    placeholder={placeholder}
+                    maxLength={maxLength ?? undefined}
+                    {...(errors ? shakeAnimation : {})}
+                />
+            ) : (
             <motion.input
                 type={type}
                 id={name}
@@ -33,7 +44,7 @@ const CustomInput = ({ label, name, value, onChange, errors, placeholder, type =
                 maxLength={maxLength ?? undefined}
                 {...(errors ? shakeAnimation : {})}
             />
-
+            )}
             {errors && (
                 <motion.p 
                     initial={{ opacity: 0, y: -5 }} 

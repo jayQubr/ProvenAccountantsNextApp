@@ -7,12 +7,12 @@ import { ArrowLeftIcon} from '@heroicons/react/24/outline'
 import { IdentificationIcon } from '@heroicons/react/24/outline'
 import CustomInput from '@/components/ui/CustomInput';
 
-const NoticeAssessment = () => {
+const ATOPortalCopy = () => {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const router = useRouter()
 
   const [companyData, setCompanyData] = useState<any>({
-    year: '',
+    period: '',
     details: '',
   })
 
@@ -27,8 +27,8 @@ const NoticeAssessment = () => {
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
 
-    if (!companyData.year.trim()) {
-      newErrors.year = 'Year is required'
+    if (!companyData.period.trim()) {
+      newErrors.period = 'Period is required'
     }
 
     if (!companyData.details.trim()) {
@@ -75,11 +75,11 @@ const NoticeAssessment = () => {
           <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-sky-100 flex items-center justify-center text-sky-500">
             <IdentificationIcon className="w-5 h-5" />
           </div>
-          <h1 className="text-xl md:text-2xl font-bold text-gray-800">Notice of Assessment</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-gray-800">ATO Portal Copy</h1>
         </div>
         
         <p className="text-gray-600 text-sm">
-          Complete the form below to register your notice of assessment. All fields marked with * are required.
+          Complete the form below to register your ATO portal copy. All fields marked with * are required.
         </p>
       </motion.div>
       
@@ -94,12 +94,11 @@ const NoticeAssessment = () => {
         <div className="p-6 space-y-6">
           {/* Main Form Fields */}
             <div className="space-y-4 mt-4">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4">Notice of Assessment</h2>
-              <CustomInput label="Specify the year" type="number" name="year" value={companyData.year} onChange={(e) => handleChange(e, 0)} errors={errors.year} placeholder="Enter your year" />
+              <h2 className="text-lg font-semibold text-gray-800 mb-4">Period for which ATO Portal Copy</h2>
+              <CustomInput label="Specify the Period" type="text" name="period" value={companyData.period} onChange={(e) => handleChange(e, 0)} errors={errors.period} placeholder="Enter your period" />
               <CustomInput label="Details (Optional)" type="textarea" name="details" value={companyData.details} onChange={(e) => handleChange(e, 0)} errors={errors.details} placeholder="Enter your details" />
             </div>
 
-    
         </div>
 
         {/* Submit Button */}
@@ -124,4 +123,4 @@ const NoticeAssessment = () => {
   )
 }
 
-export default NoticeAssessment
+export default ATOPortalCopy

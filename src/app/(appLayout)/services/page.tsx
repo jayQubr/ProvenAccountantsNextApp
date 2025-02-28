@@ -75,11 +75,11 @@ const services = [
   },
   { 
     id: 8, 
-    name: 'ATO Registration Copy', 
+    name: 'ATO Portal Copy', 
     description: 'Get official copies of your ATO registration documents for your business records or compliance needs.',
     icon: ClipboardDocumentIcon,
     category: 'Documentation',
-    path: '/services/ato-registration-copy'
+    path: '/services/ato-portal-copy'
   },
   { 
     id: 9, 
