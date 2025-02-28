@@ -118,7 +118,7 @@ const MobileBottomNav = () => {
 
   // Check if a route is active, including nested routes
   const isRouteActive = (href: string) => {
-    // if (href === '/' && pathname === '/') return true;
+    if (href === '/' && pathname === '/') return true;
     if (href !== '/' && pathname.startsWith(href)) return true;
     return false;
   };
@@ -145,6 +145,11 @@ const MobileBottomNav = () => {
                   <Link 
                     key={item.name} 
                     href={item.href}
+                    onClick={(e) => {
+                      if (isActive) {
+                        e.preventDefault();
+                      }
+                    }}
                     className={`flex flex-col items-center py-2 px-3 rounded-lg ${
                       isActive && !item.highlight ? activeBgClass : ''
                     } ${item.highlight ? 'relative' : ''}`}
