@@ -1,11 +1,13 @@
 'use client'
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { ArrowLeftIcon } from '@heroicons/react/24/outline'
 import { IdentificationIcon } from '@heroicons/react/24/outline'
 import PhoneInput from 'react-phone-number-input/input'
 import 'react-phone-number-input/style.css'
+import CustomInput from '@/components/ui/CustomInput'
+import CustomCheckbox from '@/components/ui/CustomCheckbox'
 
 const BusinessRegistrationPage = () => {
   const router = useRouter()
@@ -101,6 +103,9 @@ const BusinessRegistrationPage = () => {
     if (!formData.agreeToDeclaration) {
       newErrors.agreeToDeclaration = 'You must agree to the declaration'
     }
+    if(!formData.abn.trim()) {
+      newErrors.abn = 'ABN is required'
+    }
     
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -175,63 +180,9 @@ const BusinessRegistrationPage = () => {
           <div>
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Personal Information</h2>
             <div className="space-y-4">
-              {/* Full Name */}
-              <div>
-                <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
-                  Full Name of Applicant/Authorized Person <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="fullName"
-                  name="fullName"
-                  value={formData.fullName}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 rounded-lg border ${errors.fullName ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'} focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors`}
-                  placeholder="Enter your full name"
-                />
-                {errors.fullName && (
-                  <p className="mt-1 text-sm text-red-600">{errors.fullName}</p>
-                )}
-              </div>
-              
-              {/* Email */}
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                  Email <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 rounded-lg border ${errors.email ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'} focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors`}
-                  placeholder="Enter your email address"
-                />
-                {errors.email && (
-                  <p className="mt-1 text-sm text-red-600">{errors.email}</p>
-                )}
-              </div>
-
-              {/* Date of Birth */}
-              <div>
-                <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700 mb-1">
-                  Date of Birth of Applicant/Authorized Person <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="date"
-                  id="dateOfBirth"
-                  name="dateOfBirth"
-                  value={formData.dateOfBirth}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 rounded-lg border ${errors.dateOfBirth ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'} focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors`}
-                />
-                {errors.dateOfBirth && (
-                  <p className="mt-1 text-sm text-red-600">{errors.dateOfBirth}</p>
-                )}
-              </div>
-              
-              {/* Phone Number */}
+              <CustomInput label="Full Name of Applicant/Authorized Person" name="fullName" value={formData.fullName} onChange={handleChange} errors={errors.fullName} placeholder="Enter your full name" />
+              <CustomInput label="Email" type="email" name="email" value={formData.email} onChange={handleChange} errors={errors.email} placeholder="Enter your email address" />
+              <CustomInput label="Date of Birth of Applicant/Authorized Person" type="date" name="dateOfBirth" value={formData.dateOfBirth} onChange={handleChange} errors={errors.dateOfBirth} placeholder="Enter your date of birth" />
               <div>
                 <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
                   Telephone/Mobile <span className="text-red-500">*</span>
@@ -257,42 +208,8 @@ const BusinessRegistrationPage = () => {
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Address Information</h2>
             <div className="space-y-4">
               {/* Postal Address */}
-              <div>
-                <label htmlFor="postalAddress" className="block text-sm font-medium text-gray-700 mb-1">
-                  Postal Address <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="postalAddress"
-                  name="postalAddress"
-                  value={formData.postalAddress}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 rounded-lg border ${errors.postalAddress ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'} focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors`}
-                  placeholder="Enter your postal address"
-                />
-                {errors.postalAddress && (
-                  <p className="mt-1 text-sm text-red-600">{errors.postalAddress}</p>
-                )}
-              </div>
-              
-              {/* Postal Code */}
-              <div>
-                <label htmlFor="postalCode" className="block text-sm font-medium text-gray-700 mb-1">
-                  Postal Code <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="postalCode"
-                  name="postalCode"
-                  value={formData.postalCode}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 rounded-lg border ${errors.postalCode ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'} focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors`}
-                  placeholder="Enter postal code"
-                />
-                {errors.postalCode && (
-                  <p className="mt-1 text-sm text-red-600">{errors.postalCode}</p>
-                )}
-              </div>
+              <CustomInput label="Postal Address" type="text" name="postalAddress" value={formData.postalAddress} onChange={handleChange} errors={errors.postalAddress} placeholder="Enter your postal address" />
+              <CustomInput label="Postal Code" type="text" name="postalCode" value={formData.postalCode} onChange={handleChange} errors={errors.postalCode} placeholder="Enter your postal code" />
             </div>
           </div>
 
@@ -300,62 +217,9 @@ const BusinessRegistrationPage = () => {
           <div>
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Business Registration Details</h2>
             <div className="space-y-4">
-              {/* ABN */}
-              <div>
-                <label htmlFor="abn" className="block text-sm font-medium text-gray-700 mb-1">
-                  ABN <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="abn"
-                  name="abn"
-                  value={formData.abn}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 rounded-lg border ${errors.abn ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'} focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors`}
-                  placeholder="Enter ABN"
-                />
-                {errors.abn && (
-                  <p className="mt-1 text-sm text-red-600">{errors.abn}</p>
-                )}
-              </div>
-
-              {/* Business Name */}
-              <div>
-                <label htmlFor="businessName" className="block text-sm font-medium text-gray-700 mb-1">
-                  Business Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="businessName"
-                  name="businessName"
-                  value={formData.businessName}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 rounded-lg border ${errors.businessName ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'} focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors`}
-                  placeholder="Enter your business name"
-                />
-                {errors.businessName && (
-                  <p className="mt-1 text-sm text-red-600">{errors.businessName}</p>
-                )}
-              </div>
-              
-              {/* Business Address */}
-              <div>
-                <label htmlFor="businessAddress" className="block text-sm font-medium text-gray-700 mb-1">
-                  Business Address <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="businessAddress"
-                  name="businessAddress"
-                  value={formData.businessAddress}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 rounded-lg border ${errors.businessAddress ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'} focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors`}
-                  placeholder="Enter business address"
-                />
-                {errors.businessAddress && (
-                  <p className="mt-1 text-sm text-red-600">{errors.businessAddress}</p>
-                )}
-              </div>
+              <CustomInput label="ABN" type="text" name="abn" value={formData.abn} onChange={handleChange} errors={errors.abn} placeholder="Enter ABN" />
+              <CustomInput label="Business Name" type="text" name="businessName" value={formData.businessName} onChange={handleChange} errors={errors.businessName} placeholder="Enter your business name" />
+              <CustomInput label="Business Address" type="text" name="businessAddress" value={formData.businessAddress} onChange={handleChange} errors={errors.businessAddress} placeholder="Enter your business address" />
             </div>
           </div>
 
@@ -374,26 +238,7 @@ const BusinessRegistrationPage = () => {
               <li>The information supplied is accurate and complete to the best of my knowledge, and any false information provided may lead to penalties under applicable acts, rules, and regulations.</li>
               <li>All the persons mentioned in the application have consented to act for the respective roles.</li>
             </ul>
-            <div className="flex gap-2 items-center">
-              <div className="flex items-center h-5">
-                <input
-                  id="agreeToDeclaration"
-                  name="agreeToDeclaration"
-                  type="checkbox"
-                  checked={formData.agreeToDeclaration}
-                  onChange={handleChange}
-                  className={`w-4 h-4 text-sky-600 border-gray-300 rounded focus:ring-sky-500 ${errors.agreeToDeclaration ? 'border-red-300' : ''}`}
-                />
-              </div>
-              <div className="">
-                <label htmlFor="agreeToDeclaration" className="text-sm font-medium text-gray-700">
-                  I agree to the declaration <span className="text-red-500">*</span>
-                </label>
-                {errors.agreeToDeclaration && (
-                  <p className="mt-1 text-sm text-red-600">{errors.agreeToDeclaration}</p>
-                )}
-              </div>
-            </div>
+            <CustomCheckbox label="I agree to the declaration" name="agreeToDeclaration" checked={formData.agreeToDeclaration} onChange={handleChange} />
           </div>
         </div>
 

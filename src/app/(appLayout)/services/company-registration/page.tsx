@@ -1,5 +1,6 @@
-'use client'
-import React, { useState } from 'react'
+'use client';
+
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { ArrowLeftIcon } from '@heroicons/react/24/outline'
@@ -7,8 +8,11 @@ import { IdentificationIcon } from '@heroicons/react/24/outline'
 import PhoneInput from 'react-phone-number-input/input'
 import 'react-phone-number-input/style.css'
 import { Disclosure } from '@headlessui/react'
+import CustomInput from '@/components/ui/CustomInput';
+import CustomCheckbox from '@/components/ui/CustomCheckbox';
 
 const CompanyRegistration = () => {
+  const [errors, setErrors] = useState<Record<string, string>>({})
   const router = useRouter()
 
   const [companyData, setCompanyData] = useState({
@@ -85,8 +89,64 @@ const CompanyRegistration = () => {
   }
 
   const validateForm = () => {
-    // Implement the form validation here
-    return true
+    const newErrors: Record<string, string> = {}
+
+    if (!companyData.fullName.trim()) {
+      newErrors.fullName = 'Full name is required'
+    }
+
+    if (!companyData.email.trim()) {
+      newErrors.email = 'Email is required'
+    } else if (!/\S+@\S+\.\S+/.test(companyData.email)) {
+      newErrors.email = 'Email is invalid'
+    }
+
+    if (!companyData.dateOfBirth.trim()) {
+      newErrors.dateOfBirth = 'Date of birth is required'
+    }
+
+    if (!companyData.phone || companyData.phone === '+61') {
+      newErrors.phone = 'Phone number is required'
+    }
+
+    if (!companyData.postalAddress.trim()) {
+      newErrors.postalAddress = 'Postal address is required'
+    }
+
+    if (!companyData.postalCode.trim()) {
+      newErrors.postalCode = 'Postal code is required'
+    } else if (!/^\d{4}$/.test(companyData.postalCode)) {
+      newErrors.postalCode = 'Postal code must be 4 digits'
+    }
+
+    if (!companyData.abn.trim()) {
+      newErrors.abn = 'ABN is required'
+    }
+
+    if (!companyData.businessName.trim()) {
+      newErrors.businessName = 'Business name is required'
+    }
+
+    if (!companyData.businessAddress.trim()) {
+      newErrors.businessAddress = 'Business address is required'
+    }
+
+    if (!companyData.businessPostalCode.trim()) {
+      newErrors.businessPostalCode = 'Business postal code is required'
+    } else if (!/^\d{4}$/.test(companyData.businessPostalCode)) {
+      newErrors.businessPostalCode = 'Business postal code must be 4 digits'
+    }
+
+    if (!companyData.otherDetails.trim()) {
+      newErrors.otherDetails = 'Other details are required'
+    }
+
+    if (!companyData.agreeToDeclaration) {
+      newErrors.agreeToDeclaration = 'You must agree to the declaration'
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -146,166 +206,17 @@ const CompanyRegistration = () => {
           <div>
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Company Information</h2>
             <div className="space-y-4">
-              <div>
-                <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
-                  Full Name of Applicant/Authorized Person <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="fullName"
-                  name="fullName"
-                  value={companyData.fullName}
-                  onChange={(e) => handleChange(e, 0)}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors"
-                  placeholder="Enter your full name"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                  Email <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={companyData.email}
-                  onChange={(e) => handleChange(e, 0)}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors"
-                  placeholder="Enter your email address"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700 mb-1">
-                  Date of Birth <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="date"
-                  id="dateOfBirth"
-                  name="dateOfBirth"
-                  value={companyData.dateOfBirth}
-                  onChange={(e) => handleChange(e, 0)}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                  Telephone/Mobile <span className="text-red-500">*</span>
-                </label>
-                <PhoneInput
-                  country="AU"
-                  value={companyData.phone}
-                  onChange={(value) => handlePhoneChange(value, 0)}
-                  className="w-full bg-transparent outline-none"
-                  placeholder="Enter phone number"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="postalAddress" className="block text-sm font-medium text-gray-700 mb-1">
-                  Postal Address <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="postalAddress"
-                  name="postalAddress"
-                  value={companyData.postalAddress}
-                  onChange={(e) => handleChange(e, 0)}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors"
-                  placeholder="Enter postal address"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="postalCode" className="block text-sm font-medium text-gray-700 mb-1">
-                  Postal Code <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="postalCode"
-                  name="postalCode"
-                  value={companyData.postalCode}
-                  onChange={(e) => handleChange(e, 0)}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors"
-                  placeholder="Enter postal code"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="abn" className="block text-sm font-medium text-gray-700 mb-1">
-                  ABN <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="abn"
-                  name="abn"
-                  value={companyData.abn}
-                  onChange={(e) => handleChange(e, 0)}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors"
-                  placeholder="Enter ABN"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="businessName" className="block text-sm font-medium text-gray-700 mb-1">
-                  Business Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="businessName"
-                  name="businessName"
-                  value={companyData.businessName}
-                  onChange={(e) => handleChange(e, 0)}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors"
-                  placeholder="Enter business name"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="businessAddress" className="block text-sm font-medium text-gray-700 mb-1">
-                  Business Address <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="businessAddress"
-                  name="businessAddress"
-                  value={companyData.businessAddress}
-                  onChange={(e) => handleChange(e, 0)}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors"
-                  placeholder="Enter business address"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="businessPostalCode" className="block text-sm font-medium text-gray-700 mb-1">
-                  Business Postal Code <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="businessPostalCode"
-                  name="businessPostalCode"
-                  value={companyData.businessPostalCode}
-                  onChange={(e) => handleChange(e, 0)}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors"
-                  placeholder="Enter business postal code"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="otherDetails" className="block text-sm font-medium text-gray-700 mb-1">
-                  Other Details (if any)
-                </label>
-                <textarea
-                  id="otherDetails"
-                  name="otherDetails"
-                  value={companyData.otherDetails}
-                  onChange={(e) => handleChange(e, 0)}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors"
-                  placeholder="Enter other details"
-                />
-              </div>
+              <CustomInput label="Full Name of Applicant/Authorized Person" name="fullName" value={companyData.fullName} onChange={(e) => handleChange(e, 0)} errors={errors.fullName} placeholder="Enter your full name" />
+              <CustomInput label="Email" name="email" value={companyData.email} onChange={(e) => handleChange(e, 0)} errors={errors.email} placeholder="Enter your email address" />
+              <CustomInput label="Date of Birth of Applicant/Authorized Person" type="date" name="dateOfBirth" value={companyData.dateOfBirth} onChange={(e) => handleChange(e, 0)} errors={errors.dateOfBirth} placeholder="Enter your date of birth" />
+              <CustomInput label="Telephone/Mobile" name="phone" value={companyData.phone} onChange={(e) => handleChange(e, 0)} errors={errors.phone} placeholder="Enter your phone number" />
+              <CustomInput label="Postal Address" type="text" name="postalAddress" value={companyData.postalAddress} onChange={(e) => handleChange(e, 0)} errors={errors.postalAddress} placeholder="Enter your postal address" />
+              <CustomInput label="Postal Code" type="text" name="postalCode" value={companyData.postalCode} onChange={(e) => handleChange(e, 0)} errors={errors.postalCode} placeholder="Enter your postal code" />
+              <CustomInput label="ABN" type="text" name="abn" value={companyData.abn} onChange={(e) => handleChange(e, 0)} errors={errors.abn} placeholder="Enter your ABN" />
+              <CustomInput label="Business Name" type="text" name="businessName" value={companyData.businessName} onChange={(e) => handleChange(e, 0)} errors={errors.businessName} placeholder="Enter your business name" />
+              <CustomInput label="Business Address" type="text" name="businessAddress" value={companyData.businessAddress} onChange={(e) => handleChange(e, 0)} errors={errors.businessAddress} placeholder="Enter your business address" />
+              <CustomInput label="Business Postal Code" type="text" name="businessPostalCode" value={companyData.businessPostalCode} onChange={(e) => handleChange(e, 0)} errors={errors.businessPostalCode} placeholder="Enter your business postal code" />
+              <CustomInput label="Other Details (if any)" type="text" name="otherDetails" value={companyData.otherDetails} onChange={(e) => handleChange(e, 0)} errors={errors.otherDetails} placeholder="Enter other details" />
             </div>
           </div>
 
@@ -320,133 +231,14 @@ const CompanyRegistration = () => {
                       {open ? 'Close Authorized Person' : 'Add Authorized Person'}
                     </Disclosure.Button>
                     <Disclosure.Panel className="space-y-4 bg-gray-50 p-4 rounded-lg shadow-md">
-                      {/* Full Name */}
-                      <div>
-                        <label htmlFor={`fullName${index}`} className="block text-sm font-medium text-gray-700 mb-1">
-                          Full Name <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          id={`fullName${index}`}
-                          name="fullName"
-                          value={person.fullName}
-                          onChange={(e) => handleChange(e, index)}
-                          className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors"
-                          placeholder="Enter full name"
-                        />
-                      </div>
-
-                      {/* Email */}
-                      <div>
-                        <label htmlFor={`email${index}`} className="block text-sm font-medium text-gray-700 mb-1">
-                          Email <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="email"
-                          id={`email${index}`}
-                          name="email"
-                          value={person.email}
-                          onChange={(e) => handleChange(e, index)}
-                          className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors"
-                          placeholder="Enter email"
-                        />
-                      </div>
-
-                      {/* Date of Birth */}
-                      <div>
-                        <label htmlFor={`dateOfBirth${index}`} className="block text-sm font-medium text-gray-700 mb-1">
-                          Date of Birth <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="date"
-                          id={`dateOfBirth${index}`}
-                          name="dateOfBirth"
-                          value={person.dateOfBirth}
-                          onChange={(e) => handleChange(e, index)}
-                          className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors"
-                        />
-                      </div>
-
-                      {/* Phone Number */}
-                      <div>
-                        <label htmlFor={`phone${index}`} className="block text-sm font-medium text-gray-700 mb-1">
-                          Phone <span className="text-red-500">*</span>
-                        </label>
-                        <PhoneInput
-                          country="AU"
-                          value={person.phone}
-                          onChange={(value) => handlePhoneChange(value, index)}
-                          className="w-full bg-transparent outline-none"
-                          placeholder="Enter phone number"
-                        />
-                      </div>
-
-                      {/* Address */}
-                      <div>
-                        <label htmlFor={`address${index}`} className="block text-sm font-medium text-gray-700 mb-1">
-                          Address <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          id={`address${index}`}
-                          name="address"
-                          value={person.address}
-                          onChange={(e) => handleChange(e, index)}
-                          className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors"
-                          placeholder="Enter address"
-                        />
-                      </div>
-
-                      {/* Postal Code */}
-                      <div>
-                        <label htmlFor={`postalCode${index}`} className="block text-sm font-medium text-gray-700 mb-1">
-                          Postal Code <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          id={`postalCode${index}`}
-                          name="postalCode"
-                          value={person.postalCode}
-                          onChange={(e) => handleChange(e, index)}
-                          className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors"
-                          placeholder="Enter postal code"
-                        />
-                      </div>
-
-                      {/* Tax File Number */}
-                      <div>
-                        <label htmlFor={`taxFileNumber${index}`} className="block text-sm font-medium text-gray-700 mb-1">
-                          Tax File Number <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          id={`taxFileNumber${index}`}
-                          name="taxFileNumber"
-                          value={person.taxFileNumber}
-                          onChange={(e) => handleChange(e, index)}
-                          className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors"
-                          placeholder="Enter tax file number"
-                        />
-                      </div>
-
-                      {/* Position */}
-                      <div>
-                        <label htmlFor={`position${index}`} className="block text-sm font-medium text-gray-700 mb-1">
-                          Position in Company <span className="text-red-500">*</span>
-                        </label>
-                        <select
-                          id={`position${index}`}
-                          name="position"
-                          value={person.position}
-                          onChange={(e:any) => handleChange(e, index)}
-                          className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-colors"
-                        >
-                          <option value="Director">Director</option>
-                          <option value="Shareholder">Shareholder</option>
-                        </select>
-                      </div>
-
-                      {/* Remove Button */}
+                      <CustomInput label="Full Name" type="text" name="fullName" value={person.fullName} onChange={(e) => handleChange(e, index)} errors={errors.fullName} placeholder="Enter your full name" />
+                      <CustomInput label="Email" name="email" value={person.email} onChange={(e) => handleChange(e, index)} errors={errors.email} placeholder="Enter your email address" />
+                      <CustomInput label="Date of Birth" type="date" name="dateOfBirth" value={person.dateOfBirth} onChange={(e) => handleChange(e, index)} errors={errors.dateOfBirth} placeholder="Enter your date of birth" />
+                      <CustomInput label="Phone Number" name="phone" value={person.phone} onChange={(e) => handleChange(e, index)} errors={errors.phone} placeholder="Enter your phone number" />
+                      <CustomInput label="Address" type="text" name="address" value={person.address} onChange={(e) => handleChange(e, index)} errors={errors.address} placeholder="Enter your address" />
+                      <CustomInput label="Postal Code" type="text" name="postalCode" value={person.postalCode} onChange={(e) => handleChange(e, index)} errors={errors.postalCode} placeholder="Enter your postal code" />
+                      <CustomInput label="Tax File Number" type="text" name="taxFileNumber" value={person.taxFileNumber} onChange={(e) => handleChange(e, index)} errors={errors.taxFileNumber} placeholder="Enter your tax file number" />
+                      <CustomInput label="Position in Company" type="text" name="position" value={person.position} onChange={(e) => handleChange(e, index)} errors={errors.position} placeholder="Enter your position in company" />
                       <button
                         type="button"
                         onClick={() => removeAuthorizedPerson(index)}
@@ -483,24 +275,7 @@ const CompanyRegistration = () => {
               <li>The information supplied is accurate and complete to the best of my knowledge, and any false information provided may lead to penalties under applicable acts, rules, and regulations.</li>
               <li>All the persons mentioned in the application have consented to act for the respective roles.</li>
             </ol>
-            
-            <div className="flex items-center gap-2">
-              <div className="flex items-center h-5">
-                <input
-                  id="agreeToDeclaration"
-                  name="agreeToDeclaration"
-                  type="checkbox"
-                  // checked={companyData.agreeToDeclaration}
-                  onChange={(e) => handleChange(e, 0)}
-                  className="w-4 h-4 text-sky-600 border-gray-300 rounded focus:ring-sky-500"
-                />
-              </div>
-              <div className="">
-                <label htmlFor="agreeToDeclaration" className="text-sm font-medium text-gray-700">
-                  Authorisation Approval Provided <span className="text-red-500">*</span>
-                </label>
-              </div>
-            </div>
+            <CustomCheckbox label="Authorisation Approval Provided" name="agreeToDeclaration" checked={companyData.agreeToDeclaration} onChange={(e) => handleChange(e, 0)} />
           </div>
         </div>
 
