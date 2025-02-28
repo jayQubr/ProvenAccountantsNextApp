@@ -2,7 +2,7 @@
 
 import { Fragment, useEffect, useState } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
-import { CalendarIcon, Cog6ToothIcon, DocumentDuplicateIcon, FolderIcon, HomeIcon, UsersIcon, XMarkIcon, UserCircleIcon } from '@heroicons/react/24/outline'
+import { CalendarIcon, Cog6ToothIcon, DocumentDuplicateIcon, FolderIcon, HomeIcon, UsersIcon, XMarkIcon, UserCircleIcon, CalendarDateRangeIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { auth } from '@/lib/firebaseConfig'
@@ -17,11 +17,11 @@ const classNames = (...classes: any) => {
 const navigation = [
     { name: 'Dashboard', href: '/', icon: HomeIcon },
     { name: 'Services', href: '/services', icon: UsersIcon },
-    { name: 'Appointments', href: '/appointments', icon: CalendarIcon },
     { name: 'My Requests', href: '/my-requests', icon: FolderIcon },
-    { name: 'My Bookings', href: '/my-bookings', icon: DocumentDuplicateIcon },
+    { name: 'Appointments', href: '/appointments', icon: CalendarIcon },
+    { name: 'Schedule Appointment', href: '/appointments/schedule', icon: CalendarDateRangeIcon },
     { name: 'My Profile', href: '/my-profile', icon: UserCircleIcon },
-    { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
+    // { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
 ]
 
 const Sidebar = ({ sidebarOpen, setSidebarOpen }: any) => {
@@ -101,7 +101,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: any) => {
                                 </Transition.Child>
                                 
                                 {/* Sidebar component for mobile */}
-                                <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-gradient-to-b from-sky-700 to-sky-900 px-6 pb-4 shadow-lg">
+                                <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-gradient-to-b from-sky-600 to-sky-700 px-6 pb-4 shadow-lg">
                                     <div className="flex h-16 shrink-0 items-center space-x-3">
                                         <div className="bg-white p-1.5 rounded-md shadow-md">
                                             <Image
