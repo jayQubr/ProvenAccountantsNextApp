@@ -23,8 +23,8 @@ type FormData = {
     otherDetails: string
     ABN: string
     declaration: boolean
-    idDocuments: File | null
-    otherDocuments: File | null
+    idDocuments: File[] | null
+    otherDocuments: File[] | null
     accountantLocation: string
 }
 
@@ -126,9 +126,12 @@ const IntroductionModal = ({ isOpen = false, setIsOpen, userData }: Introduction
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
         const files = e.target.files
         if (files && files.length > 0) {
+            // Convert FileList to array
+            const fileArray = Array.from(files);
+            
             setFormData({
                 ...formData,
-                [fieldName]: files[0]
+                [fieldName]: fileArray
             })
             
             // Clear error when file is uploaded
@@ -151,31 +154,93 @@ const IntroductionModal = ({ isOpen = false, setIsOpen, userData }: Introduction
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
-        console.log("formData-----");
+        e.preventDefault();
+        
         if (!validationForm()) return;
         
-        setIsSubmitting(true)
-
+        setIsSubmitting(true);
+        
         try {
+            // Create form data to handle file uploads
+            const formDataObj = new FormData();
+            
+            // Log the form state data
+            console.log("Form state data:", formData);
+            
+            // Add user data as JSON string with ALL required fields
+            const userInfo = {
+                uid: userData.uid, // Make sure this is coming from your auth context
+                firstName: formData.firstName,
+                lastName: formData.lastName,
+                email: formData.email,
+                mobileNumber: formData.mobileNumber,
+                dateOfBirth: formData.dateOfBirth || '',
+                postalAddress: formData.postalAddress || '',
+                postalCode: formData.postalCode || '',
+                taxFileNumber: formData.taxFileNumber || '',
+                ABN: formData.ABN || '',
+                otherDetails: formData.otherDetails || '',
+                accountantLocation: formData.accountantLocation || 'runcorn',
+                declaration: formData.declaration || false
+            };
+            
+            console.log("userData being sent:", userInfo);
+            
+            formDataObj.append('userData', JSON.stringify(userInfo));
+            
+            // Add ID documents (can be multiple)
+            if (formData.idDocuments) {
+                if (Array.isArray(formData.idDocuments)) {
+                    formData.idDocuments.forEach(file => {
+                        formDataObj.append('idDocuments', file);
+                    });
+                } else {
+                    formDataObj.append('idDocuments', formData.idDocuments);
+                }
+            }
+            
+            // Add other documents (can be multiple)
+            if (formData.otherDocuments) {
+                if (Array.isArray(formData.otherDocuments)) {
+                    formData.otherDocuments.forEach(file => {
+                        formDataObj.append('otherDocuments', file);
+                    });
+                } else {
+                    formDataObj.append('otherDocuments', formData.otherDocuments);
+                }
+            }
+            
+            // Submit the form
             const response = await fetch('/api/user-info', {
                 method: 'POST',
-                body: JSON.stringify({uid: userData.uid, ...formData})
-            })
-            const data = await response.json();
-            console.log(data);
-            setIsSubmitting(false)
-            handleOpenChange(false)
+                body: formDataObj,
+            });
+            
+            const result = await response.json();
+            console.log("API response:", result);
+            
+            if (result.success) {
+                // Show success message or redirect
+                console.log('Registration successful!', result);
+                handleOpenChange(false);
+            } else {
+                // Show error message
+                console.error('Registration failed:', result.message);
+                setErrors(prev => ({
+                    ...prev,
+                    form: `Registration failed: ${result.message}`
+                }));
+            }
         } catch (error) {
-            console.log(error);
-            setIsSubmitting(false)
+            console.error('Error submitting form:', error);
+            setErrors(prev => ({
+                ...prev,
+                form: 'An error occurred. Please try again.'
+            }));
+        } finally {
+            setIsSubmitting(false);
         }
-        // Simulate API call
-        setTimeout(() => {
-            setIsSubmitting(false)
-            handleOpenChange(false)
-        }, 1000)
-    }
+    };
 
     const validationForm = () => {
         const newErrors: Record<string, string> = {};
@@ -505,7 +570,9 @@ const IntroductionModal = ({ isOpen = false, setIsOpen, userData }: Introduction
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                                                 </svg>
                                                 <p className="text-sm text-gray-500">
-                                                    {formData.idDocuments ? formData.idDocuments.name : 'Drag & drop or click to upload'}
+                                                    {formData.idDocuments 
+                                                        ? `${formData.idDocuments.length} file(s) selected` 
+                                                        : 'Drag & drop or click to upload'}
                                                 </p>
                                                 <p className="text-xs text-gray-400 mt-1">
                                                     Driving License, Passport, etc.
@@ -547,7 +614,9 @@ const IntroductionModal = ({ isOpen = false, setIsOpen, userData }: Introduction
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                                                 </svg>
                                                 <p className="text-sm text-gray-500">
-                                                    {formData.otherDocuments ? formData.otherDocuments.name : 'Drag & drop or click to upload'}
+                                                    {formData.otherDocuments 
+                                                        ? `${formData.otherDocuments.length} file(s) selected` 
+                                                        : 'Drag & drop or click to upload'}
                                                 </p>
                                                 <p className="text-xs text-gray-400 mt-1">
                                                     Any additional documents
