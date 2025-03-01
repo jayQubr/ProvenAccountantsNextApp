@@ -13,6 +13,7 @@ import MobileBottomNav from '@/components/features/MobileBottomNav';
 import Link from 'next/link';
 import SkeletonLoader from '@/components/ui/SkeletonLoader';
 import LayoutSkeleton from '@/components/skeleton/LayoutSkeleton';
+import IntroductionModal from '@/components/features/IntroductionModal';
 
 interface UserData {
   uid: string;
@@ -30,11 +31,11 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [pageLoading, setPageLoading] = useState(true);
   const router = useRouter();
-  const pathname = usePathname();
+  const pathname = usePathname() as string;
+  const [isOpen, setIsOpen] = useState(true);
   
   const userNavigation = [
-    { name: 'Profile', href: '#' },
-    { name: 'Settings', href: '#' },
+    { name: 'Profile', href: '/my-profile' },
     { name: 'Logout', href: '#', action: () => {
       auth.signOut();
       router.push('/login');
@@ -93,7 +94,6 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
       if (authUser) {
         try {
           const userProfileResult = await getUserProfile(authUser.uid);
-          
           if (userProfileResult.success) {
             setUser({
               uid: authUser.uid,
@@ -156,8 +156,14 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
     return null;
   }
 
+  const isFormSubmitted = true;
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
+      {isFormSubmitted ? (
+        <IntroductionModal isOpen={isOpen} setIsOpen={setIsOpen} userData={user}/>
+      ) : (
+        <div className="min-h-screen bg-gray-50">
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
       <div className="lg:pl-72">
         <motion.div 
@@ -279,6 +285,8 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav />
     </div>
+      )}
+    </>
   )
 }
 

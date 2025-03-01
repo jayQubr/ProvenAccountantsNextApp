@@ -18,6 +18,7 @@ import {
   BuildingOfficeIcon,
   ShieldCheckIcon
 } from '@heroicons/react/24/outline'
+import IntroductionModal from '@/components/features/IntroductionModal'
 
 const Dashboard = () => {
   const [user, setUser] = useState<any>(null)
@@ -147,7 +148,6 @@ const Dashboard = () => {
 
   return (
     <div className="px-4 py-6 md:px-6 lg:px-8 max-w-7xl mx-auto">
-      {/* Welcome Section */}
       <motion.div 
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -405,6 +405,8 @@ const Dashboard = () => {
       
       {/* Add padding at the bottom for mobile to account for the fixed navigation */}
       <div className="h-20 md:hidden"></div>
+
+      
     </div>
   )
 }
