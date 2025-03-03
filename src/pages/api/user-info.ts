@@ -9,6 +9,7 @@ import newClientRegistration from "@/utils/template/newClientRegistration";
 export const config = {
     api: {
         bodyParser: false,
+        responseLimit: false,
     },
 };
 
@@ -18,15 +19,23 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     try {
-        // Parse form data including files
+        // Parse form data including files with size limits
         const form = new IncomingForm({
             multiples: true,
             keepExtensions: true,
+            maxFileSize: 5 * 1024 * 1024, // 5MB per file
+            maxTotalFileSize: 20 * 1024 * 1024, // 20MB total
         });
 
         const [fields, files] = await new Promise<[any, any]>((resolve, reject) => {
             form.parse(req, (err, fields, files) => {
-                if (err) return reject(err);
+                if (err) {
+                    // Handle file size limit exceeded error
+                    if (err.message.includes('maxFileSize exceeded') || err.message.includes('maxTotalFileSize exceeded')) {
+                        return reject(new Error('File size limit exceeded. Maximum file size is 5MB per file and 20MB total.'));
+                    }
+                    return reject(err);
+                }
                 resolve([fields, files]);
             });
         });
@@ -56,16 +65,32 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             firstName: userData.firstName || '',
             lastName: userData.lastName || '',
             phone: userData.mobileNumber || '',
+            email: userData.email || '',
             address: userData.postalAddress || '',
             postalCode: userData.postalCode || '',
             dateOfBirth: userData.dateOfBirth || '',
-            hasCompletedIntroduction: true
+            hasCompletedIntroduction: true,
+            accountType: userData.accountType || 'individual',
+            accountantLocation: userData.accountantLocation || '',
+            // Add organization-specific fields if account type is organization
+            ...(userData.accountType === 'organization' && {
+                organizationDetails: {
+                    companyName: userData.companyName || '',
+                    companyEmail: userData.companyEmail || '',
+                    companyPhone: userData.companyMobileNumber || '',
+                    companyDateOfBirth: userData.companyDateOfBirth || '',
+                    ABN: userData.ABN || '',
+                    acn: userData.acn || '',
+                    registeredAddress: userData.registeredAddress || '',
+                    city: userData.city || '',
+                    previousAccountant: {
+                        name: userData.previousAccountantName || '',
+                        email: userData.previousAccountantEmail || '',
+                        phone: userData.previousAccountantPhone || ''
+                    }
+                }
+            })
         };
-
-        // Add dateOfBirth only if it exists
-        if (userData.dateOfBirth) {
-            profileUpdate.dateOfBirth = userData.dateOfBirth;
-        }
 
         // Update user profile in Firestore
         try {

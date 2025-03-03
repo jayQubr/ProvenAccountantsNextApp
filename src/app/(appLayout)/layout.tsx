@@ -34,6 +34,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const pathname = usePathname() as string;
   const [isOpen, setIsOpen] = useState(true);
+  const [isIntroductionModalOpen, setIsIntroductionModalOpen] = useState(false);
   
   const userNavigation = [
     { name: 'Profile', href: '/my-profile' },
@@ -103,6 +104,9 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
               photoURL: authUser.photoURL || userProfileResult.data?.photoURL,
               ...userProfileResult.data
             });
+            if (!userProfileResult.data?.hasCompletedIntroduction) {
+              setIsIntroductionModalOpen(true);
+            }
           } else {
             setUser({
               uid: authUser.uid,
@@ -110,6 +114,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
               displayName: authUser.displayName || 'User',
               photoURL: authUser.photoURL
             });
+            setIsIntroductionModalOpen(true);
           }
         } catch (error) {
           setUser({
@@ -118,6 +123,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
             displayName: authUser.displayName || 'User',
             photoURL: authUser.photoURL
           });
+          setIsIntroductionModalOpen(true);
         }
       } else {
         setUser(null);
@@ -159,8 +165,8 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <>
-      {!user.hasCompletedIntroduction ? (
-        <IntroductionModal isOpen={isOpen} setIsOpen={setIsOpen} userData={user}/>
+      {isIntroductionModalOpen ? (
+        <IntroductionModal isOpen={isOpen} setIsOpen={setIsOpen} userData={user} setIsIntroductionModalOpen={setIsIntroductionModalOpen}/>
       ) : (
         <div className="min-h-screen bg-gray-50">
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />

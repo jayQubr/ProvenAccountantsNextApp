@@ -1,3 +1,4 @@
+import { InformationCircleIcon } from '@heroicons/react/24/outline'
 import * as Dialog from '@radix-ui/react-dialog'
 import { Cross2Icon } from '@radix-ui/react-icons'
 
@@ -8,9 +9,7 @@ const Modal = ({ open, handleOpenChange, children }: { open: boolean, handleOpen
         <div className='flex flex-col justify-center items-center bg-sky-100 min-h-screen w-full p-4'>
           <div className="text-center mb-6">
             <div className="flex justify-center mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+              <InformationCircleIcon className="h-16 w-16 text-sky-500" />
             </div>
             <h2 className="text-2xl font-bold text-gray-800 mb-2">Complete Your Profile</h2>
             <p className="text-gray-600 max-w-md mx-auto">
@@ -27,7 +26,7 @@ const Modal = ({ open, handleOpenChange, children }: { open: boolean, handleOpen
         <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm data-[state=open]:animate-overlayShow" />
         <Dialog.Content className="fixed left-[50%] top-[50%] max-h-[85vh] w-[90vw] max-w-[800px] translate-x-[-50%] translate-y-[-50%] overflow-y-auto rounded-xl bg-white p-8 shadow-2xl focus:outline-none data-[state=open]:animate-contentShow">
           <Dialog.Title className="text-2xl font-bold text-gray-900">
-            Introduction Form
+            Registration Form
           </Dialog.Title>
           <Dialog.Description className="mt-2 text-gray-600">
             Please fill out the form below to get started with our services.

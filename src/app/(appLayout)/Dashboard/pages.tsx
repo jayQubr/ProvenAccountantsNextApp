@@ -406,7 +406,6 @@ const Dashboard = () => {
       {/* Add padding at the bottom for mobile to account for the fixed navigation */}
       <div className="h-20 md:hidden"></div>
 
-      
     </div>
   )
 }

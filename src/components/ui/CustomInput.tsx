@@ -13,13 +13,14 @@ interface CustomInputProps {
     maxLength?: number | null;
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
     errors: string;
+    required?: boolean;
 }
 
-const CustomInput = ({ label, name, value, onChange, errors, placeholder, type = "text", maxLength = null }: CustomInputProps) => {
+const CustomInput = ({ label, name, value, onChange, errors, placeholder, type = "text", maxLength = null, required = true }: CustomInputProps) => {
     return (
         <div className="relative w-full">
             <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">
-                {label} <span className="text-red-500">*</span>
+                {label} {required && <span className="text-red-500">*</span>}
             </label>
             {type === "textarea" ? (
                 <textarea
