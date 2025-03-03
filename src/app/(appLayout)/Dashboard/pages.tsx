@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { auth } from '@/lib/firebaseConfig'
 import { getUserProfile } from '@/lib/firebaseService'
 import Link from 'next/link'
@@ -18,6 +18,8 @@ import {
   BuildingOfficeIcon,
   ShieldCheckIcon
 } from '@heroicons/react/24/outline';
+import Image from 'next/image'
+import { generateUserBgColor } from '@/helper/generateUserBgColor'
 
 const Dashboard = () => {
   const [user, setUser] = useState<any>(null)
@@ -136,6 +138,17 @@ const Dashboard = () => {
       statusColor: 'bg-green-100 text-green-800'
     }
   ]
+  
+  const getInitials = useCallback(() => {
+
+    if (!user?.displayName) return 'U';
+    return user.displayName
+      .split(' ')
+      .map((name:any) => name[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  }, [user?.displayName]);
 
   if (loading) {
     return (
@@ -156,7 +169,7 @@ const Dashboard = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold mb-2">
-              Welcome back, {user?.displayName?.split(' ')[0] || 'User'}!
+              Welcome back, {user.firstName || user?.displayName?.split(' ')[0] || 'User'}!
             </h1>
             <p className="text-sky-100 mb-4">
               Your financial dashboard is ready for you.
@@ -181,13 +194,15 @@ const Dashboard = () => {
           <div className="hidden md:block">
             <div className="w-24 h-24 rounded-full bg-sky-800 flex items-center justify-center">
               {user?.photoURL ? (
-                <img 
+                <Image 
                   src={user.photoURL} 
                   alt={user.displayName || 'User'} 
                   className="w-20 h-20 rounded-full object-cover"
                 />
               ) : (
-                <UserCircleIcon className="w-16 h-16 text-white" />
+                <div className={`w-full h-full rounded-full flex items-center justify-center text-white font-bold text-2xl ${generateUserBgColor(user?.email || '')}`}>
+                  {getInitials()}
+                </div>
               )}
             </div>
           </div>
