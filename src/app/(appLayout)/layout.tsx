@@ -23,6 +23,7 @@ interface UserData {
   createdAt?: any;
   lastLogin?: any;
   provider?: string;
+  hasCompletedIntroduction?: boolean;
 }
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
@@ -156,11 +157,9 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
     return null;
   }
 
-  const isFormSubmitted = true;
-
   return (
     <>
-      {isFormSubmitted ? (
+      {!user.hasCompletedIntroduction ? (
         <IntroductionModal isOpen={isOpen} setIsOpen={setIsOpen} userData={user}/>
       ) : (
         <div className="min-h-screen bg-gray-50">

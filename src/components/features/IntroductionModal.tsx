@@ -10,6 +10,7 @@ import PhoneInput from 'react-phone-number-input'
 import 'react-phone-number-input/style.css'
 import { isValidPhoneNumber } from 'react-phone-number-input'
 import { motion } from 'framer-motion'
+import { toast, Toaster } from 'sonner'
 
 type FormData = {
     firstName: string
@@ -155,17 +156,12 @@ const IntroductionModal = ({ isOpen = false, setIsOpen, userData }: Introduction
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
         if (!validationForm()) return;
-        
         setIsSubmitting(true);
         
         try {
             // Create form data to handle file uploads
             const formDataObj = new FormData();
-            
-            // Log the form state data
-            console.log("Form state data:", formData);
             
             // Add user data as JSON string with ALL required fields
             const userInfo = {
@@ -183,8 +179,6 @@ const IntroductionModal = ({ isOpen = false, setIsOpen, userData }: Introduction
                 accountantLocation: formData.accountantLocation || 'runcorn',
                 declaration: formData.declaration || false
             };
-            
-            console.log("userData being sent:", userInfo);
             
             formDataObj.append('userData', JSON.stringify(userInfo));
             
@@ -209,7 +203,6 @@ const IntroductionModal = ({ isOpen = false, setIsOpen, userData }: Introduction
                     formDataObj.append('otherDocuments', formData.otherDocuments);
                 }
             }
-            
             // Submit the form
             const response = await fetch('/api/user-info', {
                 method: 'POST',
@@ -217,14 +210,12 @@ const IntroductionModal = ({ isOpen = false, setIsOpen, userData }: Introduction
             });
             
             const result = await response.json();
-            console.log("API response:", result);
             
             if (result.success) {
-                // Show success message or redirect
-                console.log('Registration successful!', result);
+                toast.success('Registration successful!');
                 handleOpenChange(false);
             } else {
-                // Show error message
+                toast.error('Registration failed');
                 console.error('Registration failed:', result.message);
                 setErrors(prev => ({
                     ...prev,
@@ -232,6 +223,7 @@ const IntroductionModal = ({ isOpen = false, setIsOpen, userData }: Introduction
                 }));
             }
         } catch (error) {
+            toast.error('An error occurred. Please try again.');
             console.error('Error submitting form:', error);
             setErrors(prev => ({
                 ...prev,
@@ -306,6 +298,7 @@ const IntroductionModal = ({ isOpen = false, setIsOpen, userData }: Introduction
 
     return (
         <Modal open={open} handleOpenChange={handleOpenChange} >
+           
             <Tabs.Root value={activeTab} onValueChange={setActiveTab} className="mt-8">
                 <Tabs.List className="flex space-x-1 rounded-lg bg-gray-50 p-1" aria-label="Introduction type">
                     <Tabs.Trigger

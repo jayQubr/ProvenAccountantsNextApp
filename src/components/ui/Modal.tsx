@@ -5,9 +5,23 @@ const Modal = ({ open, handleOpenChange, children }: { open: boolean, handleOpen
   return (
     <Dialog.Root open={open} onOpenChange={handleOpenChange}>
       <Dialog.Trigger asChild>
-        <button className="rounded-md bg-sky-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-sky-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400">
-          Get Started
-        </button>
+        <div className='flex flex-col justify-center items-center bg-sky-100 min-h-screen w-full p-4'>
+          <div className="text-center mb-6">
+            <div className="flex justify-center mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">Complete Your Profile</h2>
+            <p className="text-gray-600 max-w-md mx-auto">
+              To get started, please fill out all required fields in the following form. This information helps us provide you with the best service possible.
+            </p>
+          </div>
+          
+          <button className="rounded-md bg-sky-500 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-sky-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 transition-all duration-200 transform hover:scale-105">
+            Get Started
+          </button>
+        </div>
       </Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm data-[state=open]:animate-overlayShow" />
