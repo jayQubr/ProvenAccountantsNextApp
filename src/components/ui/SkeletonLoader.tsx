@@ -181,7 +181,7 @@ const DefaultSkeleton = () => (
 );
 
 const SkeletonLoader = () => {
-  const pathname = usePathname();
+  const pathname:any = usePathname();
   
   // Determine which skeleton to show based on the current path
   if (pathname === '/' || pathname === '/dashboard') {

@@ -44,8 +44,8 @@ let mockAppointments:any = {
 
 const RescheduleAppointmentPage = () => {
   const router = useRouter();
-  const params = useParams();
-  const appointmentId = params.id as string;
+  const params = useParams<any>();
+  const appointmentId = params.id ?? '';
   
   const [appointment, setAppointment] = useState<Appointment | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);

@@ -23,7 +23,7 @@ const TrustRegistration = () => {
     position: ''
   })
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, index: number) => {
+  const handleChange = (e: any, index: number) => {
     const { name, value, type } = e.target
     let updatedAuthorizedPersons:any = [...companyData.authorizedPersons]
     updatedAuthorizedPersons[index][name] = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
@@ -60,7 +60,7 @@ const TrustRegistration = () => {
     }))
   }
 
-  const handlePersonChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>, index: number) => {
+  const handlePersonChange = (e:any, index: number) => {
     const { name, value } = e.target;
     
     setCompanyData((prev:any) => ({

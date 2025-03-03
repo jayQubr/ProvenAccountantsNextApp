@@ -105,8 +105,8 @@ const mockAppointments: { [key: string]: Appointment } = {
 
 const AppointmentDetailPage = () => {
     const router = useRouter();
-    const params = useParams();
-    const appointmentId = params.id as string;
+    const params:any = useParams();
+    const appointmentId = params?.id ?? '';
     
     const [appointment, setAppointment] = useState<Appointment | null>(null);
     const [loading, setLoading] = useState(true);
@@ -114,7 +114,6 @@ const AppointmentDetailPage = () => {
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [cancelReason, setCancelReason] = useState('');
     const [cancelling, setCancelling] = useState(false);
-    const [showRescheduleModal, setShowRescheduleModal] = useState(false);
     
     useEffect(() => {
       const fetchAppointment = async () => {
