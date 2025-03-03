@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import React, { ReactNode } from "react";
 
 const shakeAnimation = {
     initial: { x: 0 },
@@ -11,41 +12,73 @@ interface CustomInputProps {
     placeholder?: string;
     type?: string;
     maxLength?: number | null;
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
     errors: string;
     required?: boolean;
+    icon?: ReactNode;
+    autoComplete?: string;
+    rightElement?: ReactNode;
 }
 
-const CustomInput = ({ label, name, value, onChange, errors, placeholder, type = "text", maxLength = null, required = true }: CustomInputProps) => {
+const CustomInput = ({ 
+    label, 
+    name, 
+    value, 
+    onChange, 
+    errors, 
+    placeholder, 
+    type = "text", 
+    maxLength = null, 
+    required = true,
+    icon,
+    autoComplete,
+    rightElement
+}: CustomInputProps) => {
     return (
         <div className="relative w-full">
             <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">
                 {label} {required && <span className="text-red-500">*</span>}
             </label>
-            {type === "textarea" ? (
-                <textarea
-                    id={name}
-                    name={name}
-                    value={value}
-                    onChange={(e) => onChange(e as any)}
-                    className={`w-full px-4 py-3 rounded-lg border ${errors ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'} focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 transition-colors`}
-                    placeholder={placeholder}
-                    maxLength={maxLength ?? undefined}
-                    {...(errors ? shakeAnimation : {})}
-                />
-            ) : (
-            <motion.input
-                type={type}
-                id={name}
-                name={name}
-                value={value}
-                onChange={onChange}
-                className={`w-full px-4 py-3 rounded-lg border ${errors ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'} focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 transition-colors`}
-                placeholder={placeholder}
-                maxLength={maxLength ?? undefined}
-                {...(errors ? shakeAnimation : {})}
-            />
-            )}
+            <div className="relative">
+                {icon && (
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        {icon}
+                    </div>
+                )}
+                
+                {type === "textarea" ? (
+                    <textarea
+                        id={name}
+                        name={name}
+                        value={value}
+                        onChange={(e) => onChange(e)}
+                        className={`w-full ${icon ? 'pl-10' : 'px-4'} py-3 rounded-lg border ${errors ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'} focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 transition-colors`}
+                        placeholder={placeholder}
+                        maxLength={maxLength ?? undefined}
+                        {...(errors ? shakeAnimation : {})}
+                    />
+                ) : (
+                    <motion.input
+                        type={type}
+                        id={name}
+                        name={name}
+                        value={value}
+                        onChange={onChange}
+                        className={`w-full ${icon ? 'pl-10' : 'px-4'} py-3 rounded-lg border ${errors ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'} focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 transition-colors`}
+                        placeholder={placeholder}
+                        maxLength={maxLength ?? undefined}
+                        autoComplete={autoComplete}
+                        {...(errors ? shakeAnimation : {})}
+                    />
+                )}
+                
+                {rightElement && (
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                        {rightElement}
+                    </div>
+                )}
+            </div>
+            
             {errors && (
                 <motion.p 
                     initial={{ opacity: 0, y: -5 }} 

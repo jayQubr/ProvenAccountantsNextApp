@@ -1,8 +1,20 @@
+import { auth } from '@/lib/firebaseConfig'
 import { InformationCircleIcon } from '@heroicons/react/24/outline'
 import * as Dialog from '@radix-ui/react-dialog'
 import { Cross2Icon } from '@radix-ui/react-icons'
+import { signOut } from 'firebase/auth'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 
 const Modal = ({ open, handleOpenChange, children }: { open: boolean, handleOpenChange: (open: boolean) => void, children: React.ReactNode }) => {
+  const router = useRouter();
+
+  const handleLogOut = () => {
+    signOut(auth);
+    toast.success('Logged out successfully');
+    router.push('/login');
+  }
+  
   return (
     <Dialog.Root open={open} onOpenChange={handleOpenChange}>
       <Dialog.Trigger asChild>
@@ -17,9 +29,14 @@ const Modal = ({ open, handleOpenChange, children }: { open: boolean, handleOpen
             </p>
           </div>
           
+          <div className='flex flex-row gap-4'>
           <button className="rounded-md bg-sky-500 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-sky-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 transition-all duration-200 transform hover:scale-105">
             Get Started
           </button>
+          <button onClick={handleLogOut} className="rounded-md bg-red-500 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-red-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400 transition-all duration-200 transform hover:scale-105">
+            Log Out
+          </button>
+          </div>
         </div>
       </Dialog.Trigger>
       <Dialog.Portal>

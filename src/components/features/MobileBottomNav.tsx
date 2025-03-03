@@ -46,12 +46,11 @@ const navItems = [
     icon: WrenchScrewdriverIcon,
     activeIcon: WrenchScrewdriverIconSolid,
     color: 'emerald',
-    // highlight: true 
   }
 ];
 
 const MobileBottomNav = () => {
-  const pathname = usePathname();
+  const pathname:any = usePathname();
   const [visible, setVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
@@ -74,7 +73,6 @@ const MobileBottomNav = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
 
-  // Don't render on server side to avoid hydration issues
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
     setIsMounted(true);
@@ -82,7 +80,6 @@ const MobileBottomNav = () => {
 
   if (!isMounted) return null;
 
-  // Get color classes based on the item's color
   const getColorClasses = (item: typeof navItems[0], isActive: boolean) => {
     const colorMap: Record<string, { bg: string, text: string, activeBg: string }> = {
       sky: { 

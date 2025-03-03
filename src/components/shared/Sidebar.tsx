@@ -25,7 +25,7 @@ const navigation = [
 ]
 
 const Sidebar = ({ sidebarOpen, setSidebarOpen }: any) => {
-    const pathname = usePathname()
+    const pathname:any = usePathname()
     const router = useRouter()
     const [showSidebar, setShowSidebar] = useState(false)
 
@@ -172,7 +172,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: any) => {
 
             {/* Static sidebar for desktop */}
             <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
-                <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-gradient-to-b from-sky-700 to-sky-900 px-6 pb-4 shadow-lg">
+                <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-gradient-to-b from-sky-600 to-sky-700 px-6 pb-4 shadow-lg">
                     <div className="flex h-16 shrink-0 items-center space-x-3">
                         <div className="bg-white p-1.5 rounded-md shadow-md">
                             <Image

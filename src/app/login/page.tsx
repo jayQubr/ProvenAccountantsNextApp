@@ -22,6 +22,8 @@ import {
   DocumentTextIcon,
   CalculatorIcon
 } from '@heroicons/react/24/outline';
+import CustomInput from '@/components/ui/CustomInput';
+import { toast } from 'sonner';
 
 const LoginPage = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -34,8 +36,12 @@ const LoginPage = () => {
   // Form states
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [displayName, setDisplayName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  
+  // Form validation errors
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   // Animation states
   const [animate, setAnimate] = useState(false);
@@ -49,14 +55,68 @@ const LoginPage = () => {
     setSuccess('');
     setEmail('');
     setPassword('');
-    setDisplayName('');
+    setFirstName('');
+    setLastName('');
     setConfirmPassword('');
+    setFormErrors({});
+  };
+
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+    
+    if (!email.trim()) {
+      errors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      errors.email = 'Email is invalid';
+    }
+    
+    if (!isLogin && !showForgotPassword) {
+      if (!firstName.trim()) {
+        errors.firstName = 'First name is required';
+      }
+      
+      if (!lastName.trim()) {
+        errors.lastName = 'Last name is required';
+      }
+      
+      if (!password) {
+        errors.password = 'Password is required';
+      } else if (password.length < 6) {
+        errors.password = 'Password must be at least 6 characters';
+      }
+
+      if (!confirmPassword) {
+        errors.confirmPassword = 'Confirm password is required';
+      } else if (confirmPassword !== password) {
+        errors.confirmPassword = 'Passwords do not match';
+      }
+      
+      if (password !== confirmPassword) {
+        errors.confirmPassword = 'Passwords do not match';
+      }
+    } else if (isLogin && !showForgotPassword) {
+      if (!password) {
+        errors.password = 'Password is required';
+      }
+    } else if (showForgotPassword) {
+      if (!email.trim()) {
+        errors.email = 'Email is required';
+      }
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setSuccess('');
+    
+    if (!validateForm()) {
+      return;
+    }
+    
     setIsLoading(true);
 
     try {
@@ -72,19 +132,31 @@ const LoginPage = () => {
         // Handle login
         const result = await loginWithEmailAndPassword(email, password);
         if (result.success) {
-          router.push('/dashboard');
+          toast.success('Login successful');
+          router.push('/');
         } else {
-          setError('Invalid email or password. Please try again.');
+          // Check for specific error codes
+          if (result.error && 
+              typeof result.error === 'object' && 
+              'code' in result.error && 
+              result.error.code === 'auth/wrong-auth-method' &&
+              'message' in result.error) {
+            toast.error('Invalid email or password. Please try again.');
+            setError(String(result.error.message));
+          } else {
+            toast.error('An unexpected error occurred. Please try again later.');
+            setError('An unexpected error occurred. Please try again later.');
+          }
         }
       } else {
         // Handle registration
         if (password !== confirmPassword) {
-          setError('Passwords do not match');
+          setFormErrors(prev => ({...prev, confirmPassword: 'Passwords do not match'}));
           setIsLoading(false);
           return;
         }
 
-        const result = await registerWithEmailAndPassword(email, password, displayName);
+        const result = await registerWithEmailAndPassword(email, password, firstName, lastName);
         if (result.success) {
           setSuccess('Account created successfully! You can now log in.');
           setIsLogin(true);
@@ -106,12 +178,21 @@ const LoginPage = () => {
     try {
       const result = await signInWithGoogle();
       if (result.success) {
+        toast.success('Login successful');
         router.push('/');
       } else {
-        setError('Google sign-in failed. Please try again.');
+        if (result.error && 
+            typeof result.error === 'object' && 
+            'code' in result.error && 
+            result.error.code === 'auth/account-exists-with-different-credential' &&
+            'message' in result.error) {
+          toast.error(String(result.error.message));
+        } else {
+          toast.error('Google sign-in failed. Please try again.');
+        }
       }
     } catch (err) {
-      setError('An unexpected error occurred. Please try again later.');
+      toast.error('An unexpected error occurred. Please try again later.');
       console.error(err);
     } finally {
     }
@@ -217,7 +298,7 @@ const LoginPage = () => {
               </div>
             </div>
 
-            <h2 className="text-2xl font-bold text-gray-900">
+            <h2 className="text-2xl text-center font-bold text-gray-900">
               {showForgotPassword
                 ? 'Reset Password'
                 : isLogin
@@ -225,7 +306,7 @@ const LoginPage = () => {
                   : 'Create your account'}
             </h2>
 
-            <p className="text-center text-gray-600">
+            <p className="text-center text-gray-600 mb-6">
               {showForgotPassword
                 ? 'Enter your email to receive a password reset link'
                 : isLogin
@@ -248,49 +329,45 @@ const LoginPage = () => {
 
             <form onSubmit={handleSubmit} className="space-y-5">
               {!isLogin && !showForgotPassword && (
-                <div>
-                  <label htmlFor="displayName" className="block text-sm font-medium text-gray-700 mb-1">
-                    Full Name
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <UserCircleIcon className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
-                      id="displayName"
-                      name="displayName"
-                      type="text"
-                      required
-                      value={displayName}
-                      onChange={(e) => setDisplayName(e.target.value)}
-                        className="pl-10 block w-full rounded-lg border border-gray-300 bg-white py-2.5 text-gray-900 focus:ring-2 focus:ring-sky-500 focus:border-transparent sm:text-sm"
-                      placeholder="John Doe"
-                    />
-                  </div>
-                </div>
+                <>
+                  <CustomInput
+                    label="First Name"
+                    name="firstName"
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    errors={formErrors.firstName || ''}
+                    placeholder="John"
+                    required={true}
+                    icon={<UserCircleIcon className="h-5 w-5 text-gray-400" />}
+                  />
+                  
+                  <CustomInput
+                    label="Last Name"
+                    name="lastName"
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    errors={formErrors.lastName || ''}
+                    placeholder="Doe"
+                    required={true}
+                    icon={<UserCircleIcon className="h-5 w-5 text-gray-400" />}
+                  />
+                </>
               )}
 
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                  Email address
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <EnvelopeIcon className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    autoComplete="email"
-                    className="pl-10 block w-full rounded-lg border border-gray-300 bg-white py-2.5 text-gray-900 focus:ring-2 focus:ring-sky-500 focus:border-transparent sm:text-sm"
-                    placeholder="you@example.com"
-                  />
-                </div>
-              </div>
+              <CustomInput
+                label="Email address"
+                name="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                errors={formErrors.email || ''}
+                placeholder="you@example.com"
+                required={true}
+                icon={<EnvelopeIcon className="h-5 w-5 text-gray-400" />}
+                autoComplete="email"
+              />
 
               {!showForgotPassword && (
                 <div>
@@ -308,47 +385,34 @@ const LoginPage = () => {
                       </button>
                     )}
                   </div>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <LockClosedIcon className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
-                      id="password"
-                      name="password"
-                      type="password"
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      autoComplete={isLogin ? "current-password" : "new-password"}
-                      className="pl-10 block w-full rounded-lg border border-gray-300 bg-white py-2.5 text-gray-900 focus:ring-2 focus:ring-sky-500 focus:border-transparent sm:text-sm"
-                      placeholder={isLogin ? "Your password" : "Create a password"}
-                    />
-                  </div>
+                  <CustomInput
+                    label=""
+                    name="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    errors={formErrors.password || ''}
+                    placeholder={isLogin ? "Your password" : "Create a password"}
+                    required={false}
+                    icon={<LockClosedIcon className="h-5 w-5 text-gray-400" />}
+                    autoComplete={isLogin ? "current-password" : "new-password"}
+                  />
                 </div>
               )}
 
               {!isLogin && !showForgotPassword && (
-                <div>
-                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-                    Confirm Password
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <LockClosedIcon className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
-                      id="confirmPassword"
-                      name="confirmPassword"
-                      type="password"
-                      required
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      autoComplete="new-password"
-                      className="pl-10 block w-full rounded-lg border border-gray-300 bg-white py-2.5 text-gray-900 focus:ring-2 focus:ring-sky-500 focus:border-transparent sm:text-sm"
-                      placeholder="Confirm your password"
-                    />
-                  </div>
-                </div>
+                <CustomInput
+                  label="Confirm Password"
+                  name="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  errors={formErrors.confirmPassword || ''}
+                  placeholder="Confirm your password"
+                  required={false}
+                  icon={<LockClosedIcon className="h-5 w-5 text-gray-400" />}
+                  autoComplete="new-password"
+                />
               )}
 
               <div className="pt-2">

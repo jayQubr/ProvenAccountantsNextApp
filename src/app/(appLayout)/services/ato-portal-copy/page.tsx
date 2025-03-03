@@ -16,7 +16,7 @@ const ATOPortalCopy = () => {
     details: '',
   })
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, index: number) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setCompanyData((prev:any) => ({
       ...prev,
@@ -95,8 +95,25 @@ const ATOPortalCopy = () => {
           {/* Main Form Fields */}
             <div className="space-y-4 mt-4">
               <h2 className="text-lg font-semibold text-gray-800 mb-4">Period for which ATO Portal Copy</h2>
-              <CustomInput label="Specify the Period" type="text" name="period" value={companyData.period} onChange={(e) => handleChange(e, 0)} errors={errors.period} placeholder="Enter your period" />
-              <CustomInput label="Details (Optional)" type="textarea" name="details" value={companyData.details} onChange={(e) => handleChange(e, 0)} errors={errors.details} placeholder="Enter your details" />
+              <CustomInput 
+                label="Specify the Period" 
+                type="text" 
+                name="period" 
+                value={companyData.period} 
+                onChange={handleChange} 
+                errors={errors.period || ''} 
+                placeholder="Enter your period" 
+              />
+              <CustomInput 
+                label="Details (Optional)" 
+                type="textarea" 
+                name="details" 
+                value={companyData.details} 
+                onChange={handleChange} 
+                errors={errors.details || ''} 
+                placeholder="Enter your details" 
+                required={false}
+              />
             </div>
 
         </div>

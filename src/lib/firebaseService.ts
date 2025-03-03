@@ -5,7 +5,8 @@ import {
     signOut,
     sendPasswordResetEmail,
     updateProfile,
-    User
+    User,
+    fetchSignInMethodsForEmail
 } from 'firebase/auth';
 import {
     doc,
@@ -20,11 +21,14 @@ import { auth, db, googleProvider } from './firebaseConfig';
 export const registerWithEmailAndPassword = async (
     email: string,
     password: string,
-    displayName: string
+    firstName: string,
+    lastName: string
 ) => {
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
+        
+        const displayName = `${firstName} ${lastName}`;
 
         // Update profile with display name
         await updateProfile(user, { displayName });
@@ -33,9 +37,12 @@ export const registerWithEmailAndPassword = async (
         await setDoc(doc(db, "users", user.uid), {
             uid: user.uid,
             email,
+            firstName,
+            lastName,
             displayName,
             createdAt: serverTimestamp(),
             lastLogin: serverTimestamp(),
+            provider: "email"
         });
 
         return { success: true, user };
@@ -46,6 +53,20 @@ export const registerWithEmailAndPassword = async (
 
 export const loginWithEmailAndPassword = async (email: string, password: string) => {
     try {
+        // Check sign-in methods for this email
+        const methods = await fetchSignInMethodsForEmail(auth, email);
+        
+        // If the user signed up with Google but is trying to use email/password
+        if (methods.includes('google.com') && !methods.includes('password')) {
+            return { 
+                success: false, 
+                error: { 
+                    code: 'auth/wrong-auth-method',
+                    message: 'This email is registered with Google Sign-In. Please use the Google Sign-In button to log in.'
+                } 
+            };
+        }
+        
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
 
         // Update last login timestamp
@@ -70,10 +91,17 @@ export const signInWithGoogle = async () => {
 
         if (!userDoc.exists()) {
             // Create new user document if it doesn't exist
+            const displayName = user.displayName || '';
+            const nameParts = displayName.split(' ');
+            const firstName = nameParts[0] || '';
+            const lastName = nameParts.slice(1).join(' ') || '';
+            
             await setDoc(doc(db, "users", user.uid), {
                 uid: user.uid,
                 email: user.email,
-                displayName: user.displayName,
+                firstName,
+                lastName,
+                displayName,
                 photoURL: user.photoURL,
                 createdAt: serverTimestamp(),
                 lastLogin: serverTimestamp(),
@@ -87,7 +115,17 @@ export const signInWithGoogle = async () => {
         }
 
         return { success: true, user };
-    } catch (error) {
+    } catch (error: any) {
+        // Check if the error is because user tried to sign in with email/password
+        if (error.code === 'auth/account-exists-with-different-credential') {
+            return { 
+                success: false, 
+                error: { 
+                    code: error.code,
+                    message: 'This email is registered with email/password. Please use email and password to log in.'
+                } 
+            };
+        }
         return { success: false, error };
     }
 };
