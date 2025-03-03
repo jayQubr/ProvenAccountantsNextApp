@@ -17,8 +17,7 @@ import {
   DocumentCheckIcon,
   BuildingOfficeIcon,
   ShieldCheckIcon
-} from '@heroicons/react/24/outline'
-import IntroductionModal from '@/components/features/IntroductionModal'
+} from '@heroicons/react/24/outline';
 
 const Dashboard = () => {
   const [user, setUser] = useState<any>(null)
@@ -361,46 +360,6 @@ const Dashboard = () => {
             </motion.div>
           </div>
         </motion.div>
-      </div>
-
-      {/* Mobile App-like Bottom Navigation - Only visible on mobile */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 z-50">
-        <div className="flex justify-between items-center">
-          <Link href="/" className="flex flex-col items-center text-sky-600">
-            <div className="p-1 rounded-full bg-sky-100">
-              <DocumentTextIcon className="h-5 w-5" />
-            </div>
-            <span className="text-xs mt-1">Home</span>
-          </Link>
-          
-          <Link href="/services" className="flex flex-col items-center text-gray-500 hover:text-sky-600">
-            <div className="p-1 rounded-full">
-              <BriefcaseIcon className="h-5 w-5" />
-            </div>
-            <span className="text-xs mt-1">Services</span>
-          </Link>
-          
-          <Link href="/appointments" className="flex flex-col items-center text-gray-500 hover:text-sky-600">
-            <div className="p-1 rounded-full">
-              <CalendarIcon className="h-5 w-5" />
-            </div>
-            <span className="text-xs mt-1">Appointments</span>
-          </Link>
-          
-          <Link href="/my-requests" className="flex flex-col items-center text-gray-500 hover:text-sky-600">
-            <div className="p-1 rounded-full">
-              <DocumentDuplicateIcon className="h-5 w-5" />
-            </div>
-            <span className="text-xs mt-1">Requests</span>
-          </Link>
-          
-          <Link href="/my-profile" className="flex flex-col items-center text-gray-500 hover:text-sky-600">
-            <div className="p-1 rounded-full">
-              <UserCircleIcon className="h-5 w-5" />
-            </div>
-            <span className="text-xs mt-1">Profile</span>
-          </Link>
-        </div>
       </div>
       
       {/* Add padding at the bottom for mobile to account for the fixed navigation */}

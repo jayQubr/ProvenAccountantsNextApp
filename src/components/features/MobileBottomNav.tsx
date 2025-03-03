@@ -113,6 +113,18 @@ const MobileBottomNav = () => {
     return isActive ? color.text : 'text-gray-500 hover:text-gray-900';
   };
 
+
+  const getTextColorClass = (item: typeof navItems[0], isActive: boolean) => {
+    const colorMap: Record<string, string> = {
+      sky: 'text-sky-500',
+      indigo: 'text-indigo-500',
+      amber: 'text-amber-500',
+      emerald: 'text-emerald-500'
+    };
+    
+    return isActive ? colorMap[item.color] || colorMap.sky : 'text-gray-500';
+  };
+
   // Check if a route is active, including nested routes
   const isRouteActive = (href: string) => {
     if (href === '/' && pathname === '/') return true;
@@ -168,7 +180,9 @@ const MobileBottomNav = () => {
                       </motion.div>
                     )}
                     
-                    <span className={`text-xs font-medium mt-1 ${item.highlight ? 'mt-9' : ''} ${isActive ? colorClass : 'text-gray-500'}`}>
+                    <span className={`text-xs font-medium mt-1 ${item.highlight ? 'mt-9' : ''} ${
+                      isActive ? getTextColorClass(item, isActive) : 'text-gray-500'
+                    }`}>
                       {item.name}
                     </span>
                     
