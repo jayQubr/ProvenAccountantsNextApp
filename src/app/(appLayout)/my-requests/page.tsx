@@ -16,57 +16,54 @@ import {
   DocumentTextIcon
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
+import { collection, query, where, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { db } from '@/lib/firebaseConfig';
+import { getCurrentUser } from '@/lib/firebaseService';
+import { Toaster, toast } from 'sonner';
+import { User } from 'firebase/auth';
 
 // Define the request interface
 interface ServiceRequest {
   id: string;
-  serviceId: number;
+  serviceId?: number;
   serviceName: string;
-  status: 'pending' | 'approved' | 'rejected' | 'completed';
+  status: 'pending' | 'in-progress' | 'approved' | 'rejected' | 'completed';
   createdAt: any;
+  updatedAt?: any;
   details: any;
   category: string;
+  notes?: string;
+  adminNotes?: string;
+  collectionName: string;
 }
 
-// Mock data for development - will be replaced with Firebase data
-const mockRequests: ServiceRequest[] = [
-  {
-    id: '1',
-    serviceId: 1,
-    serviceName: 'ATO Registration',
-    status: 'pending',
-    createdAt: { seconds: Date.now() / 1000 - 86400 }, // 1 day ago
-    details: { taxFileNumber: '123456789', businessName: 'Example Business' },
-    category: 'Registration'
-  },
-  {
-    id: '2',
-    serviceId: 5,
-    serviceName: 'Notice Assessment',
-    status: 'approved',
-    createdAt: { seconds: Date.now() / 1000 - 172800 }, // 2 days ago
-    details: { assessmentYear: '2023', referenceNumber: 'REF123456' },
-    category: 'Documentation'
-  },
-  {
-    id: '3',
-    serviceId: 9,
-    serviceName: 'Payment Plan',
-    status: 'completed',
-    createdAt: { seconds: Date.now() / 1000 - 259200 }, // 3 days ago
-    details: { amount: '$5,000', paymentPlan: 'Monthly' },
-    category: 'Management'
-  },
-  {
-    id: '4',
-    serviceId: 6,
-    serviceName: 'Tax Return Copy',
-    status: 'rejected',
-    createdAt: { seconds: Date.now() / 1000 - 345600 }, // 4 days ago
-    details: { year: '2022', reason: 'Loan Application' },
-    category: 'Documentation'
-  }
-];
+// Service category mapping
+const serviceCategories = {
+  'atoRegistrations': 'Registration',
+  'businessRegistrations': 'Registration',
+  'trustRegistrations': 'Registration',
+  'companyRegistrations': 'Registration',
+  'noticeAssessments': 'Documentation',
+  'taxReturnCopies': 'Documentation',
+  'basLodgements': 'Documentation',
+  'atoPortals': 'Documentation',
+  'paymentPlans': 'Management',
+  'addressUpdates': 'Management'
+};
+
+// Service name mapping
+const serviceNames = {
+  'atoRegistrations': 'ATO Registration',
+  'businessRegistrations': 'Business Registration',
+  'trustRegistrations': 'Trust Registration',
+  'companyRegistrations': 'Company Registration',
+  'noticeAssessments': 'Notice of Assessment',
+  'taxReturnCopies': 'Tax Return Copy',
+  'basLodgements': 'BAS Lodgement Copy',
+  'atoPortals': 'ATO Portal Copy',
+  'paymentPlans': 'Payment Plan',
+  'addressUpdates': 'Address Update'
+};
 
 const MyRequestsPage = () => {
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
@@ -81,9 +78,68 @@ const MyRequestsPage = () => {
     const fetchRequests = async () => {
       try {
         setLoading(true);
-        setRequests(mockRequests);
+        
+        const user = await getCurrentUser() as User | null;
+        if (!user) {
+          router.push('/auth/login');
+          return;
+        }
+
+        const allRequests: ServiceRequest[] = [];
+        
+        // Collections to fetch from
+        const collections = [
+          'atoRegistrations',
+          'businessRegistrations',
+          'trustRegistrations',
+          'companyRegistrations',
+          'noticeAssessments',
+          'taxReturnCopies',
+          'basLodgements',
+          'atoPortals',
+          'paymentPlans',
+          'addressUpdates'
+        ];
+
+        // Fetch from each collection
+        for (const collectionName of collections) {
+          const collectionRef = collection(db, collectionName);
+          const q = query(
+            collectionRef, 
+            where("userId", "==", user.uid as string)
+            // Removed orderBy to avoid needing composite indexes
+          );
+          
+          const querySnapshot = await getDocs(q);
+          
+          querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            allRequests.push({
+              id: doc.id,
+              serviceName: serviceNames[collectionName as keyof typeof serviceNames] || collectionName,
+              status: data.status,
+              createdAt: data.createdAt,
+              updatedAt: data.updatedAt,
+              details: data,
+              category: serviceCategories[collectionName as keyof typeof serviceCategories] || 'Other',
+              notes: data.notes,
+              adminNotes: data.adminNotes,
+              collectionName
+            });
+          });
+        }
+
+        // Sort requests by createdAt timestamp in descending order (newest first)
+        allRequests.sort((a, b) => {
+          const timeA = a.createdAt?.seconds || 0;
+          const timeB = b.createdAt?.seconds || 0;
+          return timeB - timeA;
+        });
+
+        setRequests(allRequests);
       } catch (error) {
         console.error('Error fetching requests:', error);
+        toast.error('Failed to load your requests');
       } finally {
         setLoading(false);
       }
@@ -104,13 +160,17 @@ const MyRequestsPage = () => {
   });
 
   // Handle delete request
-  const handleDeleteRequest = async (id: string) => {
+  const handleDeleteRequest = async (id: string, collectionName: string) => {
     try {
-      // For development, just filter out the request
+      const docRef = doc(db, collectionName, id);
+      await deleteDoc(docRef);
+      
       setRequests(requests.filter(req => req.id !== id));
       setDeleteConfirmId(null);
+      toast.success('Request deleted successfully');
     } catch (error) {
       console.error('Error deleting request:', error);
+      toast.error('Failed to delete request');
     }
   };
 
@@ -130,10 +190,11 @@ const MyRequestsPage = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
+      case 'in-progress':
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
             <ClockIcon className="w-3 h-3 mr-1" />
-            Pending
+            {status === 'in-progress' ? 'In Progress' : 'Pending'}
           </span>
         );
       case 'approved':
@@ -169,6 +230,8 @@ const MyRequestsPage = () => {
 
   return (
     <div className="container mx-auto px-2 md:px-4 py-4 md:py-8 max-w-6xl">
+      <Toaster position="top-right" />
+      
       <motion.div 
         className="mb-6 md:mb-8"
         initial={{ opacity: 0, y: -20 }}
@@ -226,6 +289,7 @@ const MyRequestsPage = () => {
               >
                 <option value="all">All Statuses</option>
                 <option value="pending">Pending</option>
+                <option value="in-progress">In Progress</option>
                 <option value="approved">Approved</option>
                 <option value="rejected">Rejected</option>
                 <option value="completed">Completed</option>
@@ -297,14 +361,36 @@ const MyRequestsPage = () => {
                 </div>
                 
                 <div className="mt-3 text-sm text-gray-600">
-                  {/* Display some request details */}
+                  {/* Display some key request details */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {Object.entries(request.details).map(([key, value]) => (
-                      <div key={key} className="flex items-start">
-                        <span className="font-medium text-gray-700 mr-2">{key.charAt(0).toUpperCase() + key.slice(1)}:</span>
-                        <span>{String(value)}</span>
-                      </div>
-                    ))}
+                    {Object.entries(request.details).slice(0, 4).map(([key, value]) => {
+                      // Skip internal fields
+                      if (['userId', 'userEmail', 'userName', 'createdAt', 'updatedAt', 'status', 'notes', 'adminNotes'].includes(key)) {
+                        return null;
+                      }
+                      
+                      // Handle boolean values
+                      if (typeof value === 'boolean') {
+                        return (
+                          <div key={key} className="flex items-start">
+                            <span className="font-medium text-gray-700 mr-2">{key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}:</span>
+                            <span>{value ? 'Yes' : 'No'}</span>
+                          </div>
+                        );
+                      }
+                      
+                      // Skip object and array values
+                      if (typeof value === 'object' && value !== null) {
+                        return null;
+                      }
+                      
+                      return (
+                        <div key={key} className="flex items-start">
+                          <span className="font-medium text-gray-700 mr-2">{key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}:</span>
+                          <span>{String(value)}</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
                 
@@ -314,7 +400,7 @@ const MyRequestsPage = () => {
                   </div>
                   <div className="flex space-x-2">
                     <button
-                      onClick={() => router.push(`/my-requests/${request.id}`)}
+                      onClick={() => router.push(`/my-requests/${request.id}?collection=${request.collectionName}`)}
                       className="p-1.5 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors"
                       aria-label="View request details"
                     >
@@ -350,7 +436,7 @@ const MyRequestsPage = () => {
                           Cancel
                         </button>
                         <button
-                          onClick={() => handleDeleteRequest(request.id)}
+                          onClick={() => handleDeleteRequest(request.id, request.collectionName)}
                           className="px-3 py-1 text-xs font-medium rounded-md bg-red-600 text-white hover:bg-red-700"
                         >
                           Delete

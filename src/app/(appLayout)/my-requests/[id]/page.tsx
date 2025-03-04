@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { 
   ArrowLeftIcon,
   ClipboardDocumentListIcon,
@@ -15,142 +15,165 @@ import {
   PaperAirplaneIcon
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
+import { doc, getDoc, deleteDoc, updateDoc, collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebaseConfig';
+import { getCurrentUser } from '@/lib/firebaseService';
+import { Toaster, toast } from 'sonner';
+import { User } from 'firebase/auth';
 
 // Define the request interface
 interface ServiceRequest {
   id: string;
-  serviceId: number;
+  serviceId?: number;
   serviceName: string;
-  status: 'pending' | 'approved' | 'rejected' | 'completed';
+  status: 'pending' | 'in-progress' | 'approved' | 'rejected' | 'completed';
   createdAt: any;
   updatedAt?: any;
   details: any;
   category: string;
   notes?: string;
   adminNotes?: string;
+  collectionName: string;
 }
 
-// Mock data for development - will be replaced with Firebase data
-const mockRequests: { [key: string]: ServiceRequest } = {
-  '1': {
-    id: '1',
-    serviceId: 1,
-    serviceName: 'ATO Registration',
-    status: 'pending',
-    createdAt: { seconds: Date.now() / 1000 - 86400 }, // 1 day ago
-    details: { 
-      taxFileNumber: '123456789', 
-      businessName: 'Example Business',
-      businessType: 'Sole Trader',
-      contactNumber: '0412 345 678',
-      email: 'example@business.com',
-      address: '123 Business St, Sydney NSW 2000'
-    },
-    category: 'Registration',
-    notes: 'Please process this registration as soon as possible.'
-  },
-  '2': {
-    id: '2',
-    serviceId: 5,
-    serviceName: 'Notice Assessment',
-    status: 'approved',
-    createdAt: { seconds: Date.now() / 1000 - 172800 },
-    updatedAt: { seconds: Date.now() / 1000 - 86400 },
-    details: { 
-      assessmentYear: '2023', 
-      referenceNumber: 'REF123456',
-      taxFileNumber: '987654321',
-      fullName: 'John Smith',
-      contactNumber: '0412 345 678',
-      email: 'john@example.com'
-    },
-    category: 'Documentation',
-    notes: 'Need this for my home loan application.',
-    adminNotes: 'Approved. Documents will be sent via email.'
-  },
-  '3': {
-    id: '3',
-    serviceId: 9,
-    serviceName: 'Payment Plan',
-    status: 'completed',
-    createdAt: { seconds: Date.now() / 1000 - 259200 },
-    updatedAt: { seconds: Date.now() / 1000 - 43200 }, 
-    details: { 
-      amount: '$5,000', 
-      paymentPlan: 'Monthly',
-      taxFileNumber: '456789123',
-      fullName: 'Sarah Johnson',
-      contactNumber: '0412 987 654',
-      email: 'sarah@example.com',
-      reason: 'Cash flow issues due to COVID-19'
-    },
-    category: 'Management',
-    notes: 'I need this payment plan urgently.',
-    adminNotes: 'Payment plan has been set up. First payment due on 15th of next month.'
-  },
-  '4': {
-    id: '4',
-    serviceId: 6,
-    serviceName: 'Tax Return Copy',
-    status: 'rejected',
-    createdAt: { seconds: Date.now() / 1000 - 345600 }, 
-    updatedAt: { seconds: Date.now() / 1000 - 172800 },
-    details: { 
-      year: '2022', 
-      reason: 'Loan Application',
-      taxFileNumber: '789123456',
-      fullName: 'Michael Brown',
-      contactNumber: '0413 456 789',
-      email: 'michael@example.com'
-    },
-    category: 'Documentation',
-    notes: 'Need this for bank loan application.',
-    adminNotes: 'Rejected. The tax return for this year has not been lodged yet. Please lodge your tax return first.'
-  }
+// Define Firebase Timestamp interface
+interface FirebaseTimestamp {
+  seconds: number;
+  nanoseconds: number;
+}
+
+// Service name mapping
+const serviceNames = {
+  'atoRegistrations': 'ATO Registration',
+  'businessRegistrations': 'Business Registration',
+  'trustRegistrations': 'Trust Registration',
+  'companyRegistrations': 'Company Registration',
+  'noticeAssessments': 'Notice of Assessment',
+  'taxReturnCopies': 'Tax Return Copy',
+  'basLodgements': 'BAS Lodgement Copy',
+  'atoPortals': 'ATO Portal Copy',
+  'paymentPlans': 'Payment Plan',
+  'addressUpdates': 'Address Update'
 };
+
+// Service category mapping
+const serviceCategories = {
+  'atoRegistrations': 'Registration',
+  'businessRegistrations': 'Registration',
+  'trustRegistrations': 'Registration',
+  'companyRegistrations': 'Registration',
+  'noticeAssessments': 'Documentation',
+  'taxReturnCopies': 'Documentation',
+  'basLodgements': 'Documentation',
+  'atoPortals': 'Documentation',
+  'paymentPlans': 'Management',
+  'addressUpdates': 'Management'
+};
+
+// Message interface
+interface Message {
+  id: string;
+  text: string;
+  createdAt: any;
+  userId: string;
+  userName: string;
+  isAdmin: boolean;
+}
 
 const RequestDetailPage = () => {
   const [request, setRequest] = useState<ServiceRequest | null>(null);
   const [loading, setLoading] = useState(true);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [message, setMessage] = useState('');
+  const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const id = params?.id as string;
+  const collectionName = searchParams?.get('collection') || '';
 
-  // Fetch request details from Firebase
+  // Fetch user and request details
   useEffect(() => {
-    const fetchRequestDetails = async () => {
+    const fetchUserAndRequest = async () => {
       try {
-        setLoading(true);
-        
-        if (mockRequests[id]) {
-          setRequest(mockRequests[id]);
-        } else {
-          router.push('/my-requests');
+        const currentUser = await getCurrentUser() as User | null;
+        if (!currentUser) {
+          router.push('/auth/login');
+          return;
         }
+        setUser(currentUser);
 
+        await fetchRequestDetails(currentUser);
       } catch (error) {
-        console.error('Error fetching request details:', error);
-        router.push('/my-requests');
-      } finally {
-        setLoading(false);
+        console.error('Error fetching data:', error);
+        toast.error('Failed to load request details');
       }
     };
 
-    if (id) {
-      fetchRequestDetails();
+    fetchUserAndRequest();
+  }, [id, collectionName, router]);
+
+  // Fetch request details from Firestore
+  const fetchRequestDetails = async (currentUser: User) => {
+    try {
+      setLoading(true);
+      
+      if (!id || !collectionName) {
+        router.push('/my-requests');
+        return;
+      }
+
+      const docRef = doc(db, collectionName, id);
+      const docSnap = await getDoc(docRef);
+      
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        
+        // Verify this request belongs to the current user
+        if (data.userId !== currentUser.uid) {
+          toast.error('You do not have permission to view this request');
+          router.push('/my-requests');
+          return;
+        }
+        
+        setRequest({
+          id: docSnap.id,
+          serviceName: serviceNames[collectionName as keyof typeof serviceNames] || collectionName,
+          status: data.status,
+          createdAt: data.createdAt,
+          updatedAt: data.updatedAt,
+          details: data,
+          category: serviceCategories[collectionName as keyof typeof serviceCategories] || 'Other',
+          notes: data.notes,
+          adminNotes: data.adminNotes,
+          collectionName
+        });
+      } else {
+        toast.error('Request not found');
+        router.push('/my-requests');
+      }
+    } catch (error) {
+      console.error('Error fetching request details:', error);
+      toast.error('Failed to load request details');
+      router.push('/my-requests');
+    } finally {
+      setLoading(false);
     }
-  }, [id, router]);
+  };
 
   // Handle delete request
   const handleDeleteRequest = async () => {
     try {
-
+      if (!id || !collectionName) return;
+      
+      const docRef = doc(db, collectionName, id);
+      await deleteDoc(docRef);
+      
+      toast.success('Request deleted successfully');
       router.push('/my-requests');
-
     } catch (error) {
       console.error('Error deleting request:', error);
+      toast.error('Failed to delete request');
     }
   };
 
@@ -158,14 +181,24 @@ const RequestDetailPage = () => {
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!message.trim()) return;
+    if (!message.trim() || !user) return;
     
     try {
-      setMessage('');
-      alert('Message sent successfully!');
+      await addDoc(collection(db, 'messages'), {
+        text: message.trim(),
+        requestId: id,
+        collectionName: collectionName,
+        userId: user.uid,
+        userName: user.displayName || 'User',
+        isAdmin: false,
+        createdAt: serverTimestamp()
+      });
       
+      setMessage('');
+      toast.success('Message sent successfully');
     } catch (error) {
       console.error('Error sending message:', error);
+      toast.error('Failed to send message');
     }
   };
 
@@ -187,10 +220,11 @@ const RequestDetailPage = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
+      case 'in-progress':
         return (
           <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
             <ClockIcon className="w-4 h-4 mr-1.5" />
-            Pending
+            {status === 'in-progress' ? 'In Progress' : 'Pending'}
           </span>
         );
       case 'approved':
@@ -309,6 +343,8 @@ const RequestDetailPage = () => {
 
   return (
     <div className="container mx-auto px-2 md:px-4 py-4 md:py-8 max-w-4xl">
+      <Toaster position="top-right" />
+      
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -359,14 +395,89 @@ const RequestDetailPage = () => {
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Request Information</h2>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                {Object.entries(request.details).map(([key, value]) => (
-                  <div key={key} className="flex flex-col">
-                    <span className="text-sm font-medium text-gray-500 mb-1">
-                      {key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}
-                    </span>
-                    <span className="text-base text-gray-900">{String(value)}</span>
-                  </div>
-                ))}
+                {Object.entries(request.details).map(([key, value]) => {
+                  // Skip internal fields
+                  if (['userId', 'userEmail', 'userName', 'createdAt', 'updatedAt', 'status', 'notes', 'adminNotes'].includes(key)) {
+                    return null;
+                  }
+                  
+                  // Handle boolean values
+                  if (typeof value === 'boolean') {
+                    return (
+                      <div key={key} className="flex flex-col">
+                        <span className="text-sm font-medium text-gray-500 mb-1">
+                          {key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}
+                        </span>
+                        <span className="text-base text-gray-900">{value ? 'Yes' : 'No'}</span>
+                      </div>
+                    );
+                  }
+                  
+                  // Handle array values
+                  if (Array.isArray(value)) {
+                    return (
+                      <div key={key} className="flex flex-col col-span-2">
+                        <span className="text-sm font-medium text-gray-500 mb-1">
+                          {key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}
+                        </span>
+                        <div className="space-y-2">
+                          {value.map((item, index) => (
+                            <div key={index} className="p-3 bg-gray-50 rounded-md">
+                              {Object.entries(item).map(([itemKey, itemValue]) => (
+                                <div key={itemKey} className="mb-1">
+                                  <span className="font-medium text-gray-700">{itemKey.charAt(0).toUpperCase() + itemKey.slice(1)}: </span>
+                                  <span>{String(itemValue)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  }
+                  
+                  // Handle object values (excluding arrays and timestamps)
+                  if (typeof value === 'object' && value !== null && !Array.isArray(value) && 
+                      !(value && 'seconds' in value && 'nanoseconds' in value)) {
+                    return (
+                      <div key={key} className="flex flex-col col-span-2">
+                        <span className="text-sm font-medium text-gray-500 mb-1">
+                          {key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}
+                        </span>
+                        <div className="p-3 bg-gray-50 rounded-md">
+                          {Object.entries(value).map(([objKey, objValue]) => (
+                            <div key={objKey} className="mb-1">
+                              <span className="font-medium text-gray-700">{objKey.charAt(0).toUpperCase() + objKey.slice(1)}: </span>
+                              <span>{String(objValue)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  }
+                  
+                  // Handle timestamp values
+                  if (value && typeof value === 'object' && 'seconds' in value && 'nanoseconds' in value) {
+                    return (
+                      <div key={key} className="flex flex-col">
+                        <span className="text-sm font-medium text-gray-500 mb-1">
+                          {key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}
+                        </span>
+                        <span className="text-base text-gray-900">{formatDate(value)}</span>
+                      </div>
+                    );
+                  }
+                  
+                  // Default string representation
+                  return (
+                    <div key={key} className="flex flex-col">
+                      <span className="text-sm font-medium text-gray-500 mb-1">
+                        {key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}
+                      </span>
+                      <span className="text-base text-gray-900">{String(value)}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
             
