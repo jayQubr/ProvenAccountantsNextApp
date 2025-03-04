@@ -9,12 +9,13 @@ import {
 export interface PaymentPlanData {
     planType: string;
     amount: number;
-    userId?: string;
+    userId?: any;
     userEmail?: string;
     userName?: string;
     status?: 'pending' | 'in-progress' | 'completed' | 'rejected';
     createdAt?: number;
     updatedAt?: number;
+    notes?: string;
 }
 
 const COLLECTION_NAME = 'paymentPlans';
