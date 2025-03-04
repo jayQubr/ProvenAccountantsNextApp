@@ -5,20 +5,15 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { IdentificationIcon } from '@heroicons/react/24/outline';
-import { Toaster, toast } from 'sonner';
+import { toast } from 'sonner';
 import CustomCheckbox from '@/components/ui/CustomCheckbox';
 import CustomInput from '@/components/ui/CustomInput';
-import LoadingSpinner from '@/components/features/LoadingSpinner';
 import SubmitButton from '@/components/features/SubmitButton';
 import PersonalInformation from '@/components/features/PersonaInformation';
 import RegistrationStatusBanner from '@/components/features/RegistrationStatusBanner';
 import useStore from '@/utils/useStore';
-import { 
-  checkExistingATORegistration, 
-  submitATORegistration, 
-  ATORegistrationStatus,
-  ATORegistrationData
-} from '@/lib/atoRegistrationService';
+import { checkExistingATORegistration, ATORegistrationStatus, ATORegistrationData } from '@/lib/atoRegistrationService';
+import SkeletonLoader from '@/components/ui/SkeletonLoader';
 
 const ATORegistrationPage = () => {
   const router = useRouter();
@@ -126,10 +121,20 @@ const ATORegistrationPage = () => {
         abn: formData.abn,
         gst: formData.gst,
         fuelTaxCredit: formData.fuelTaxCredit,
-        status: 'pending' as ATORegistrationStatus
+        status: 'pending' as ATORegistrationStatus, 
+        user: userStore
       };
 
-      const result = await submitATORegistration(registrationData);
+      // Send data to API endpoint
+      const response = await fetch('/api/service-registration', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ registrationData }),
+      });
+
+      const result = await response.json();
 
       if (result.success) {
         toast.success('ATO Registration request submitted successfully!');
@@ -145,7 +150,7 @@ const ATORegistrationPage = () => {
           router.push('/services');
         }, 2000);
       } else {
-        toast.error('Failed to submit registration. Please try again.');
+        toast.error(result.message || 'Failed to submit registration. Please try again.');
       }
     } catch (error) {
       console.error('Error submitting form:', error);
@@ -157,16 +162,12 @@ const ATORegistrationPage = () => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <LoadingSpinner />
-      </div>
+      <SkeletonLoader />
     );
   }
 
   return (
     <div className="container mx-auto px-2 py-4 md:px-4 md:py-8 w-full md:max-w-3xl">
-      <Toaster position="top-center" richColors />
-      
       {/* Header */}
       <motion.div
         className="mb-6"
@@ -200,6 +201,7 @@ const ATORegistrationPage = () => {
           status={existingRegistration.status}
           title="ATO Registration"
           createdAt={existingRegistration.createdAt}
+          updatedAt={existingRegistration.updatedAt}
           notes={existingRegistration.notes}
           type="ATO"
         />
