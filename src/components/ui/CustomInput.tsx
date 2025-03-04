@@ -18,6 +18,7 @@ interface CustomInputProps {
     icon?: ReactNode;
     autoComplete?: string;
     rightElement?: ReactNode;
+    disabled?: boolean;
 }
 
 const CustomInput = ({ 
@@ -32,7 +33,8 @@ const CustomInput = ({
     required = true,
     icon,
     autoComplete,
-    rightElement
+    rightElement,
+    disabled = false
 }: CustomInputProps) => {
     return (
         <div className="relative w-full">
@@ -68,6 +70,7 @@ const CustomInput = ({
                         placeholder={placeholder}
                         maxLength={maxLength ?? undefined}
                         autoComplete={autoComplete}
+                        disabled={disabled}
                         {...(errors ? shakeAnimation : {})}
                     />
                 )}

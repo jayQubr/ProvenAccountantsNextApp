@@ -1,11 +1,13 @@
+import useStore from "@/utils/useStore";
 import { InformationCircleIcon } from "@heroicons/react/24/outline"
 
 const PersonalInformation = ({ title }: { title?: string }) => {
+  const { user } = useStore();
   const userData = {
-    fullName : 'John Doe',
-    email: 'example@gmail.com',
-    dateOfBirth: '12/12/2025',
-    phone: '1234567'
+    fullName : user.firstName + ' ' + user.lastName,
+    email: user.email,
+    dateOfBirth: user.dateOfBirth,
+    phone: user.phone
   }
   return (
     <div className="bg-gray-50 p-5 rounded-lg border border-gray-200">

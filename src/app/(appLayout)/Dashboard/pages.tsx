@@ -198,6 +198,8 @@ const Dashboard = () => {
                   src={user.photoURL} 
                   alt={user.displayName || 'User'} 
                   className="w-20 h-20 rounded-full object-cover"
+                  width={100}
+                  height={100}
                 />
               ) : (
                 <div className={`w-full h-full rounded-full flex items-center justify-center text-white font-bold text-2xl ${generateUserBgColor(user?.email || '')}`}>

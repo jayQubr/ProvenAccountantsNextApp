@@ -16,6 +16,7 @@ import LayoutSkeleton from '@/components/skeleton/LayoutSkeleton';
 import IntroductionModal from '@/components/features/IntroductionModal';
 import Image from 'next/image';
 import { generateUserBgColor, userDisplayName } from '@/helper/generateUserBgColor';
+import useStore from '@/utils/useStore';
 
 interface UserData {
   uid: string;
@@ -37,7 +38,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname() as string;
   const [isOpen, setIsOpen] = useState(true);
   const [isIntroductionModalOpen, setIsIntroductionModalOpen] = useState(false);
-
+  const { setUser: setUserStore } = useStore();
   const userNavigation = [
     { name: 'Profile', href: '/my-profile' },
     {
@@ -102,6 +103,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
         try {
           const userProfileResult = await getUserProfile(authUser.uid);
           if (userProfileResult.success) {
+            setUserStore(userProfileResult.data);
             setUser({
               uid: authUser.uid,
               email: authUser.email,
