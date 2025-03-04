@@ -3,12 +3,15 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ArrowLeftIcon, CheckCircleIcon, ClockIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { IdentificationIcon } from '@heroicons/react/24/outline';
 import { Toaster, toast } from 'sonner';
 import CustomCheckbox from '@/components/ui/CustomCheckbox';
 import CustomInput from '@/components/ui/CustomInput';
+import LoadingSpinner from '@/components/features/LoadingSpinner';
+import SubmitButton from '@/components/features/SubmitButton';
 import PersonalInformation from '@/components/features/PersonaInformation';
+import RegistrationStatusBanner from '@/components/features/RegistrationStatusBanner';
 import useStore from '@/utils/useStore';
 import { 
   checkExistingATORegistration, 
@@ -16,29 +19,6 @@ import {
   ATORegistrationStatus,
   ATORegistrationData
 } from '@/lib/atoRegistrationService';
-
-const statusColors: Record<ATORegistrationStatus, { bg: string, text: string, icon: any }> = {
-  'pending': { 
-    bg: 'bg-amber-50', 
-    text: 'text-amber-700',
-    icon: <ClockIcon className="w-5 h-5 text-amber-500" />
-  },
-  'in-progress': { 
-    bg: 'bg-blue-50', 
-    text: 'text-blue-700',
-    icon: <ClockIcon className="w-5 h-5 text-blue-500" />
-  },
-  'completed': { 
-    bg: 'bg-green-50', 
-    text: 'text-green-700',
-    icon: <CheckCircleIcon className="w-5 h-5 text-green-500" />
-  },
-  'rejected': { 
-    bg: 'bg-red-50', 
-    text: 'text-red-700',
-    icon: <ClockIcon className="w-5 h-5 text-red-500" />
-  }
-};
 
 const ATORegistrationPage = () => {
   const router = useRouter();
@@ -139,6 +119,8 @@ const ATORegistrationPage = () => {
     try {
       const registrationData = {
         userId: userStore.uid,
+        userEmail: userStore.email || '',
+        userName: userStore.displayName || '',
         postalAddress: formData.postalAddress,
         postalCode: formData.postalCode,
         abn: formData.abn,
@@ -175,11 +157,8 @@ const ATORegistrationPage = () => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8 flex justify-center items-center min-h-[60vh]">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-sky-500 border-t-transparent"></div>
-          <p className="mt-2 text-gray-600">Loading...</p>
-        </div>
+      <div className="container mx-auto px-4 py-8">
+        <LoadingSpinner />
       </div>
     );
   }
@@ -217,40 +196,13 @@ const ATORegistrationPage = () => {
 
       {/* Existing Registration Status */}
       {existingRegistration && (
-        <motion.div
-          className={`mb-6 p-4 rounded-lg border ${statusColors[existingRegistration.status].bg} ${statusColors[existingRegistration.status].text} border-${existingRegistration.status === 'completed' ? 'green' : existingRegistration.status === 'rejected' ? 'red' : 'amber'}-200`}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <div className="flex items-start gap-3">
-            <div className="mt-0.5">
-              {statusColors[existingRegistration.status].icon}
-            </div>
-            <div>
-              <h3 className="font-medium">
-                {existingRegistration.status === 'pending' && 'Your ATO Registration request is pending'}
-                {existingRegistration.status === 'in-progress' && 'Your ATO Registration is being processed'}
-                {existingRegistration.status === 'completed' && 'Your ATO Registration has been completed'}
-                {existingRegistration.status === 'rejected' && 'Your ATO Registration request was not approved'}
-              </h3>
-              <p className="text-sm mt-1">
-                {existingRegistration.status === 'pending' && 'We have received your request and will process it soon.'}
-                {existingRegistration.status === 'in-progress' && 'Our team is currently working on your registration.'}
-                {existingRegistration.status === 'completed' && 'Your ATO registration has been successfully processed.'}
-                {existingRegistration.status === 'rejected' && 'Please contact our support team for more information.'}
-              </p>
-              {existingRegistration.notes && (
-                <p className="text-sm mt-2 p-2 bg-white bg-opacity-50 rounded">
-                  <span className="font-medium">Notes:</span> {existingRegistration.notes}
-                </p>
-              )}
-              <p className="text-xs mt-2">
-                Submitted on: {existingRegistration.createdAt?.toDate?.().toLocaleDateString() || 'N/A'}
-              </p>
-            </div>
-          </div>
-        </motion.div>
+        <RegistrationStatusBanner
+          status={existingRegistration.status}
+          title="ATO Registration"
+          createdAt={existingRegistration.createdAt}
+          notes={existingRegistration.notes}
+          type="ATO"
+        />
       )}
 
       {/* Form */}
@@ -343,33 +295,14 @@ const ATORegistrationPage = () => {
             Cancel
           </button>
 
-          <button
-            type="submit"
-            disabled={isSubmitting || existingRegistration?.status === 'in-progress' || existingRegistration?.status === 'completed'}
-            className={`px-6 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-colors flex items-center ${
-              (isSubmitting || existingRegistration?.status === 'in-progress' || existingRegistration?.status === 'completed') 
-                ? 'opacity-70 cursor-not-allowed' 
-                : ''
-            }`}
-          >
-            {isSubmitting ? (
-              <>
-                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Processing...
-              </>
-            ) : existingRegistration?.status === 'pending' ? (
-              'Update Registration'
-            ) : existingRegistration?.status === 'rejected' ? (
-              'Resubmit Registration'
-            ) : existingRegistration?.status === 'in-progress' || existingRegistration?.status === 'completed' ? (
-              'Already Submitted'
-            ) : (
-              'Submit Registration'
-            )}
-          </button>
+          <SubmitButton 
+            isSubmitting={isSubmitting}
+            status={existingRegistration?.status}
+            defaultText="Submit Registration"
+            pendingText="Update Registration"
+            rejectedText="Resubmit Registration"
+            completedText="Already Submitted"
+          />
         </div>
       </motion.form>
     </div>

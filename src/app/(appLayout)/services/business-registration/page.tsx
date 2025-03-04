@@ -1,16 +1,29 @@
 'use client';
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
-import { ArrowLeftIcon } from '@heroicons/react/24/outline'
-import { IdentificationIcon } from '@heroicons/react/24/outline'
-import CustomInput from '@/components/ui/CustomInput'
-import CustomCheckbox from '@/components/ui/CustomCheckbox'
-import PersonalInformation from '@/components/features/PersonaInformation'
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
+import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { IdentificationIcon } from '@heroicons/react/24/outline';
+import { Toaster, toast } from 'sonner';
+import CustomInput from '@/components/ui/CustomInput';
+import CustomCheckbox from '@/components/ui/CustomCheckbox';
+import LoadingSpinner from '@/components/features/LoadingSpinner';
+import SubmitButton from '@/components/features/SubmitButton';
+import PersonalInformation from '@/components/features/PersonaInformation';
+import RegistrationStatusBanner from '@/components/features/RegistrationStatusBanner';
+import useStore from '@/utils/useStore';
+import { 
+  checkExistingBusinessRegistration, 
+  submitBusinessRegistration, 
+  BusinessRegistrationStatus,
+  BusinessRegistrationData
+} from '@/lib/businessRegistrationService';
 
 const BusinessRegistrationPage = () => {
-  const router = useRouter()
+  const router = useRouter();
+  const { user: userStore } = useStore();
+  const [existingRegistration, setExistingRegistration] = useState<(BusinessRegistrationData & { id: string }) | null>(null);
   const [formData, setFormData] = useState({
     postalAddress: '',
     postalCode: '',
@@ -18,90 +31,154 @@ const BusinessRegistrationPage = () => {
     businessName: '',
     businessAddress: '',
     agreeToDeclaration: false
-  })
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const checkRegistration = async () => {
+      if (!userStore?.uid) return;
+      
+      setIsLoading(true);
+      try {
+        const result = await checkExistingBusinessRegistration(userStore.uid);
+        if (result.exists && result.data) {
+          setExistingRegistration(result.data);
+          
+          // Pre-fill form with existing data
+          setFormData({
+            postalAddress: result.data.postalAddress || '',
+            postalCode: result.data.postalCode || '',
+            abn: result.data.abn || '',
+            businessName: result.data.businessName || '',
+            businessAddress: result.data.businessAddress || '',
+            agreeToDeclaration: true
+          });
+        }
+      } catch (error) {
+        console.error("Error checking registration:", error);
+        toast.error("Failed to check existing registration");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkRegistration();
+  }, [userStore?.uid]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target
-    const checked = type === 'checkbox' ? (e.target as HTMLInputElement).checked : undefined
+    const { name, value, type } = e.target;
+    const checked = type === 'checkbox' ? (e.target as HTMLInputElement).checked : undefined;
 
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
-    }))
+    }));
 
     // Clear error when field is edited
     if (errors[name]) {
       setErrors(prev => {
-        const newErrors = { ...prev }
-        delete newErrors[name]
-        return newErrors
-      })
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
     }
-  }
+  };
 
   const validateForm = () => {
-    const newErrors: Record<string, string> = {}
+    const newErrors: Record<string, string> = {};
 
     if (!formData.postalAddress.trim()) {
-      newErrors.postalAddress = 'Postal address is required'
+      newErrors.postalAddress = 'Postal address is required';
     }
     
     if (!formData.postalCode.trim()) {
-      newErrors.postalCode = 'Postal code is required'
+      newErrors.postalCode = 'Postal code is required';
     } else if (!/^\d{4}$/.test(formData.postalCode)) {
-      newErrors.postalCode = 'Postal code must be 4 digits'
+      newErrors.postalCode = 'Postal code must be 4 digits';
     }
 
     if (!formData.businessName.trim()) {
-      newErrors.businessName = 'Business name is required'
+      newErrors.businessName = 'Business name is required';
     }
 
     if (!formData.businessAddress.trim()) {
-      newErrors.businessAddress = 'Business address is required'
+      newErrors.businessAddress = 'Business address is required';
     }
 
     if (!formData.agreeToDeclaration) {
-      newErrors.agreeToDeclaration = 'You must agree to the declaration'
-    }
-    if(!formData.abn.trim()) {
-      newErrors.abn = 'ABN is required'
+      newErrors.agreeToDeclaration = 'You must agree to the declaration';
     }
     
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    if(!formData.abn.trim()) {
+      newErrors.abn = 'ABN is required';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     
-    if (!validateForm()) {
-      return
+    if (!validateForm() || !userStore?.uid) {
+      return;
     }
     
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     
     try {
-      // Here you would typically send the data to your backend
-      console.log('Form submitted:', formData)
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Show success message or redirect
-      alert('Business Registration request submitted successfully!')
-      router.push('/services')
+      const registrationData = {
+        userId: userStore.uid,
+        userEmail: userStore.email || '',
+        userName: userStore.displayName || '',
+        postalAddress: formData.postalAddress,
+        postalCode: formData.postalCode,
+        abn: formData.abn,
+        businessName: formData.businessName,
+        businessAddress: formData.businessAddress,
+        status: 'pending' as BusinessRegistrationStatus
+      };
+
+      const result = await submitBusinessRegistration(registrationData);
+
+      if (result.success) {
+        toast.success('Business Registration request submitted successfully!');
+        
+        // Fetch the updated registration
+        const updatedResult = await checkExistingBusinessRegistration(userStore.uid);
+        if (updatedResult.exists && updatedResult.data) {
+          setExistingRegistration(updatedResult.data);
+        }
+        
+        // Wait for toast to be visible before redirecting
+        setTimeout(() => {
+          router.push('/services');
+        }, 2000);
+      } else {
+        toast.error('Failed to submit registration. Please try again.');
+      }
     } catch (error) {
-      console.error('Error submitting form:', error)
-      alert('There was an error submitting your request. Please try again.')
+      console.error('Error submitting form:', error);
+      toast.error('There was an error submitting your request. Please try again.');
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <LoadingSpinner />
+      </div>
+    );
   }
 
   return (
     <div className="container mx-auto px-2 py-4 md:px-4 md:py-8 w-full md:max-w-3xl">
+      <Toaster position="top-center" richColors />
+      
       {/* Header */}
       <motion.div 
         className="mb-6"
@@ -129,6 +206,17 @@ const BusinessRegistrationPage = () => {
         </p>
       </motion.div>
       
+      {/* Existing Registration Status */}
+      {existingRegistration && (
+        <RegistrationStatusBanner
+          status={existingRegistration.status}
+          title="Business Registration"
+          createdAt={existingRegistration.createdAt}
+          notes={existingRegistration.notes}
+          type="business"
+        />
+      )}
+      
       {/* Form */}
       <motion.form 
         onSubmit={handleSubmit}
@@ -144,8 +232,26 @@ const BusinessRegistrationPage = () => {
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Address Information</h2>
             <div className="space-y-4">
               {/* Postal Address */}
-              <CustomInput label="Postal Address" type="text" name="postalAddress" value={formData.postalAddress} onChange={handleChange} errors={errors.postalAddress} placeholder="Enter your postal address" />
-              <CustomInput label="Postal Code" type="text" name="postalCode" value={formData.postalCode} onChange={handleChange} errors={errors.postalCode} placeholder="Enter your postal code" />
+              <CustomInput 
+                label="Postal Address" 
+                type="text" 
+                name="postalAddress" 
+                value={formData.postalAddress} 
+                onChange={handleChange} 
+                errors={errors.postalAddress} 
+                placeholder="Enter your postal address" 
+                disabled={existingRegistration?.status === 'in-progress' || existingRegistration?.status === 'completed'}
+              />
+              <CustomInput 
+                label="Postal Code" 
+                type="text" 
+                name="postalCode" 
+                value={formData.postalCode} 
+                onChange={handleChange} 
+                errors={errors.postalCode} 
+                placeholder="Enter your postal code" 
+                disabled={existingRegistration?.status === 'in-progress' || existingRegistration?.status === 'completed'}
+              />
             </div>
           </div>
 
@@ -153,9 +259,36 @@ const BusinessRegistrationPage = () => {
           <div>
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Business Registration Details</h2>
             <div className="space-y-4">
-              <CustomInput label="ABN" type="text" name="abn" value={formData.abn} onChange={handleChange} errors={errors.abn} placeholder="Enter ABN" />
-              <CustomInput label="Business Name" type="text" name="businessName" value={formData.businessName} onChange={handleChange} errors={errors.businessName} placeholder="Enter your business name" />
-              <CustomInput label="Business Address" type="text" name="businessAddress" value={formData.businessAddress} onChange={handleChange} errors={errors.businessAddress} placeholder="Enter your business address" />
+              <CustomInput 
+                label="ABN" 
+                type="text" 
+                name="abn" 
+                value={formData.abn} 
+                onChange={handleChange} 
+                errors={errors.abn} 
+                placeholder="Enter ABN" 
+                disabled={existingRegistration?.status === 'in-progress' || existingRegistration?.status === 'completed'}
+              />
+              <CustomInput 
+                label="Business Name" 
+                type="text" 
+                name="businessName" 
+                value={formData.businessName} 
+                onChange={handleChange} 
+                errors={errors.businessName} 
+                placeholder="Enter your business name" 
+                disabled={existingRegistration?.status === 'in-progress' || existingRegistration?.status === 'completed'}
+              />
+              <CustomInput 
+                label="Business Address" 
+                type="text" 
+                name="businessAddress" 
+                value={formData.businessAddress} 
+                onChange={handleChange} 
+                errors={errors.businessAddress} 
+                placeholder="Enter your business address" 
+                disabled={existingRegistration?.status === 'in-progress' || existingRegistration?.status === 'completed'}
+              />
             </div>
           </div>
 
@@ -174,7 +307,14 @@ const BusinessRegistrationPage = () => {
               <li>The information supplied is accurate and complete to the best of my knowledge, and any false information provided may lead to penalties under applicable acts, rules, and regulations.</li>
               <li>All the persons mentioned in the application have consented to act for the respective roles.</li>
             </ul>
-            <CustomCheckbox label="I agree to the declaration" name="agreeToDeclaration" checked={formData.agreeToDeclaration} onChange={handleChange} />
+            <CustomCheckbox 
+              label="I agree to the declaration" 
+              name="agreeToDeclaration" 
+              checked={formData.agreeToDeclaration} 
+              onChange={handleChange} 
+              errors={errors.agreeToDeclaration}
+              disabled={existingRegistration?.status === 'in-progress' || existingRegistration?.status === 'completed'}
+            />
           </div>
         </div>
 
@@ -188,26 +328,18 @@ const BusinessRegistrationPage = () => {
             Cancel
           </button>
           
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className={`px-6 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-colors flex items-center ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
-          >
-            {isSubmitting ? (
-              <>
-                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Processing...
-              </>
-            ) : (
-              'Submit Registration'
-            )}
-          </button>
+          <SubmitButton 
+            isSubmitting={isSubmitting}
+            status={existingRegistration?.status}
+            defaultText="Submit Registration"
+            pendingText="Update Registration"
+            rejectedText="Resubmit Registration"
+            completedText="Already Submitted"
+          />
         </div>
       </motion.form>
     </div>
-  )
-}
+  );
+};
+
 export default BusinessRegistrationPage;

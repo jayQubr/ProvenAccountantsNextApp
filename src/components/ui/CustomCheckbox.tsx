@@ -1,4 +1,4 @@
-const CustomCheckbox = ({ label, name, checked, onChange, errors, disabled = false }: { label: string, name: string, checked: boolean, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void, errors?: string, disabled?: boolean }) => {
+const CustomCheckbox = ({ label, name, checked, onChange, errors, disabled = false }: { label: string, name: string, checked: boolean, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void, errors?: string, disabled?: any }) => {
     return (
         <div className="flex items-start">
             <div className="flex items-center gap-2 justify-center">
