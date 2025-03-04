@@ -1,20 +1,44 @@
 'use client';
 
-import { useState } from 'react'
+import { useState, useEffect, ChangeEvent, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { ArrowLeftIcon, PlusIcon, MinusIcon, UserPlusIcon, ChevronDownIcon, UserGroupIcon } from '@heroicons/react/24/outline'
 import { IdentificationIcon } from '@heroicons/react/24/outline'
 import { Disclosure } from '@headlessui/react'
-import CustomInput from '@/components/ui/CustomInput';
-import CustomCheckbox from '@/components/ui/CustomCheckbox';
-import PersonalInformation from '@/components/features/PersonaInformation';
+import { toast, Toaster } from 'sonner'
+import useStore from '@/utils/useStore'
+import CustomInput from '@/components/ui/CustomInput'
+import CustomCheckbox from '@/components/ui/CustomCheckbox'
+import PersonalInformation from '@/components/features/PersonaInformation'
+import LoadingSpinner from '@/components/features/LoadingSpinner'
+import SubmitButton from '@/components/features/SubmitButton'
+import RegistrationStatusBanner from '@/components/features/RegistrationStatusBanner'
+import { 
+  submitCompanyRegistration, 
+  checkExistingCompanyRegistration,
+  AuthorizedPerson,
+  CompanyRegistrationData
+} from '@/lib/companyRegistratinoService'
+
+interface CompanyFormData {
+  address: string;
+  postalCode: string;
+  taxFileNumber: string;
+  authorizedPersons: AuthorizedPerson[];
+  agreeToDeclaration: boolean;
+  position: string;
+}
 
 const CompanyRegistration = () => {
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [loading, setLoading] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [existingRegistration, setExistingRegistration] = useState<(CompanyRegistrationData & { id: string }) | null>(null)
   const router = useRouter()
+  const { user } = useStore()
 
-  const [companyData, setCompanyData] = useState<any>({
+  const [companyData, setCompanyData] = useState<CompanyFormData>({
     address: '',
     postalCode: '',
     taxFileNumber: '',
@@ -23,18 +47,96 @@ const CompanyRegistration = () => {
     position: ''
   })
 
-  const handleChange = (e: any, index: number) => {
-    const { name, value, type } = e.target
-    let updatedAuthorizedPersons:any = [...companyData.authorizedPersons]
-    updatedAuthorizedPersons[index][name] = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
-    setCompanyData((prev:any) => ({
+  useEffect(() => {
+    const checkRegistration = async () => {
+      if (!user?.uid) return
+      
+      setLoading(true)
+      try {
+        const result = await checkExistingCompanyRegistration(user.uid)
+        if (result.exists && result.data) {
+          setExistingRegistration(result.data)
+          
+          // Pre-fill form with existing data
+          setCompanyData({
+            address: result.data.address || '',
+            postalCode: result.data.postalCode || '',
+            taxFileNumber: result.data.taxFileNumber || '',
+            authorizedPersons: result.data.authorizedPersons || [],
+            agreeToDeclaration: result.data.agreeToDeclaration || false,
+            position: result.data.position || ''
+          })
+        } else {
+          // Initialize with one empty authorized person
+          setCompanyData(prev => ({
+            ...prev,
+            authorizedPersons: [
+              {
+                fullName: '',
+                email: '',
+                dateOfBirth: '',
+                phone: '',
+                address: '',
+                postalCode: '',
+                taxFileNumber: '',
+                position: ''
+              }
+            ]
+          }))
+        }
+      } catch (error) {
+        console.error('Error checking registration:', error)
+        toast.error('Failed to check existing registration')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    checkRegistration()
+  }, [user])
+
+  const handleChange = (e: any) => {
+    const { name, value, type, checked } = e.target
+    setCompanyData(prev => ({
       ...prev,
-      authorizedPersons: updatedAuthorizedPersons
+      [name]: type === 'checkbox' ? checked : value
     }))
+    
+    // Clear error when field is edited
+    if (errors[name]) {
+      setErrors(prev => {
+        const newErrors = { ...prev }
+        delete newErrors[name]
+        return newErrors
+      })
+    }
+  }
+
+  const handlePersonChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>, index: number) => {
+    const { name, value } = e.target
+    
+    setCompanyData(prev => ({
+      ...prev,
+      authorizedPersons: prev.authorizedPersons.map((person, i) => {
+        if (i === index) {
+          return { ...person, [name]: value }
+        }
+        return person
+      })
+    }))
+    
+    // Clear error when field is edited
+    if (errors[`authorizedPersons.${index}.${name}`]) {
+      setErrors(prev => {
+        const newErrors = { ...prev }
+        delete newErrors[`authorizedPersons.${index}.${name}`]
+        return newErrors
+      })
+    }
   }
 
   const addAuthorizedPerson = () => {
-    setCompanyData((prev:any) => ({
+    setCompanyData(prev => ({
       ...prev,
       authorizedPersons: [
         ...prev.authorizedPersons,
@@ -53,35 +155,12 @@ const CompanyRegistration = () => {
   }
 
   const removeAuthorizedPerson = (index: number) => {
-    const updatedAuthorizedPersons = companyData.authorizedPersons.filter((_:any, i:number) => i !== index)
-    setCompanyData((prev:any) => ({
+    const updatedAuthorizedPersons = companyData.authorizedPersons.filter((_, i) => i !== index)
+    setCompanyData(prev => ({
       ...prev,
       authorizedPersons: updatedAuthorizedPersons
     }))
   }
-
-  const handlePersonChange = (e: any, index: number) => {
-    const { name, value } = e.target;
-    
-    setCompanyData((prev:any) => ({
-      ...prev,
-      authorizedPersons: prev.authorizedPersons.map((person:any, i:number) => {
-        if (i === index) {
-          return { ...person, [name]: value };
-        }
-        return person;
-      })
-    }));
-    
-    // Clear error when field is edited
-    if (errors[`authorizedPersons.${index}.${name}`]) {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[`authorizedPersons.${index}.${name}`];
-        return newErrors;
-      });
-    }
-  };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
@@ -100,37 +179,90 @@ const CompanyRegistration = () => {
       newErrors.taxFileNumber = 'Tax file number is required'
     }
 
-    if (!companyData.postalCode.trim()) {
-      newErrors.postalCode = 'Postal code is required'
-    } else if (!/^\d{4}$/.test(companyData.postalCode)) {
-      newErrors.postalCode = 'Postal code must be 4 digits'
-    }
-
     if (!companyData.agreeToDeclaration) {
       newErrors.agreeToDeclaration = 'You must agree to the declaration'
     }
+
+    // Validate authorized persons
+    companyData.authorizedPersons.forEach((person, index) => {
+      if (!person.fullName.trim()) {
+        newErrors[`authorizedPersons.${index}.fullName`] = 'Full name is required'
+      }
+      
+      if (!person.email.trim()) {
+        newErrors[`authorizedPersons.${index}.email`] = 'Email is required'
+      } else if (!/\S+@\S+\.\S+/.test(person.email)) {
+        newErrors[`authorizedPersons.${index}.email`] = 'Email is invalid'
+      }
+      
+      if (!person.position) {
+        newErrors[`authorizedPersons.${index}.position`] = 'Position is required'
+      }
+    })
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
 
     if (!validateForm()) return
+    if (!user?.uid) {
+      toast.error('You must be logged in to submit a registration')
+      return
+    }
 
+    setSubmitting(true)
     try {
-      // Simulate API call
-      alert('Company registration submitted successfully!')
-      router.push('/services')
+      const registrationData = {
+        ...companyData,
+        userId: user.uid,
+        userEmail: user.email || '',
+        userName: user.displayName || '',
+        status: existingRegistration?.status || 'pending'
+      };
+      
+      const result = await submitCompanyRegistration(registrationData)
+      
+      if (result.success) {
+        toast.success('Company registration submitted successfully!')
+        
+        // Refresh the registration data
+        const updatedResult = await checkExistingCompanyRegistration(user.uid)
+        if (updatedResult.exists && updatedResult.data) {
+          setExistingRegistration(updatedResult.data)
+        }
+        
+        if (!existingRegistration) {
+          // If this was a new submission, wait a moment then redirect
+          setTimeout(() => {
+            router.push('/services')
+          }, 2000)
+        }
+      } else {
+        toast.error('Failed to submit registration. Please try again.')
+      }
     } catch (error) {
       console.error('Error submitting form:', error)
-      alert('There was an error submitting your request. Please try again.')
+      toast.error('There was an error submitting your request. Please try again.')
+    } finally {
+      setSubmitting(false)
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <LoadingSpinner size="lg" />
+      </div>
+    )
   }
 
   return (
     <div className="container mx-auto px-2 py-4 md:px-4 md:py-8 w-full md:max-w-3xl">
+
+
       {/* Header */}
       <motion.div 
         className="mb-6"
@@ -158,6 +290,18 @@ const CompanyRegistration = () => {
         </p>
       </motion.div>
       
+      {/* Registration Status Banner */}
+      {existingRegistration && (
+        <RegistrationStatusBanner 
+          title="Company Registration"
+          status={existingRegistration?.status} 
+          notes={existingRegistration?.notes}
+          createdAt={existingRegistration?.createdAt}
+          updatedAt={existingRegistration?.updatedAt}
+          type="company"
+        />
+      )}
+      
       {/* Form */}
       <motion.form 
         onSubmit={handleSubmit}
@@ -171,17 +315,58 @@ const CompanyRegistration = () => {
           <div>
             <PersonalInformation title="Authorised Person Details"/>
             <div className="space-y-4 mt-4">
-              <CustomInput label="Address" type="text" name="address" value={companyData.address} onChange={(e) => handleChange(e, 0)} errors={errors.address} placeholder="Enter your postal address" />
-              <CustomInput label="Postal Code" type="text" name="postalCode" value={companyData.postalCode} onChange={(e) => handleChange(e, 0)} errors={errors.postalCode} placeholder="Enter your postal code" />
-              <CustomInput label="Text File Number" type="text" name="taxFileNumber" value={companyData.taxFileNumber} onChange={(e) => handleChange(e, 0)} errors={errors.taxFileNumber} placeholder="Enter your tax file number" />
+              <CustomInput 
+                label="Address" 
+                type="text" 
+                name="address" 
+                value={companyData.address} 
+                onChange={handleChange} 
+                errors={errors.address} 
+                placeholder="Enter your postal address" 
+                disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
+              />
+              <CustomInput 
+                label="Postal Code" 
+                type="text" 
+                name="postalCode" 
+                value={companyData.postalCode} 
+                onChange={handleChange} 
+                errors={errors.postalCode} 
+                placeholder="Enter your postal code" 
+                disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
+              />
+              <CustomInput 
+                label="Tax File Number" 
+                type="text" 
+                name="taxFileNumber" 
+                value={companyData.taxFileNumber} 
+                onChange={handleChange} 
+                errors={errors.taxFileNumber} 
+                placeholder="Enter your tax file number" 
+                disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
+              />
             </div>
           </div>
 
           {/* Position in Company */}
           <div>
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Position in Company</h2>
-            <CustomCheckbox label="Director" name="position" checked={companyData.position === 'Director'} onChange={(e) => handleChange(e, 0)} />
-            <CustomCheckbox label="Shareholder" name="position" checked={companyData.position === 'Shareholder'} onChange={(e) => handleChange(e, 0)} />
+            <div className="space-y-2">
+              <CustomCheckbox 
+                label="Director" 
+                name="position" 
+                checked={companyData.position === 'Director'} 
+                onChange={() => setCompanyData(prev => ({ ...prev, position: 'Director' }))} 
+                disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
+              />
+              <CustomCheckbox 
+                label="Shareholder" 
+                name="position" 
+                checked={companyData.position === 'Shareholder'} 
+                onChange={() => setCompanyData(prev => ({ ...prev, position: 'Shareholder' }))} 
+                disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
+              />
+            </div>
           </div>
 
           {/* Authorized Persons Section */}
@@ -197,9 +382,9 @@ const CompanyRegistration = () => {
               Add details of all individuals who are authorized to act on behalf of the company.
             </p>
             
-            {companyData.authorizedPersons.length > 0 ? (
+            {companyData.authorizedPersons && companyData.authorizedPersons.length > 0 ? (
               <div className="space-y-4 mb-4">
-                {companyData.authorizedPersons.map((person:any, index:number) => (
+                {companyData.authorizedPersons.map((person, index) => (
                   <Disclosure key={index} defaultOpen={true}>
                     {({ open }) => (
                       <div className="border border-gray-200 rounded-lg overflow-hidden">
@@ -225,9 +410,10 @@ const CompanyRegistration = () => {
                               type="text" 
                               name="fullName" 
                               value={person.fullName} 
-                              onChange={(e) => handlePersonChange(e, index)} 
+                              onChange={(e:any) => handlePersonChange(e, index)} 
                               errors={errors[`authorizedPersons.${index}.fullName`]} 
                               placeholder="Enter full name" 
+                              disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
                             />
                             
                             <CustomInput 
@@ -235,9 +421,10 @@ const CompanyRegistration = () => {
                               type="email" 
                               name="email" 
                               value={person.email} 
-                              onChange={(e) => handlePersonChange(e, index)} 
+                              onChange={(e:any) => handlePersonChange(e, index)} 
                               errors={errors[`authorizedPersons.${index}.email`]} 
                               placeholder="Enter email address" 
+                              disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
                             />
                             
                             <CustomInput 
@@ -245,8 +432,9 @@ const CompanyRegistration = () => {
                               type="date" 
                               name="dateOfBirth" 
                               value={person.dateOfBirth} 
-                              onChange={(e) => handlePersonChange(e, index)} 
+                              onChange={(e:any) => handlePersonChange(e, index)} 
                               errors={errors[`authorizedPersons.${index}.dateOfBirth`]} 
+                              disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
                             />
                             
                             <CustomInput 
@@ -254,9 +442,10 @@ const CompanyRegistration = () => {
                               type="tel" 
                               name="phone" 
                               value={person.phone} 
-                              onChange={(e) => handlePersonChange(e, index)} 
+                              onChange={(e:any) => handlePersonChange(e, index)} 
                               errors={errors[`authorizedPersons.${index}.phone`]} 
                               placeholder="Enter phone number" 
+                              disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
                             />
                             
                             <div className="md:col-span-2">
@@ -265,9 +454,10 @@ const CompanyRegistration = () => {
                                 type="text" 
                                 name="address" 
                                 value={person.address} 
-                                onChange={(e) => handlePersonChange(e, index)} 
+                                onChange={(e:any) => handlePersonChange(e, index)} 
                                 errors={errors[`authorizedPersons.${index}.address`]} 
                                 placeholder="Enter address" 
+                                disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
                               />
                             </div>
                             
@@ -276,10 +466,11 @@ const CompanyRegistration = () => {
                               type="text" 
                               name="postalCode" 
                               value={person.postalCode} 
-                              onChange={(e) => handlePersonChange(e, index)} 
+                              onChange={(e:any) => handlePersonChange(e, index)} 
                               errors={errors[`authorizedPersons.${index}.postalCode`]} 
                               placeholder="Enter postal code" 
                               maxLength={4}
+                              disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
                             />
                             
                             <CustomInput 
@@ -287,9 +478,10 @@ const CompanyRegistration = () => {
                               type="text" 
                               name="taxFileNumber" 
                               value={person.taxFileNumber} 
-                              onChange={(e) => handlePersonChange(e, index)} 
+                              onChange={(e:any) => handlePersonChange(e, index)} 
                               errors={errors[`authorizedPersons.${index}.taxFileNumber`]} 
                               placeholder="Enter TFN" 
+                              disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
                             />
                             
                             <div className="md:col-span-2">
@@ -300,8 +492,9 @@ const CompanyRegistration = () => {
                                 id={`position-${index}`}
                                 name="position"
                                 value={person.position}
-                                onChange={(e) => handlePersonChange(e, index)}
+                                onChange={(e:any) => handlePersonChange(e, index)}
                                 className="w-full px-4 py-2 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+                                disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
                               >
                                 <option value="">Select position</option>
                                 <option value="Director">Director</option>
@@ -318,16 +511,18 @@ const CompanyRegistration = () => {
                             </div>
                           </div>
                           
-                          <div className="mt-4 pt-3 border-t border-gray-100 flex justify-end">
-                            <button
-                              type="button"
-                              onClick={() => removeAuthorizedPerson(index)}
-                              className="px-4 py-2 flex items-center text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
-                            >
-                              <MinusIcon className="w-4 h-4 mr-1" />
-                              Remove Person
-                            </button>
-                          </div>
+                          {existingRegistration?.status !== 'completed' && existingRegistration?.status !== 'in-progress' && (
+                            <div className="mt-4 pt-3 border-t border-gray-100 flex justify-end">
+                              <button
+                                type="button"
+                                onClick={() => removeAuthorizedPerson(index)}
+                                className="px-4 py-2 flex items-center text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                              >
+                                <MinusIcon className="w-4 h-4 mr-1" />
+                                Remove Person
+                              </button>
+                            </div>
+                          )}
                         </Disclosure.Panel>
                       </div>
                     )}
@@ -346,14 +541,16 @@ const CompanyRegistration = () => {
               </div>
             )}
             
-            <button
-              type="button"
-              onClick={addAuthorizedPerson}
-              className="w-full flex items-center justify-center px-4 py-3 bg-sky-500 hover:bg-sky-600 text-white rounded-lg transition-colors"
-            >
-              <PlusIcon className="w-5 h-5 mr-2" />
-              Add Authorized Person
-            </button>
+            {existingRegistration?.status !== 'completed' && existingRegistration?.status !== 'in-progress' && (
+              <button
+                type="button"
+                onClick={addAuthorizedPerson}
+                className="w-full flex items-center justify-center px-4 py-3 bg-sky-500 hover:bg-sky-600 text-white rounded-lg transition-colors"
+              >
+                <PlusIcon className="w-5 h-5 mr-2" />
+                Add Authorized Person
+              </button>
+            )}
           </div>
 
           {/* Declaration */}
@@ -371,7 +568,14 @@ const CompanyRegistration = () => {
               <li>The information supplied is accurate and complete to the best of my knowledge, and any false information provided may lead to penalties under applicable acts, rules, and regulations.</li>
               <li>All the persons mentioned in the application have consented to act for the respective roles.</li>
             </ol>
-            <CustomCheckbox label="Authorisation Approval Provided" name="agreeToDeclaration" checked={companyData.agreeToDeclaration} onChange={(e) => handleChange(e, 0)} />
+            <CustomCheckbox 
+              label="Authorisation Approval Provided" 
+              name="agreeToDeclaration" 
+              checked={companyData.agreeToDeclaration} 
+              onChange={handleChange} 
+              errors={errors.agreeToDeclaration}
+              disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
+            />
           </div>
         </div>
 
@@ -385,12 +589,14 @@ const CompanyRegistration = () => {
             Cancel
           </button>
           
-          <button
-            type="submit"
-            className="px-6 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-colors"
-          >
-            Submit Registration
-          </button>
+          {existingRegistration?.status !== 'completed' && existingRegistration?.status !== 'in-progress' && (
+            <SubmitButton
+              isSubmitting={submitting}
+              defaultText="Submit Registration"
+              pendingText="Submitting..."
+              rejectedText="Resubmit Registration"
+            />
+          )}
         </div>
       </motion.form>
     </div>
