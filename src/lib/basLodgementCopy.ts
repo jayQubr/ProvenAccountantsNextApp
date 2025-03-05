@@ -7,10 +7,9 @@ import {
 } from './registrationService';
 
 export interface BASLodgementData {
-    year: string;
+    quarter: string;
     details: string;
     userId?: string;
-    userEmail?: string;
     userName?: string;
     status?: 'pending' | 'in-progress' | 'completed' | 'rejected';
     createdAt?: number;

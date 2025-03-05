@@ -13,23 +13,17 @@ import useStore from '@/utils/useStore';
 import RegistrationStatusBanner from '@/components/features/RegistrationStatusBanner';
 import CustomCheckbox from '@/components/ui/CustomCheckbox';
 import { RegistrationStatus } from '@/lib/registrationService';
+import SkeletonLoader from '@/components/ui/SkeletonLoader';
 
 interface BASLodgementData {
   quarter: string;
   details: string;
   agreeToDeclaration?: boolean;
   userId?: string;
-  userEmail?: string;
-  userName?: string;
   status?: 'pending' | 'in-progress' | 'completed' | 'rejected';
   createdAt?: number;
   updatedAt?: number;
   notes?: string;
-  user?: {
-    phone?: string;
-    address?: string;
-    [key: string]: any;
-  };
 }
 
 const BASLodgementCopy = () => {
@@ -125,17 +119,12 @@ const BASLodgementCopy = () => {
         throw new Error('User ID is undefined');
       }
 
+      // Only send essential data to the API
       const basLodgementData = {
-        ...basData,
-        userId: userId,
-        userEmail: user.email || '',
-        userName: user.displayName || user.firstName || '',
-        status: 'pending' as const,
-        user: {
-          phone: user.phone || '',
-          address: user.address || '',
-          ...user
-        }
+        quarter: basData.quarter,
+        details: basData.details,
+        agreeToDeclaration: basData.agreeToDeclaration,
+        userId: userId
       };
 
       const response = await fetch('/api/bas-lodgement-copy', {
@@ -170,7 +159,7 @@ const BASLodgementCopy = () => {
     }
   };
 
-  if (loading) return <div className="flex justify-center items-center h-64"><LoadingSpinner size="lg" /></div>;
+  if (loading) return <SkeletonLoader />;
 
   return (
     <div className="container mx-auto px-2 py-4 md:px-4 md:py-8 w-full md:max-w-3xl">

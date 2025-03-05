@@ -20,14 +20,25 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             return res.status(400).json({ success: false, message: 'Missing BAS lodgement data or user ID' });
         }
 
+        // Prepare data for storage - only store essential information
+        const dataToStore = {
+            quarter: basLodgementData.quarter,
+            details: basLodgementData.details,
+            agreeToDeclaration: basLodgementData.agreeToDeclaration,
+            userId: basLodgementData.userId,
+            status: 'pending' as const,
+            createdAt: Date.now(),
+            updatedAt: Date.now()
+        };
+
         // Submit to database
-        const result = await submitBASLodgement(basLodgementData);
+        const result = await submitBASLodgement(dataToStore);
 
         if (!result.success) {
             return res.status(500).json({ success: false, message: 'Failed to submit BAS lodgement copy request' });
         }
 
-        // Send email notification using the reusable service
+        // Send email with the necessary information
         await sendServiceRequestEmails({
             ...basLodgementData,
             serviceType: 'BAS Lodgement Copy'
