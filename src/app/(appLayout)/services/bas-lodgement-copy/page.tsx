@@ -4,11 +4,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ArrowLeftIcon, IdentificationIcon } from '@heroicons/react/24/outline';
-import { Toaster, toast } from 'sonner';
+import { toast } from 'sonner';
 import CustomInput from '@/components/ui/CustomInput';
 import SubmitButton from '@/components/features/SubmitButton';
 import { checkExistingBASLodgement } from '@/lib/basLodgementCopy';
-import LoadingSpinner from '@/components/features/LoadingSpinner';
 import useStore from '@/utils/useStore';
 import RegistrationStatusBanner from '@/components/features/RegistrationStatusBanner';
 import CustomCheckbox from '@/components/ui/CustomCheckbox';
@@ -163,8 +162,6 @@ const BASLodgementCopy = () => {
 
   return (
     <div className="container mx-auto px-2 py-4 md:px-4 md:py-8 w-full md:max-w-3xl">
-      <Toaster richColors position="top-right" />
-
       <motion.div className="mb-6" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
         <button onClick={() => router.back()} className="flex items-center text-sky-600 hover:text-sky-700 mb-4">
           <ArrowLeftIcon className="w-4 h-4 mr-2" /><span>Back to Services</span>

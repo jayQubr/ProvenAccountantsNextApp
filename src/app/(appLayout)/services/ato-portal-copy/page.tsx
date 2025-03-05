@@ -7,18 +7,16 @@ import { ArrowLeftIcon, IdentificationIcon } from '@heroicons/react/24/outline';
 import { Toaster, toast } from 'sonner';
 import CustomInput from '@/components/ui/CustomInput';
 import SubmitButton from '@/components/features/SubmitButton';
-import { checkExistingATOPortal, submitATOPortal } from '@/lib/atoPortalService';
-import LoadingSpinner from '@/components/features/LoadingSpinner';
+import { checkExistingATOPortal } from '@/lib/atoPortalService';
 import useStore from '@/utils/useStore';
 import RegistrationStatusBanner from '@/components/features/RegistrationStatusBanner';
 import { RegistrationStatus } from '@/lib/registrationService';
+import SkeletonLoader from '@/components/ui/SkeletonLoader';
 
 interface ATOPortalData {
   period: string;
   details: string;
   userId?: string;
-  userEmail?: string;
-  userName?: string;
   status?: 'pending' | 'in-progress' | 'completed' | 'rejected';
   createdAt?: number;
   updatedAt?: number;
@@ -113,21 +111,34 @@ const ATOPortalCopy = () => {
         throw new Error('User ID is undefined');
       }
 
-      const submissionData = {
-        ...atoData,
-        userId: userId,
-        userEmail: user.email || '',
-        userName: user.name || '',
-        status: 'pending' as const,
+      // Only send essential data to the API
+      const atoPortalData = {
+        period: atoData.period,
+        details: atoData.details,
+        userId: userId
       };
 
-      const result = await submitATOPortal(submissionData);
+      const response = await fetch('/api/ato-portal-copy', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ atoPortalData }),
+      });
+
+      const result = await response.json();
 
       if (result.success) {
         toast.success('ATO Portal Copy submitted successfully!', { style: { background: '#10B981', color: 'white' } });
+        
+        const updatedResult = await checkExistingATOPortal(userId);
+        if (updatedResult.exists && updatedResult.data) {
+          setExistingATO(updatedResult.data);
+        }
+        
         setTimeout(() => router.push('/services'), 2000);
       } else {
-        throw new Error('Failed to submit');
+        toast.error(result.message || 'Failed to submit ATO Portal Copy. Please try again.');
       }
     } catch (error) {
       console.error('Submission error:', error);
@@ -137,12 +148,10 @@ const ATOPortalCopy = () => {
     }
   };
 
-  if (loading) return <div className="flex justify-center items-center h-64"><LoadingSpinner size="lg" /></div>;
+  if (loading) return <SkeletonLoader />;
 
   return (
     <div className="container mx-auto px-2 py-4 md:px-4 md:py-8 w-full md:max-w-3xl">
-      <Toaster richColors position="top-right" />
-
       <motion.div className="mb-6" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
         <button onClick={() => router.back()} className="flex items-center text-sky-600 hover:text-sky-700 mb-4">
           <ArrowLeftIcon className="w-4 h-4 mr-2" /><span>Back to Services</span>
@@ -162,6 +171,7 @@ const ATOPortalCopy = () => {
           status={existingATO.status as RegistrationStatus}
           title="ATO Portal Copy"
           createdAt={existingATO.createdAt}
+          updatedAt={existingATO.updatedAt}
           notes={existingATO.notes as string}
           type="ATO Portal Copy"
         />
@@ -178,6 +188,7 @@ const ATOPortalCopy = () => {
             onChange={handleChange}
             errors={errors.period}
             placeholder="Enter the period"
+            disabled={existingATO?.status === 'completed' || existingATO?.status === 'in-progress'}
           />
           <CustomInput
             label="Details *"
@@ -187,6 +198,7 @@ const ATOPortalCopy = () => {
             onChange={handleChange}
             errors={errors.details}
             placeholder="Enter details"
+            disabled={existingATO?.status === 'completed' || existingATO?.status === 'in-progress'}
           />
         </div>
 
@@ -195,14 +207,16 @@ const ATOPortalCopy = () => {
             Cancel
           </button>
 
-          <SubmitButton
-            isSubmitting={submitting}
-            defaultText="Submit ATO Portal Copy"
-            pendingText="Submitting..."
-            rejectedText="Resubmit ATO Portal Copy"
-            status={existingATO?.status as RegistrationStatus}
-            disabled={existingATO?.status === 'completed'}
-          />
+          {existingATO?.status !== 'completed' && existingATO?.status !== 'in-progress' && (
+            <SubmitButton
+              isSubmitting={submitting}
+              defaultText="Submit ATO Portal Copy"
+              pendingText="Update Request"
+              rejectedText="Resubmit Request"
+              completedText="Already Submitted"
+              status={existingATO?.status}
+            />
+          )}
         </div>
       </motion.form>
     </div>
