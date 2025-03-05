@@ -443,12 +443,29 @@ const ATORegistrationPage = () => {
             {/* Conditional ABN fields */}
             {formData.abn.selected && (
               <div className="mb-6 p-5 bg-white rounded-lg border border-gray-200 shadow-sm">
-                <h3 className="text-md font-medium text-gray-800 mb-4 flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                  </svg>
-                  ABN Registration Details
-                </h3>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-md font-medium text-gray-800 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    ABN Registration Details
+                  </h3>
+                  
+                  {/* Remove button */}
+                  {existingRegistration?.status !== 'in-progress' && existingRegistration?.status !== 'completed' && (
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, abn: { ...prev.abn, selected: false } }))}
+                      className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                      Remove
+                    </button>
+                  )}
+                </div>
+                
                 <div className="space-y-4">
                   <CustomInput 
                     label="Nature of Business Activity" 
@@ -484,12 +501,29 @@ const ATORegistrationPage = () => {
             {/* Conditional GST fields */}
             {formData.gst.selected && (
               <div className="mb-6 p-5 bg-white rounded-lg border border-gray-200 shadow-sm">
-                <h3 className="text-md font-medium text-gray-800 mb-4 flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  GST Registration Details
-                </h3>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-md font-medium text-gray-800 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    GST Registration Details
+                  </h3>
+                  
+                  {/* Remove button */}
+                  {existingRegistration?.status !== 'in-progress' && existingRegistration?.status !== 'completed' && (
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, gst: { ...prev.gst, selected: false } }))}
+                      className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                      Remove
+                    </button>
+                  )}
+                </div>
+                
                 <div className="space-y-4">
                   <CustomInput 
                     label="Approximate Annual Income/Sales (AUD)" 
@@ -579,12 +613,29 @@ const ATORegistrationPage = () => {
             {/* Conditional Fuel Tax Credit fields */}
             {formData.fuelTaxCredit.selected && (
               <div className="mb-6 p-5 bg-white rounded-lg border border-gray-200 shadow-sm">
-                <h3 className="text-md font-medium text-gray-800 mb-4 flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  Fuel Tax Credit Details
-                </h3>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-md font-medium text-gray-800 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Fuel Tax Credit Details
+                  </h3>
+                  
+                  {/* Remove button */}
+                  {existingRegistration?.status !== 'in-progress' && existingRegistration?.status !== 'completed' && (
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, fuelTaxCredit: { ...prev.fuelTaxCredit, selected: false } }))}
+                      className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                      Remove
+                    </button>
+                  )}
+                </div>
+                
                 <p className="text-sm text-gray-600 mb-4">Select all that apply to your business:</p>
                 
                 <div className="space-y-3">
@@ -687,6 +738,76 @@ const ATORegistrationPage = () => {
               </div>
             )}
           </div>
+
+          {/* Add unselected options section */}
+          {(formData.abn.selected || formData.gst.selected || formData.fuelTaxCredit.selected) && 
+            existingRegistration?.status !== 'in-progress' && existingRegistration?.status !== 'completed' && (
+            <div className="mb-6 p-5 bg-white rounded-lg border border-gray-200 shadow-sm">
+              <h3 className="text-md font-medium text-gray-800 mb-4">Add More Registration Options</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Show ABN option if not selected */}
+                {!formData.abn.selected && (
+                  <div 
+                    className="rounded-lg border border-gray-200 p-4 cursor-pointer hover:border-sky-500 hover:bg-sky-50 transition-all duration-200"
+                    onClick={() => setFormData(prev => ({ ...prev, abn: { ...prev.abn, selected: true } }))}
+                  >
+                    <div className="flex items-center">
+                      <div className="w-10 h-10 rounded-lg bg-sky-100 flex items-center justify-center mr-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-gray-900">ABN Registration</h4>
+                        <p className="text-xs text-gray-500">Add Australian Business Number registration</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Show GST option if not selected */}
+                {!formData.gst.selected && (
+                  <div 
+                    className="rounded-lg border border-gray-200 p-4 cursor-pointer hover:border-sky-500 hover:bg-sky-50 transition-all duration-200"
+                    onClick={() => setFormData(prev => ({ ...prev, gst: { ...prev.gst, selected: true } }))}
+                  >
+                    <div className="flex items-center">
+                      <div className="w-10 h-10 rounded-lg bg-sky-100 flex items-center justify-center mr-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-gray-900">GST Registration</h4>
+                        <p className="text-xs text-gray-500">Add Goods and Services Tax registration</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Show Fuel Tax Credit option if not selected */}
+                {!formData.fuelTaxCredit.selected && (
+                  <div 
+                    className="rounded-lg border border-gray-200 p-4 cursor-pointer hover:border-sky-500 hover:bg-sky-50 transition-all duration-200"
+                    onClick={() => setFormData(prev => ({ ...prev, fuelTaxCredit: { ...prev.fuelTaxCredit, selected: true } }))}
+                  >
+                    <div className="flex items-center">
+                      <div className="w-10 h-10 rounded-lg bg-sky-100 flex items-center justify-center mr-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-gray-900">Fuel Tax Credit</h4>
+                        <p className="text-xs text-gray-500">Add Fuel Tax Credit registration</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Declaration */}
           <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
