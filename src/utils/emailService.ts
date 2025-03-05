@@ -24,6 +24,19 @@ interface ServiceRequestData {
   authorizedPersons?: any[];
   status?: string;
   user?: any;
+  // ATO Registration fields
+  abn?: boolean;
+  gst?: boolean;
+  fuelTaxCredit?: boolean;
+  businessActivity?: string;
+  abnRegistrationDate?: string;
+  businessAddress?: string;
+  annualIncome?: string;
+  gstRegistrationDate?: string;
+  accountingMethod?: string;
+  hasTrucks?: boolean;
+  hasMachinery?: boolean;
+  hasAgriculture?: boolean;
   serviceType: 
     | 'Notice of Assessment' 
     | 'Tax Return Copy' 
@@ -32,7 +45,8 @@ interface ServiceRequestData {
     | 'ATO Portal Copy' 
     | 'Payment Plan'
     | 'Trust Registration'
-    | 'Company Registration';
+    | 'Company Registration'
+    | 'ATO Registration';
 }
 
 /**
@@ -70,6 +84,41 @@ export const sendServiceRequestEmails = async (data: ServiceRequestData): Promis
         emailData.year = 'N/A'; // Not applicable for payment plans
         emailData.details = `Plan Type: ${data.planType}\nAmount: $${data.amount}\n${data.details || ''}`;
         break;
+      case 'ATO Registration':
+        emailData.year = 'N/A'; // Not applicable for ATO registrations
+        
+        // Build details string for ATO registration
+        let atoDetails = '';
+        
+        if (data.abn) {
+          atoDetails += 'ABN Registration: Yes\n';
+          if (data.businessActivity) atoDetails += `Business Activity: ${data.businessActivity}\n`;
+          if (data.abnRegistrationDate) atoDetails += `ABN Registration Date: ${data.abnRegistrationDate}\n`;
+          if (data.businessAddress) atoDetails += `Business Address: ${data.businessAddress}\n`;
+        } else {
+          atoDetails += 'ABN Registration: No\n';
+        }
+        
+        if (data.gst) {
+          atoDetails += 'GST Registration: Yes\n';
+          if (data.annualIncome) atoDetails += `Annual Income: ${data.annualIncome}\n`;
+          if (data.gstRegistrationDate) atoDetails += `GST Registration Date: ${data.gstRegistrationDate}\n`;
+          if (data.accountingMethod) atoDetails += `Accounting Method: ${data.accountingMethod}\n`;
+        } else {
+          atoDetails += 'GST Registration: No\n';
+        }
+        
+        if (data.fuelTaxCredit) {
+          atoDetails += 'Fuel Tax Credit: Yes\n';
+          if (data.hasTrucks) atoDetails += '- Has vehicles over 4.5 tonnes\n';
+          if (data.hasMachinery) atoDetails += '- Has machinery using fuel\n';
+          if (data.hasAgriculture) atoDetails += '- Has agricultural/poultry/fishery work\n';
+        } else {
+          atoDetails += 'Fuel Tax Credit: No\n';
+        }
+        
+        emailData.details = atoDetails;
+        break;
       case 'Trust Registration':
         emailData.year = 'N/A'; // Not applicable for trust registrations
         // If details is not provided, generate it from the trust data
@@ -94,7 +143,7 @@ ${authorizedPersonsDetails}
         }
         break;
       case 'Company Registration':
-        emailData.year = 'N/A'; // Not applicable for company registrations
+        emailData.year = 'N/A';
         // If details is not provided, generate it from the company data
         if (!emailData.details) {
           const authorizedPersonsDetails = data.authorizedPersons && data.authorizedPersons.length > 0
@@ -103,15 +152,15 @@ ${authorizedPersonsDetails}
               ).join('\n')
             : 'No authorized persons added';
 
-          emailData.details = `
-Company Name: ${data.companyName}
-Company Type: ${data.companyType}
-Address: ${data.address}
-Postal Code: ${data.postalCode}
-Tax File Number: ${data.taxFileNumber}
+            emailData.details = `
+                Company Name: ${data.companyName}
+                Company Type: ${data.companyType}
+                Address: ${data.address}
+                Postal Code: ${data.postalCode}
+                Tax File Number: ${data.taxFileNumber}
 
-Authorized Persons:
-${authorizedPersonsDetails}
+                Authorized Persons:
+                ${authorizedPersonsDetails}
           `;
         }
         break;
@@ -140,6 +189,8 @@ ${authorizedPersonsDetails}
           return `New Trust Registration Request: ${clientName}`;
         case 'Company Registration':
           return `New Company Registration Request: ${clientName}`;
+        case 'ATO Registration':
+          return `New ATO Registration Request: ${clientName}`;
         default:
           return `New Service Request: ${clientName}`;
       }
@@ -165,6 +216,8 @@ ${authorizedPersonsDetails}
           return `New Trust Registration request from ${clientName} for trust "${data.trustName}". Please check the details.`;
         case 'Company Registration':
           return `New Company Registration request from ${clientName} for company "${data.companyName}". Please check the details.`;
+        case 'ATO Registration':
+          return `New ATO Registration request from ${clientName}. Please check the details.`;
         default:
           return `New service request from ${clientName}. Please check the details.`;
       }
@@ -210,6 +263,9 @@ ${authorizedPersonsDetails}
           break;
         case 'Company Registration':
           confirmationText = `Thank you for submitting your company registration request for "${data.companyName}". We will process it shortly.`;
+          break;
+        case 'ATO Registration':
+          confirmationText = `Thank you for submitting your ATO registration request. We will process it shortly.`;
           break;
         default:
           confirmationText = `Thank you for submitting your service request. We will process it shortly.`;

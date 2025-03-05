@@ -213,14 +213,56 @@
                                                 <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">ABN Registration:</td>
                                                 <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{ABN}}</td>
                                             </tr>
+                                            {{#if ABN_DETAILS}}
+                                            <tr>
+                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Business Activity:</td>
+                                                <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{BUSINESS_ACTIVITY}}</td>
+                                            </tr>
+                                            <tr>
+                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Registration Date:</td>
+                                                <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{ABN_REGISTRATION_DATE}}</td>
+                                            </tr>
+                                            <tr>
+                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Business Address:</td>
+                                                <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{BUSINESS_ADDRESS}}</td>
+                                            </tr>
+                                            {{/if}}
                                             <tr>
                                                 <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">GST Registration:</td>
                                                 <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{GST}}</td>
                                             </tr>
+                                            {{#if GST_DETAILS}}
+                                            <tr>
+                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Annual Income:</td>
+                                                <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{ANNUAL_INCOME}}</td>
+                                            </tr>
+                                            <tr>
+                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Registration Date:</td>
+                                                <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{GST_REGISTRATION_DATE}}</td>
+                                            </tr>
+                                            <tr>
+                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Accounting Method:</td>
+                                                <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{ACCOUNTING_METHOD}}</td>
+                                            </tr>
+                                            {{/if}}
                                             <tr>
                                                 <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Fuel Tax Credit:</td>
                                                 <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{FUEL_TAX_CREDIT}}</td>
                                             </tr>
+                                            {{#if FUEL_TAX_DETAILS}}
+                                            <tr>
+                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Heavy Vehicles:</td>
+                                                <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{HAS_TRUCKS}}</td>
+                                            </tr>
+                                            <tr>
+                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Machinery:</td>
+                                                <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{HAS_MACHINERY}}</td>
+                                            </tr>
+                                            <tr>
+                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Agriculture:</td>
+                                                <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{HAS_AGRICULTURE}}</td>
+                                            </tr>
+                                            {{/if}}
                                         </table>
                                     </td>
                                 </tr>
@@ -264,7 +306,7 @@
                                 This is an automated email from Proven Accountants.
                             </p>
                             <p style="margin: 8px 0 0 0; color: #666666; font-size: 12px; line-height: 1.5;">
-                                &copy; 2025 Proven Accountants. All rights reserved.
+                                &copy; {{YEAR}} Proven Accountants. All rights reserved.
                             </p>
                         </td>
                     </tr>

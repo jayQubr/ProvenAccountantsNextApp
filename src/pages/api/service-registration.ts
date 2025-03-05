@@ -2,6 +2,7 @@ import { submitATORegistration } from "@/lib/atoRegistrationService";
 import { NextApiResponse, NextApiRequest } from "next";
 import nodemailer from 'nodemailer';
 import atoRegistrationEmail from "../../utils/template/atoRegistrationEmail";
+import { sendServiceRequestEmails } from "@/utils/emailService";
 
 export const config = {
     api: {
@@ -50,8 +51,35 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             html: htmlContent
         };
 
-        // Send email
-        await transporter.sendMail(mailOptions);
+        // Send email using the email service
+        try {
+            // Prepare data for email service
+            const serviceRequestData = {
+                userId: registrationData.userId,
+                userEmail: registrationData.userEmail,
+                userName: registrationData.userName,
+                serviceType: 'ATO Registration' as any,
+                status: registrationData.status,
+                // Include all ATO registration details with the new structure
+                postalAddress: registrationData.postalAddress,
+                postalCode: registrationData.postalCode,
+                abn: registrationData.abn,
+                gst: registrationData.gst,
+                fuelTaxCredit: registrationData.fuelTaxCredit
+            };
+
+            // Use the email service if available, otherwise fall back to direct email
+            if (typeof sendServiceRequestEmails === 'function') {
+                await sendServiceRequestEmails(serviceRequestData);
+            } else {
+                // Fall back to direct email
+                await transporter.sendMail(mailOptions);
+            }
+        } catch (emailError) {
+            console.error('Error sending email:', emailError);
+            // Continue with the registration process even if email fails
+            // Just log the error but don't return an error response
+        }
 
         // Return success response
         return res.status(200).json({ 

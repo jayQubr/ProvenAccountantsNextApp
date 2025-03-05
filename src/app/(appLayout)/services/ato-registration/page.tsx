@@ -22,9 +22,24 @@ const ATORegistrationPage = () => {
   const [formData, setFormData] = useState({
     postalAddress: '',
     postalCode: '',
-    abn: false,
-    gst: false,
-    fuelTaxCredit: false,
+    abn: {
+      selected: false,
+      businessActivity: '',
+      registrationDate: '',
+      businessAddress: ''
+    },
+    gst: {
+      selected: false,
+      annualIncome: '',
+      registrationDate: '',
+      accountingMethod: 'cash'
+    },
+    fuelTaxCredit: {
+      selected: false,
+      hasTrucks: false,
+      hasMachinery: false,
+      hasAgriculture: false
+    },
     agreeToDeclaration: false
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -45,9 +60,24 @@ const ATORegistrationPage = () => {
           setFormData({
             postalAddress: result.data.postalAddress || '',
             postalCode: result.data.postalCode || '',
-            abn: result.data.abn || false,
-            gst: result.data.gst || false,
-            fuelTaxCredit: result.data.fuelTaxCredit || false,
+            abn: {
+              selected: result.data.abn?.selected || false,
+              businessActivity: result.data.abn?.businessActivity || '',
+              registrationDate: result.data.abn?.registrationDate || '',
+              businessAddress: result.data.abn?.businessAddress || ''
+            },
+            gst: {
+              selected: result.data.gst?.selected || false,
+              annualIncome: result.data.gst?.annualIncome || '',
+              registrationDate: result.data.gst?.registrationDate || '',
+              accountingMethod: result.data.gst?.accountingMethod || 'cash'
+            },
+            fuelTaxCredit: {
+              selected: result.data.fuelTaxCredit?.selected || false,
+              hasTrucks: result.data.fuelTaxCredit?.hasTrucks || false,
+              hasMachinery: result.data.fuelTaxCredit?.hasMachinery || false,
+              hasAgriculture: result.data.fuelTaxCredit?.hasAgriculture || false
+            },
             agreeToDeclaration: true
           });
         }
@@ -66,10 +96,22 @@ const ATORegistrationPage = () => {
     const { name, value, type } = e.target;
     const checked = type === 'checkbox' ? (e.target as HTMLInputElement).checked : undefined;
 
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+    // Handle nested properties
+    if (name.includes('.')) {
+      const [parent, child] = name.split('.');
+      setFormData((prev:any) => ({
+        ...prev,
+        [parent]: {
+          ...prev[parent],
+          [child]: type === 'checkbox' ? checked : value
+        }
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value
+      }));
+    }
 
     // Clear error when field is edited
     if (errors[name]) {
@@ -92,6 +134,27 @@ const ATORegistrationPage = () => {
       newErrors.postalCode = 'Postal code is required';
     } else if (!/^\d{4}$/.test(formData.postalCode)) {
       newErrors.postalCode = 'Postal code must be 4 digits';
+    }
+
+    if (formData.abn.selected) {
+      if (!formData.abn.businessActivity?.trim()) {
+        newErrors['abn.businessActivity'] = 'Nature of business activity is required';
+      }
+      if (!formData.abn.registrationDate?.trim()) {
+        newErrors['abn.registrationDate'] = 'Registration date is required';
+      }
+      if (!formData.abn.businessAddress?.trim()) {
+        newErrors['abn.businessAddress'] = 'Business address is required';
+      }
+    }
+
+    if (formData.gst.selected) {
+      if (!formData.gst.annualIncome?.trim()) {
+        newErrors['gst.annualIncome'] = 'Approximate annual income is required';
+      }
+      if (!formData.gst.registrationDate?.trim()) {
+        newErrors['gst.registrationDate'] = 'Registration date is required';
+      }
     }
 
     if (!formData.agreeToDeclaration) {
@@ -118,11 +181,26 @@ const ATORegistrationPage = () => {
         userName: userStore.displayName || '',
         postalAddress: formData.postalAddress,
         postalCode: formData.postalCode,
-        abn: formData.abn,
-        gst: formData.gst,
-        fuelTaxCredit: formData.fuelTaxCredit,
+        abn: {
+          selected: formData.abn.selected,
+          businessActivity: formData.abn.businessActivity,
+          registrationDate: formData.abn.registrationDate,
+          businessAddress: formData.abn.businessAddress
+        },
+        gst: {
+          selected: formData.gst.selected,
+          annualIncome: formData.gst.annualIncome,
+          registrationDate: formData.gst.registrationDate,
+          accountingMethod: formData.gst.accountingMethod
+        },
+        fuelTaxCredit: {
+          selected: formData.fuelTaxCredit.selected,
+          hasTrucks: formData.fuelTaxCredit.hasTrucks,
+          hasMachinery: formData.fuelTaxCredit.hasMachinery,
+          hasAgriculture: formData.fuelTaxCredit.hasAgriculture
+        },
         status: 'pending' as ATORegistrationStatus, 
-        user: userStore
+        // user: userStore
       };
 
       // Send data to API endpoint
@@ -246,29 +324,368 @@ const ATORegistrationPage = () => {
           {/* Registration Options */}
           <div>
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Registration Options</h2>
-            <div className="space-y-3">
-              <CustomCheckbox 
-                label="ABN Registration Required" 
-                name="abn" 
-                checked={formData.abn} 
-                onChange={handleChange} 
-                disabled={existingRegistration?.status === 'in-progress' || existingRegistration?.status === 'completed'}
-              />
-              <CustomCheckbox 
-                label="GST Registration Required" 
-                name="gst" 
-                checked={formData.gst} 
-                onChange={handleChange} 
-                disabled={existingRegistration?.status === 'in-progress' || existingRegistration?.status === 'completed'}
-              />
-              <CustomCheckbox 
-                label="Fuel Tax Credit" 
-                name="fuelTaxCredit" 
-                checked={formData.fuelTaxCredit} 
-                onChange={handleChange} 
-                disabled={existingRegistration?.status === 'in-progress' || existingRegistration?.status === 'completed'}
-              />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              {/* ABN Registration Card */}
+              <div 
+                className={`relative rounded-lg border p-4 cursor-pointer transition-all duration-200 ${
+                  formData.abn.selected 
+                    ? 'border-sky-500 bg-sky-50 shadow-md' 
+                    : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                }`}
+                onClick={() => {
+                  if (existingRegistration?.status !== 'in-progress' && existingRegistration?.status !== 'completed') {
+                    setFormData(prev => ({ 
+                      ...prev, 
+                      abn: { ...prev.abn, selected: !prev.abn.selected } 
+                    }));
+                  }
+                }}
+              >
+                <div className="absolute top-3 right-3">
+                  <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
+                    formData.abn.selected ? 'bg-sky-500' : 'border border-gray-300'
+                  }`}>
+                    {formData.abn.selected && (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+                <div className="flex flex-col items-start">
+                  <div className="w-10 h-10 rounded-lg bg-sky-100 flex items-center justify-center mb-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                  </div>
+                  <h3 className="font-medium text-gray-900 mb-1">ABN Registration</h3>
+                  <p className="text-sm text-gray-500">Australian Business Number registration for your business</p>
+                </div>
+              </div>
+
+              {/* GST Registration Card */}
+              <div 
+                className={`relative rounded-lg border p-4 cursor-pointer transition-all duration-200 ${
+                  formData.gst.selected 
+                    ? 'border-sky-500 bg-sky-50 shadow-md' 
+                    : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                }`}
+                onClick={() => {
+                  if (existingRegistration?.status !== 'in-progress' && existingRegistration?.status !== 'completed') {
+                    setFormData(prev => ({ 
+                      ...prev, 
+                      gst: { ...prev.gst, selected: !prev.gst.selected } 
+                    }));
+                  }
+                }}
+              >
+                <div className="absolute top-3 right-3">
+                  <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
+                    formData.gst.selected ? 'bg-sky-500' : 'border border-gray-300'
+                  }`}>
+                    {formData.gst.selected && (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+                <div className="flex flex-col items-start">
+                  <div className="w-10 h-10 rounded-lg bg-sky-100 flex items-center justify-center mb-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="font-medium text-gray-900 mb-1">GST Registration</h3>
+                  <p className="text-sm text-gray-500">Goods and Services Tax registration for your business</p>
+                </div>
+              </div>
+
+              {/* Fuel Tax Credit Card */}
+              <div 
+                className={`relative rounded-lg border p-4 cursor-pointer transition-all duration-200 ${
+                  formData.fuelTaxCredit.selected 
+                    ? 'border-sky-500 bg-sky-50 shadow-md' 
+                    : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                }`}
+                onClick={() => {
+                  if (existingRegistration?.status !== 'in-progress' && existingRegistration?.status !== 'completed') {
+                    setFormData(prev => ({ 
+                      ...prev, 
+                      fuelTaxCredit: { ...prev.fuelTaxCredit, selected: !prev.fuelTaxCredit.selected } 
+                    }));
+                  }
+                }}
+              >
+                <div className="absolute top-3 right-3">
+                  <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
+                    formData.fuelTaxCredit.selected ? 'bg-sky-500' : 'border border-gray-300'
+                  }`}>
+                    {formData.fuelTaxCredit.selected && (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+                <div className="flex flex-col items-start">
+                  <div className="w-10 h-10 rounded-lg bg-sky-100 flex items-center justify-center mb-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <h3 className="font-medium text-gray-900 mb-1">Fuel Tax Credit</h3>
+                  <p className="text-sm text-gray-500">Claim credits for fuel used in eligible business activities</p>
+                </div>
+              </div>
             </div>
+            
+            {/* Conditional ABN fields */}
+            {formData.abn.selected && (
+              <div className="mb-6 p-5 bg-white rounded-lg border border-gray-200 shadow-sm">
+                <h3 className="text-md font-medium text-gray-800 mb-4 flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                  ABN Registration Details
+                </h3>
+                <div className="space-y-4">
+                  <CustomInput 
+                    label="Nature of Business Activity" 
+                    name="abn.businessActivity" 
+                    value={formData.abn.businessActivity} 
+                    onChange={handleChange} 
+                    errors={errors['abn.businessActivity']} 
+                    placeholder="Describe your business activity" 
+                    disabled={existingRegistration?.status === 'in-progress' || existingRegistration?.status === 'completed'}
+                  />
+                  <CustomInput 
+                    label="Registration Date" 
+                    type="date" 
+                    name="abn.registrationDate" 
+                    value={formData.abn.registrationDate} 
+                    onChange={handleChange} 
+                    errors={errors['abn.registrationDate']} 
+                    disabled={existingRegistration?.status === 'in-progress' || existingRegistration?.status === 'completed'}
+                  />
+                  <CustomInput 
+                    label="Business Address" 
+                    name="abn.businessAddress" 
+                    value={formData.abn.businessAddress} 
+                    onChange={handleChange} 
+                    errors={errors['abn.businessAddress']} 
+                    placeholder="Enter your business address" 
+                    disabled={existingRegistration?.status === 'in-progress' || existingRegistration?.status === 'completed'}
+                  />
+                </div>
+              </div>
+            )}
+            
+            {/* Conditional GST fields */}
+            {formData.gst.selected && (
+              <div className="mb-6 p-5 bg-white rounded-lg border border-gray-200 shadow-sm">
+                <h3 className="text-md font-medium text-gray-800 mb-4 flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  GST Registration Details
+                </h3>
+                <div className="space-y-4">
+                  <CustomInput 
+                    label="Approximate Annual Income/Sales (AUD)" 
+                    name="gst.annualIncome" 
+                    value={formData.gst.annualIncome} 
+                    onChange={handleChange} 
+                    errors={errors['gst.annualIncome']} 
+                    placeholder="Enter approximate annual income" 
+                    disabled={existingRegistration?.status === 'in-progress' || existingRegistration?.status === 'completed'}
+                  />
+                  <CustomInput 
+                    label="Registration Date" 
+                    type="date" 
+                    name="gst.registrationDate" 
+                    value={formData.gst.registrationDate} 
+                    onChange={handleChange} 
+                    errors={errors['gst.registrationDate']} 
+                    disabled={existingRegistration?.status === 'in-progress' || existingRegistration?.status === 'completed'}
+                  />
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Method of Accounting
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div 
+                        className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                          formData.gst.accountingMethod === 'cash' 
+                            ? 'border-sky-500 bg-sky-50 shadow-sm' 
+                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        }`}
+                        onClick={() => {
+                          if (existingRegistration?.status !== 'in-progress' && existingRegistration?.status !== 'completed') {
+                            setFormData(prev => ({ 
+                              ...prev, 
+                              gst: { ...prev.gst, accountingMethod: 'cash' } 
+                            }));
+                          }
+                        }}
+                      >
+                        <div className="flex items-center">
+                          <div className={`w-4 h-4 rounded-full mr-2 flex items-center justify-center ${
+                            formData.gst.accountingMethod === 'cash' ? 'bg-sky-500' : 'border border-gray-300'
+                          }`}>
+                            {formData.gst.accountingMethod === 'cash' && (
+                              <div className="w-2 h-2 rounded-full bg-white"></div>
+                            )}
+                          </div>
+                          <span className="text-gray-700 font-medium">Cash</span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1 ml-6">Record income when received and expenses when paid</p>
+                      </div>
+                      
+                      <div 
+                        className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                          formData.gst.accountingMethod === 'accrual' 
+                            ? 'border-sky-500 bg-sky-50 shadow-sm' 
+                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        }`}
+                        onClick={() => {
+                          if (existingRegistration?.status !== 'in-progress' && existingRegistration?.status !== 'completed') {
+                            setFormData(prev => ({ 
+                              ...prev, 
+                              gst: { ...prev.gst, accountingMethod: 'accrual' } 
+                            }));
+                          }
+                        }}
+                      >
+                        <div className="flex items-center">
+                          <div className={`w-4 h-4 rounded-full mr-2 flex items-center justify-center ${
+                            formData.gst.accountingMethod === 'accrual' ? 'bg-sky-500' : 'border border-gray-300'
+                          }`}>
+                            {formData.gst.accountingMethod === 'accrual' && (
+                              <div className="w-2 h-2 rounded-full bg-white"></div>
+                            )}
+                          </div>
+                          <span className="text-gray-700 font-medium">Accrual</span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1 ml-6">Record income when earned and expenses when incurred</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Conditional Fuel Tax Credit fields */}
+            {formData.fuelTaxCredit.selected && (
+              <div className="mb-6 p-5 bg-white rounded-lg border border-gray-200 shadow-sm">
+                <h3 className="text-md font-medium text-gray-800 mb-4 flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  Fuel Tax Credit Details
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">Select all that apply to your business:</p>
+                
+                <div className="space-y-3">
+                  <div 
+                    className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                      formData.fuelTaxCredit.hasTrucks 
+                        ? 'border-sky-500 bg-sky-50 shadow-sm' 
+                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    }`}
+                    onClick={() => {
+                      if (existingRegistration?.status !== 'in-progress' && existingRegistration?.status !== 'completed') {
+                        setFormData(prev => ({ 
+                          ...prev, 
+                          fuelTaxCredit: { ...prev.fuelTaxCredit, hasTrucks: !prev.fuelTaxCredit.hasTrucks } 
+                        }));
+                      }
+                    }}
+                  >
+                    <div className="flex items-center">
+                      <div className={`w-5 h-5 rounded mr-3 flex items-center justify-center ${
+                        formData.fuelTaxCredit.hasTrucks ? 'bg-sky-500' : 'border border-gray-300'
+                      }`}>
+                        {formData.fuelTaxCredit.hasTrucks && (
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                      </div>
+                      <div>
+                        <span className="text-gray-700 font-medium">Motor vehicles over 4.5 tonnes</span>
+                        <p className="text-xs text-gray-500 mt-1">Trucks, buses, or other heavy vehicles</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div 
+                    className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                      formData.fuelTaxCredit.hasMachinery 
+                        ? 'border-sky-500 bg-sky-50 shadow-sm' 
+                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    }`}
+                    onClick={() => {
+                      if (existingRegistration?.status !== 'in-progress' && existingRegistration?.status !== 'completed') {
+                        setFormData(prev => ({ 
+                          ...prev, 
+                          fuelTaxCredit: { ...prev.fuelTaxCredit, hasMachinery: !prev.fuelTaxCredit.hasMachinery } 
+                        }));
+                      }
+                    }}
+                  >
+                    <div className="flex items-center">
+                      <div className={`w-5 h-5 rounded mr-3 flex items-center justify-center ${
+                        formData.fuelTaxCredit.hasMachinery ? 'bg-sky-500' : 'border border-gray-300'
+                      }`}>
+                        {formData.fuelTaxCredit.hasMachinery && (
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                      </div>
+                      <div>
+                        <span className="text-gray-700 font-medium">Machinery using fuel</span>
+                        <p className="text-xs text-gray-500 mt-1">Industrial equipment, generators, or other machinery</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div 
+                    className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                      formData.fuelTaxCredit.hasAgriculture 
+                        ? 'border-sky-500 bg-sky-50 shadow-sm' 
+                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    }`}
+                    onClick={() => {
+                      if (existingRegistration?.status !== 'in-progress' && existingRegistration?.status !== 'completed') {
+                        setFormData(prev => ({ 
+                          ...prev, 
+                          fuelTaxCredit: { ...prev.fuelTaxCredit, hasAgriculture: !prev.fuelTaxCredit.hasAgriculture } 
+                        }));
+                      }
+                    }}
+                  >
+                    <div className="flex items-center">
+                      <div className={`w-5 h-5 rounded mr-3 flex items-center justify-center ${
+                        formData.fuelTaxCredit.hasAgriculture ? 'bg-sky-500' : 'border border-gray-300'
+                      }`}>
+                        {formData.fuelTaxCredit.hasAgriculture && (
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                      </div>
+                      <div>
+                        <span className="text-gray-700 font-medium">Agricultural, poultry, or fishery work</span>
+                        <p className="text-xs text-gray-500 mt-1">Farming, livestock, aquaculture, or related activities</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Declaration */}

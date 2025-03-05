@@ -7,9 +7,24 @@ interface ATORegistrationData {
     userName?: string;
     postalAddress: string;
     postalCode: string;
-    abn: boolean;
-    gst: boolean;
-    fuelTaxCredit: boolean;
+    abn: {
+        selected: boolean;
+        businessActivity?: string;
+        registrationDate?: string;
+        businessAddress?: string;
+    };
+    gst: {
+        selected: boolean;
+        annualIncome?: string;
+        registrationDate?: string;
+        accountingMethod?: string;
+    };
+    fuelTaxCredit: {
+        selected: boolean;
+        hasTrucks?: boolean;
+        hasMachinery?: boolean;
+        hasAgriculture?: boolean;
+    };
     status: string;
     user?: any;
 }
@@ -230,14 +245,56 @@ const htmlTemplateString = `<!DOCTYPE html>
                                                 <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">ABN Registration:</td>
                                                 <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{ABN}}</td>
                                             </tr>
+                                            {{#if ABN_DETAILS}}
+                                            <tr>
+                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Business Activity:</td>
+                                                <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{BUSINESS_ACTIVITY}}</td>
+                                            </tr>
+                                            <tr>
+                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Registration Date:</td>
+                                                <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{ABN_REGISTRATION_DATE}}</td>
+                                            </tr>
+                                            <tr>
+                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Business Address:</td>
+                                                <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{BUSINESS_ADDRESS}}</td>
+                                            </tr>
+                                            {{/if}}
                                             <tr>
                                                 <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">GST Registration:</td>
                                                 <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{GST}}</td>
                                             </tr>
+                                            {{#if GST_DETAILS}}
+                                            <tr>
+                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Annual Income:</td>
+                                                <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{ANNUAL_INCOME}}</td>
+                                            </tr>
+                                            <tr>
+                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Registration Date:</td>
+                                                <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{GST_REGISTRATION_DATE}}</td>
+                                            </tr>
+                                            <tr>
+                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Accounting Method:</td>
+                                                <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{ACCOUNTING_METHOD}}</td>
+                                            </tr>
+                                            {{/if}}
                                             <tr>
                                                 <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Fuel Tax Credit:</td>
                                                 <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{FUEL_TAX_CREDIT}}</td>
                                             </tr>
+                                            {{#if FUEL_TAX_DETAILS}}
+                                            <tr>
+                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Heavy Vehicles:</td>
+                                                <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{HAS_TRUCKS}}</td>
+                                            </tr>
+                                            <tr>
+                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Machinery:</td>
+                                                <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{HAS_MACHINERY}}</td>
+                                            </tr>
+                                            <tr>
+                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Agriculture:</td>
+                                                <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{HAS_AGRICULTURE}}</td>
+                                            </tr>
+                                            {{/if}}
                                         </table>
                                     </td>
                                 </tr>
@@ -305,25 +362,63 @@ const atoRegistrationEmail = (data: ATORegistrationData) => {
         htmlTemplate = htmlTemplateString;
     }
     
-    // Replace placeholders with actual data
-    htmlTemplate = htmlTemplate
-        .replace('{{DATE}}', new Date().toLocaleDateString('en-AU', { 
-            day: 'numeric', 
-            month: 'long', 
-            year: 'numeric'
-        }))
-        .replace('{{STATUS}}', data.status || 'Pending')
-        .replace('{{NAME}}', data.userName || 'Not provided')
-        .replace('{{EMAIL}}', data.userEmail || 'Not provided')
-        .replace('{{USER_ID}}', data.userId)
-        .replace('{{POSTAL_ADDRESS}}', data.postalAddress)
-        .replace('{{POSTAL_CODE}}', data.postalCode)
-        .replace('{{ABN}}', data.abn ? 'Yes' : 'No')
-        .replace('{{GST}}', data.gst ? 'Yes' : 'No')
-        .replace('{{FUEL_TAX_CREDIT}}', data.fuelTaxCredit ? 'Yes' : 'No')
-        .replace('{{YEAR}}', new Date().getFullYear().toString());
+    // Format the current date
+    const currentDate = new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
     
-    return htmlTemplate;
+    const currentYear = new Date().getFullYear();
+
+    // Convert boolean values to Yes/No for display
+    const abnValue = data.abn.selected ? 'Yes' : 'No';
+    const gstValue = data.gst.selected ? 'Yes' : 'No';
+    const fuelTaxCreditValue = data.fuelTaxCredit.selected ? 'Yes' : 'No';
+    const hasTrucksValue = data.fuelTaxCredit.hasTrucks ? 'Yes' : 'No';
+    const hasMachineryValue = data.fuelTaxCredit.hasMachinery ? 'Yes' : 'No';
+    const hasAgricultureValue = data.fuelTaxCredit.hasAgriculture ? 'Yes' : 'No';
+    
+    // Determine if we should show the detailed sections
+    const showAbnDetails = data.abn.selected && (data.abn.businessActivity || data.abn.registrationDate || data.abn.businessAddress);
+    const showGstDetails = data.gst.selected && (data.gst.annualIncome || data.gst.registrationDate || data.gst.accountingMethod);
+    const showFuelTaxDetails = data.fuelTaxCredit.selected && (data.fuelTaxCredit.hasTrucks || data.fuelTaxCredit.hasMachinery || data.fuelTaxCredit.hasAgriculture);
+    
+    // Format the accounting method for display
+    const accountingMethod = data.gst.accountingMethod ? 
+        (data.gst.accountingMethod.charAt(0).toUpperCase() + data.gst.accountingMethod.slice(1)) : 
+        'Not specified';
+
+    // Replace placeholders in the HTML template
+    let emailHtml = htmlTemplate
+        .replace(/{{DATE}}/g, currentDate)
+        .replace(/{{YEAR}}/g, currentYear.toString())
+        .replace(/{{STATUS}}/g, data.status.toUpperCase())
+        .replace(/{{NAME}}/g, data.userName || 'Not provided')
+        .replace(/{{EMAIL}}/g, data.userEmail || 'Not provided')
+        .replace(/{{USER_ID}}/g, data.userId || 'Not provided')
+        .replace(/{{POSTAL_ADDRESS}}/g, data.postalAddress || 'Not provided')
+        .replace(/{{POSTAL_CODE}}/g, data.postalCode || 'Not provided')
+        .replace(/{{ABN}}/g, abnValue)
+        .replace(/{{GST}}/g, gstValue)
+        .replace(/{{FUEL_TAX_CREDIT}}/g, fuelTaxCreditValue)
+        .replace(/{{BUSINESS_ACTIVITY}}/g, data.abn.businessActivity || 'Not provided')
+        .replace(/{{ABN_REGISTRATION_DATE}}/g, data.abn.registrationDate || 'Not provided')
+        .replace(/{{BUSINESS_ADDRESS}}/g, data.abn.businessAddress || 'Not provided')
+        .replace(/{{ANNUAL_INCOME}}/g, data.gst.annualIncome || 'Not provided')
+        .replace(/{{GST_REGISTRATION_DATE}}/g, data.gst.registrationDate || 'Not provided')
+        .replace(/{{ACCOUNTING_METHOD}}/g, accountingMethod)
+        .replace(/{{HAS_TRUCKS}}/g, hasTrucksValue)
+        .replace(/{{HAS_MACHINERY}}/g, hasMachineryValue)
+        .replace(/{{HAS_AGRICULTURE}}/g, hasAgricultureValue);
+    
+    // Handle conditional sections
+    emailHtml = emailHtml
+        .replace(/{{#if ABN_DETAILS}}([\s\S]*?){{\/if}}/g, showAbnDetails ? '$1' : '')
+        .replace(/{{#if GST_DETAILS}}([\s\S]*?){{\/if}}/g, showGstDetails ? '$1' : '')
+        .replace(/{{#if FUEL_TAX_DETAILS}}([\s\S]*?){{\/if}}/g, showFuelTaxDetails ? '$1' : '');
+
+    return emailHtml;
 };
 
 export default atoRegistrationEmail; 

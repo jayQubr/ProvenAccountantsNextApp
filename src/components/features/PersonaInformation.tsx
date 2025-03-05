@@ -1,5 +1,6 @@
 import useStore from "@/utils/useStore";
 import { InformationCircleIcon } from "@heroicons/react/24/outline"
+import Link from "next/link";
 
 const PersonalInformation = ({ title }: { title?: string }) => {
   const { user } = useStore();
@@ -48,7 +49,7 @@ const PersonalInformation = ({ title }: { title?: string }) => {
       
       <div className="mt-4 pt-3 border-t border-gray-200">
         <p className="text-xs text-gray-500 italic">
-          This information is from your profile. If you need to update these details, please visit your profile settings.
+          This information is from your profile. If you need to update these details, please visit your <Link href='/my-profile' className="text-indigo-500 underline">profile settings</Link>.
         </p>
       </div>
     </div>
