@@ -98,8 +98,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             }
         } catch (emailError) {
             console.error('Error sending email:', emailError);
-            // Continue with the registration process even if email fails
-            // Just log the error but don't return an error response
         }
 
         // Return success response

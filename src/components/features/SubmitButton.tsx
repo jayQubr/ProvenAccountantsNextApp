@@ -11,7 +11,7 @@ interface SubmitButtonProps {
   processingText?: string;
   onConfirm?: () => void;
   confirmMessage?: string;
-  validateForm: () => boolean; // <-- Accept validation function from parent
+  validateForm: () => boolean;
 }
 
 const SubmitButton: React.FC<SubmitButtonProps> = ({
@@ -25,8 +25,10 @@ const SubmitButton: React.FC<SubmitButtonProps> = ({
   processingText = 'Processing...',
   onConfirm,
   confirmMessage = 'Are you sure you want to submit this registration?',
-  validateForm, // <-- Receive validation function from parent
+  validateForm,
 }) => {
+  console.log("status", status)
+  
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
 

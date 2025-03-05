@@ -227,7 +227,7 @@ const ATORegistrationPage = () => {
         toast.success('ATO Registration request submitted successfully!');
 
         // Fetch the updated registration
-        const updatedResult = await checkExistingATORegistration(userStore.uid);
+        const updatedResult:any = await checkExistingATORegistration(userStore.uid);
         if (updatedResult.exists && updatedResult.data) {
           setExistingRegistration(updatedResult.data);
         }
@@ -659,10 +659,10 @@ const ATORegistrationPage = () => {
           </div>
 
           {/* Add unselected options section */}
-          {(formData.abn.selected || formData.gst.selected || formData.fuelTaxCredit.selected) &&
+          {( formData.abn.selected || formData.gst.selected || formData.fuelTaxCredit.selected) &&
             existingRegistration?.status !== 'in-progress' && existingRegistration?.status !== 'completed' && (
               <div className="mb-6 p-5 bg-white rounded-lg border border-gray-200 shadow-sm">
-                <h3 className="text-md font-medium text-gray-800 mb-4">Add More Registration Options</h3>
+             {!formData.abn.selected && !formData.gst.selected && !formData.fuelTaxCredit.selected && <h3 className="text-md font-medium text-gray-800 mb-4">Add More Registration Options</h3>}
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Show ABN option if not selected */}
