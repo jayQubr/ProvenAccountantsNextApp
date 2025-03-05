@@ -110,9 +110,16 @@ const CompanyRegistration = () => {
             authorizedPersons: result.data.authorizedPersons || [],
             agreeToDeclaration: result.data.agreeToDeclaration || false,
             position: result.data.position || '',
-            isDirector: result.data.isDirector || false,
-            isShareholder: result.data.isShareholder || false,
-            shareholderPercentage: result.data.shareholderPercentage || '',
+            isDirector: !!result.data.isDirector,
+            isShareholder: !!result.data.isShareholder,
+            shareholderPercentage: result.data.isShareholder ? (result.data.shareholderPercentage || '') : '',
+          })
+          
+          // Add debugging to verify the data
+          console.log('Loaded data:', {
+            isDirector: result.data.isDirector,
+            isShareholder: result.data.isShareholder,
+            shareholderPercentage: result.data.shareholderPercentage
           })
         }
       } catch (error) {
@@ -511,10 +518,12 @@ const CompanyRegistration = () => {
                     name="shareholderPercentage"
                     type="number"
                     value={companyData.shareholderPercentage || ''}
-                    onChange={(e) => setCompanyData((prev) => ({
-                      ...prev,
-                      shareholderPercentage: e.target.value
-                    }))}
+                    onChange={(e) => {
+                      setCompanyData((prev) => ({
+                        ...prev,
+                        shareholderPercentage: e.target.value
+                      }));
+                    }}
                     placeholder="Enter your share percentage"
                     errors={errors.shareholderPercentage}
                     disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
@@ -822,9 +831,12 @@ const CompanyRegistration = () => {
           {existingRegistration?.status !== 'completed' && existingRegistration?.status !== 'in-progress' && (
             <SubmitButton
               isSubmitting={submitting}
+              status={existingRegistration?.status}
               defaultText="Submit Registration"
-              pendingText="Submitting..."
+              pendingText="Update Registration"
+              processingText="Submitting..."
               rejectedText="Resubmit Registration"
+              completedText="Already Submitted"
               validateForm={validateForm}
               onConfirm={handleConfirmSubmit}
             />

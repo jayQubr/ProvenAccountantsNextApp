@@ -56,7 +56,7 @@ const SubmitButton: React.FC<SubmitButtonProps> = ({
 
     // Validate the form before showing confirmation
     if (!validateForm()) {
-      return; // Stop if validation fails
+      return;
     }
 
     if (!isDisabled) {
@@ -86,7 +86,7 @@ const SubmitButton: React.FC<SubmitButtonProps> = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
         type="button"
-        // disabled={isDisabled}
+        disabled={isDisabled}
         onClick={handleButtonClick}
         className={`px-6 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-colors flex items-center ${
           isDisabled ? 'opacity-70 cursor-not-allowed' : ''

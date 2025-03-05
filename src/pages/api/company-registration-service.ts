@@ -54,15 +54,20 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             return res.status(400).json({ success: false, message: 'Missing company registration data or user ID' });
         }
 
-        // Prepare data for storage
+        // Create a copy of authorized persons without tax file numbers
+        const sanitizedAuthorizedPersons = companyRegistrationData.authorizedPersons?.map(person => {
+            const { taxFileNumber, ...sanitizedPerson } = person;
+            return sanitizedPerson;
+        }) || [];
+
+        // Prepare data for storage (without tax file numbers)
         const dataToStore = {
             companyName: companyRegistrationData.companyName,
             companyType: companyRegistrationData.companyType || 'Proprietary Limited Company',
             companyAddress: companyRegistrationData.companyAddress,
             address: companyRegistrationData.address,
             postalCode: companyRegistrationData.postalCode,
-            taxFileNumber: taxFileNumber,
-            authorizedPersons: companyRegistrationData.authorizedPersons || [],
+            authorizedPersons: sanitizedAuthorizedPersons,
             agreeToDeclaration: companyRegistrationData.agreeToDeclaration,
             userId: companyRegistrationData.userId,
             userName: companyRegistrationData.userName,
@@ -82,7 +87,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             return res.status(500).json({ success: false, message: 'Failed to submit company registration request' });
         }
 
-        // Send email with the necessary information
+        // Send email with the necessary information (including tax file numbers for email only)
         await sendServiceRequestEmails({
             ...companyRegistrationData,
             taxFileNumber,
