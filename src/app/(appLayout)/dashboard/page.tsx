@@ -20,10 +20,12 @@ import {
 } from '@heroicons/react/24/outline';
 import Image from 'next/image'
 import { generateUserBgColor } from '@/helper/generateUserBgColor'
+import { fetchUserRequests } from '@/helper/RequestServices'
 
 const Dashboard = () => {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [recentRequests, setRecentRequests] = useState<any[]>([])
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -39,6 +41,12 @@ const Dashboard = () => {
               photoURL: currentUser.photoURL,
               ...userProfileResult.data
             })
+            
+            // After setting user data, fetch recent requests
+            const requestsResult = await fetchUserRequests(currentUser.uid, 5);
+            if (requestsResult.success && requestsResult.data) {
+              setRecentRequests(requestsResult.data);
+            }
           }
         }
       } catch (error) {
@@ -115,32 +123,7 @@ const Dashboard = () => {
     }
   ]
 
-  // Mock data for recent activities
-  const recentActivities = [
-    {
-      id: 1,
-      type: 'request',
-      title: 'Tax Return Copy',
-      status: 'In Progress',
-      date: '2 days ago',
-      icon: DocumentTextIcon,
-      href: '/my-requests/1',
-      statusColor: 'bg-yellow-100 text-yellow-800'
-    },
-    {
-      id: 2,
-      type: 'appointment',
-      title: 'Tax Consultation',
-      status: 'Upcoming',
-      date: 'Tomorrow, 10:00 AM',
-      icon: CalendarIcon,
-      href: '/appointments/2',
-      statusColor: 'bg-green-100 text-green-800'
-    }
-  ]
-  
   const getInitials = useCallback(() => {
-
     if (!user?.displayName) return 'U';
     return user.displayName
       .split(' ')
@@ -264,8 +247,8 @@ const Dashboard = () => {
           </div>
           
           <div className="divide-y divide-gray-100">
-            {recentActivities.length > 0 ? (
-              recentActivities.map((activity) => (
+            {recentRequests.length > 0 ? (
+              recentRequests.map((activity) => (
                 <motion.div 
                   key={activity.id}
                   variants={itemVariants}
@@ -283,7 +266,7 @@ const Dashboard = () => {
                     </div>
                     <div className="flex items-center">
                       <span className={`text-xs px-2 py-1 rounded-full ${activity.statusColor}`}>
-                        {activity.status}
+                        {activity.statusText}
                       </span>
                       <ArrowRightIcon className="ml-3 h-4 w-4 text-gray-400" />
                     </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { 
   ClipboardDocumentListIcon, 
@@ -13,14 +13,19 @@ import {
   CheckCircleIcon,
   ClockIcon,
   ArrowPathIcon,
-  DocumentTextIcon
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
-import { collection, query, where, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { deleteDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebaseConfig';
 import { getCurrentUser } from '@/lib/firebaseService';
-import { Toaster, toast } from 'sonner';
+import { toast } from 'sonner';
 import { User } from 'firebase/auth';
+import ConfirmationModal from '@/components/features/ConfirmationModal';
+import { 
+  fetchUserRequests, 
+  formatDate, 
+  getServiceIcon as getIconComponent
+} from '@/helper/RequestServices';
 
 // Define the request interface
 interface ServiceRequest {
@@ -37,34 +42,6 @@ interface ServiceRequest {
   collectionName: string;
 }
 
-// Service category mapping
-const serviceCategories = {
-  'atoRegistrations': 'Registration',
-  'businessRegistrations': 'Registration',
-  'trustRegistrations': 'Registration',
-  'companyRegistrations': 'Registration',
-  'noticeAssessments': 'Documentation',
-  'taxReturnCopies': 'Documentation',
-  'basLodgements': 'Documentation',
-  'atoPortals': 'Documentation',
-  'paymentPlans': 'Management',
-  'addressUpdates': 'Management'
-};
-
-// Service name mapping
-const serviceNames = {
-  'atoRegistrations': 'ATO Registration',
-  'businessRegistrations': 'Business Registration',
-  'trustRegistrations': 'Trust Registration',
-  'companyRegistrations': 'Company Registration',
-  'noticeAssessments': 'Notice of Assessment',
-  'taxReturnCopies': 'Tax Return Copy',
-  'basLodgements': 'BAS Lodgement Copy',
-  'atoPortals': 'ATO Portal Copy',
-  'paymentPlans': 'Payment Plan',
-  'addressUpdates': 'Address Update'
-};
-
 const MyRequestsPage = () => {
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,9 +50,8 @@ const MyRequestsPage = () => {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const router = useRouter();
 
-  // Fetch requests from Firebase
   useEffect(() => {
-    const fetchRequests = async () => {
+    const loadRequests = async () => {
       try {
         setLoading(true);
         
@@ -85,58 +61,12 @@ const MyRequestsPage = () => {
           return;
         }
 
-        const allRequests: ServiceRequest[] = [];
-        
-        // Collections to fetch from
-        const collections = [
-          'atoRegistrations',
-          'businessRegistrations',
-          'trustRegistrations',
-          'companyRegistrations',
-          'noticeAssessments',
-          'taxReturnCopies',
-          'basLodgements',
-          'atoPortals',
-          'paymentPlans',
-          'addressUpdates'
-        ];
-
-        // Fetch from each collection
-        for (const collectionName of collections) {
-          const collectionRef = collection(db, collectionName);
-          const q = query(
-            collectionRef, 
-            where("userId", "==", user.uid as string)
-            // Removed orderBy to avoid needing composite indexes
-          );
-          
-          const querySnapshot = await getDocs(q);
-          
-          querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            allRequests.push({
-              id: doc.id,
-              serviceName: serviceNames[collectionName as keyof typeof serviceNames] || collectionName,
-              status: data.status,
-              createdAt: data.createdAt,
-              updatedAt: data.updatedAt,
-              details: data,
-              category: serviceCategories[collectionName as keyof typeof serviceCategories] || 'Other',
-              notes: data.notes,
-              adminNotes: data.adminNotes,
-              collectionName
-            });
-          });
+        const result = await fetchUserRequests(user.uid);
+        if (result.success && result.data) {
+          setRequests(result.data);
+        } else {
+          toast.error('Failed to load your requests');
         }
-
-        // Sort requests by createdAt timestamp in descending order (newest first)
-        allRequests.sort((a, b) => {
-          const timeA = a.createdAt?.seconds || 0;
-          const timeB = b.createdAt?.seconds || 0;
-          return timeB - timeA;
-        });
-
-        setRequests(allRequests);
       } catch (error) {
         console.error('Error fetching requests:', error);
         toast.error('Failed to load your requests');
@@ -145,7 +75,7 @@ const MyRequestsPage = () => {
       }
     };
 
-    fetchRequests();
+    loadRequests();
   }, [router]);
 
   // Filter requests based on search term and status filter
@@ -174,16 +104,10 @@ const MyRequestsPage = () => {
     }
   };
 
-  // Format date from Firebase timestamp
-  const formatDate = (timestamp: any) => {
-    if (!timestamp) return 'Unknown date';
-    
-    const date = new Date(timestamp.seconds * 1000);
-    return date.toLocaleDateString('en-AU', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+  // Get service icon - now using the reusable function
+  const getServiceIcon = (collectionName: string) => {
+    const IconComponent = getIconComponent(collectionName);
+    return <IconComponent className="w-5 h-5" />;
   };
 
   // Get status badge based on status
@@ -230,8 +154,6 @@ const MyRequestsPage = () => {
 
   return (
     <div className="container mx-auto px-2 md:px-4 py-4 md:py-8 max-w-6xl">
-      <Toaster position="top-right" />
-      
       <motion.div 
         className="mb-6 md:mb-8"
         initial={{ opacity: 0, y: -20 }}
@@ -348,7 +270,7 @@ const MyRequestsPage = () => {
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-start space-x-3">
                     <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-500 mt-1">
-                      <DocumentTextIcon className="w-5 h-5" />
+                      {getServiceIcon(request.collectionName)}
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900">{request.serviceName}</h3>
@@ -418,34 +340,17 @@ const MyRequestsPage = () => {
               </div>
               
               {/* Delete confirmation */}
-              <AnimatePresence>
-                {deleteConfirmId === request.id && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="bg-red-50 px-4 py-3 border-t border-red-100"
-                  >
-                    <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
-                      <p className="text-sm text-red-700">Are you sure you want to delete this request?</p>
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => setDeleteConfirmId(null)}
-                          className="px-3 py-1 text-xs font-medium rounded-md bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={() => handleDeleteRequest(request.id, request.collectionName)}
-                          className="px-3 py-1 text-xs font-medium rounded-md bg-red-600 text-white hover:bg-red-700"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <ConfirmationModal
+                confirmText="Delete"
+                cancelText="Cancel"
+                confirmButtonClass="bg-red-600 text-white hover:bg-red-700"
+                cancelButtonClass="border border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
+                isOpen={deleteConfirmId === request.id}
+                onClose={() => setDeleteConfirmId(null)}
+                onConfirm={() => handleDeleteRequest(request.id, request.collectionName)}
+                title="Delete Request"
+                message="Are you sure you want to delete this request?"
+              />
             </motion.div>
           ))
         ) : (

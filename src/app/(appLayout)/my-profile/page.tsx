@@ -1,12 +1,13 @@
 'use client'
 import React, { useState, useEffect } from 'react'
-import { auth, db } from '@/lib/firebaseConfig'
+import { auth} from '@/lib/firebaseConfig'
 import { getUserProfile, updateUserProfile } from '@/lib/firebaseService'
 import CustomInput from '@/components/ui/CustomInput'
 import PhoneInput from 'react-phone-number-input'
 import 'react-phone-number-input/style.css'
 import { updateProfile } from 'firebase/auth'
 import { motion } from 'framer-motion'
+import { toast } from 'sonner'
 
 const ProfilePage = () => {
   const [user, setUser] = useState<any>(null)
@@ -161,7 +162,15 @@ const ProfilePage = () => {
           })
         }
         
+        // Show success message in the UI
         setUpdateSuccess(true)
+        
+        // Show success toast notification
+        toast.success('Profile updated successfully!', {
+          duration: 3000,
+          position: 'top-center'
+        });
+        
         setTimeout(() => {
           setUpdateSuccess(false)
           setIsEditing(false)
@@ -169,17 +178,14 @@ const ProfilePage = () => {
       }
     } catch (error) {
       console.error('Error updating profile:', error)
+      // Show error toast notification
+      toast.error('Failed to update profile. Please try again.', {
+        duration: 3000,
+        position: 'top-center'
+      });
     } finally {
       setLoading(false)
     }
-  }
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-sky-500"></div>
-      </div>
-    )
   }
 
   return (

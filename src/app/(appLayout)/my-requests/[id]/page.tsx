@@ -12,7 +12,6 @@ import {
   CheckCircleIcon,
   ExclamationCircleIcon,
   TrashIcon,
-  PaperAirplaneIcon
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { doc, getDoc, deleteDoc, updateDoc, collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
@@ -20,6 +19,7 @@ import { db } from '@/lib/firebaseConfig';
 import { getCurrentUser } from '@/lib/firebaseService';
 import { Toaster, toast } from 'sonner';
 import { User } from 'firebase/auth';
+import ConfirmationModal from '@/components/features/ConfirmationModal';
 
 // Define the request interface
 interface ServiceRequest {
@@ -34,12 +34,6 @@ interface ServiceRequest {
   notes?: string;
   adminNotes?: string;
   collectionName: string;
-}
-
-// Define Firebase Timestamp interface
-interface FirebaseTimestamp {
-  seconds: number;
-  nanoseconds: number;
 }
 
 // Service name mapping
@@ -176,32 +170,7 @@ const RequestDetailPage = () => {
       toast.error('Failed to delete request');
     }
   };
-
-  // Handle send message
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!message.trim() || !user) return;
-    
-    try {
-      await addDoc(collection(db, 'messages'), {
-        text: message.trim(),
-        requestId: id,
-        collectionName: collectionName,
-        userId: user.uid,
-        userName: user.displayName || 'User',
-        isAdmin: false,
-        createdAt: serverTimestamp()
-      });
-      
-      setMessage('');
-      toast.success('Message sent successfully');
-    } catch (error) {
-      console.error('Error sending message:', error);
-      toast.error('Failed to send message');
-    }
-  };
-
+  
   // Format date from Firebase timestamp
   const formatDate = (timestamp: any) => {
     if (!timestamp) return 'Unknown date';
@@ -534,68 +503,20 @@ const RequestDetailPage = () => {
               </div>
             )}
             
-            {/* Contact Form */}
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Need Help?</h2>
-              
-              <form onSubmit={handleSendMessage} className="space-y-4">
-                <div>
-                  <label htmlFor="message" className="sr-only">Message</label>
-                  <textarea
-                    id="message"
-                    name="message"
-                    rows={3}
-                    className="block w-full rounded-md border border-gray-200 py-2 px-3 text-gray-900 shadow-sm placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    placeholder="Type your message here..."
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                  ></textarea>
-                </div>
-                
-                <div className="flex justify-end">
-                  <button
-                    type="submit"
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                  >
-                    <PaperAirplaneIcon className="w-4 h-4 mr-1.5" />
-                    Send Message
-                  </button>
-                </div>
-              </form>
-            </div>
           </div>
         </div>
         
-        {/* Delete Confirmation Modal */}
-        {deleteConfirm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="bg-white rounded-lg shadow-xl max-w-md w-full p-6"
-            >
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Request</h3>
-              <p className="text-gray-600 mb-6">
-                Are you sure you want to delete this request? This action cannot be undone.
-              </p>
-              
-              <div className="flex justify-end space-x-3">
-                <button
-                  onClick={() => setDeleteConfirm(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 text-sm font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleDeleteRequest}
-                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium"
-                >
-                  Delete
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
+        {/* Replace the Delete Confirmation Modal with the new component */}
+        <ConfirmationModal
+          isOpen={deleteConfirm}
+          onClose={() => setDeleteConfirm(false)}
+          onConfirm={handleDeleteRequest}
+          title="Delete Request"
+          message="Are you sure you want to delete this request? This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+          confirmButtonClass="bg-red-600 text-white hover:bg-red-700"
+        />
       </motion.div>
     </div>
   );
