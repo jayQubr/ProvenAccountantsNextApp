@@ -9,10 +9,15 @@ interface BusinessRegistrationData {
     businessAddress: string;
     postalAddress: string;
     postalCode: string;
-    abn: boolean;
-    gst: boolean;
+    abn: string;
+    businessPostalAddress?: string;
+    businessPostalCode?: string;
+    othersDetails?: string;
     status: string;
     user?: any;
+    createdAt?: any;
+    updatedAt?: any;
+    notes?: string;
 }
 
 // HTML template as a string (for production where file access might be limited)
@@ -261,8 +266,16 @@ const htmlTemplateString = `<!DOCTYPE html>
                                                 <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{ABN}}</td>
                                             </tr>
                                             <tr>
-                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">GST Registration:</td>
-                                                <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{GST}}</td>
+                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Business Postal Address:</td>
+                                                <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{BUSINESS_POSTAL_ADDRESS}}</td>
+                                            </tr>
+                                            <tr>
+                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Business Postal Code:</td>
+                                                <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{BUSINESS_POSTAL_CODE}}</td>
+                                            </tr>
+                                            <tr>
+                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Others Details:</td>
+                                                <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{OTHERS_DETAILS}}</td>
                                             </tr>
                                         </table>
                                     </td>
@@ -346,8 +359,10 @@ const businessRegistrationEmail = (data: BusinessRegistrationData) => {
         .replace('{{BUSINESS_ADDRESS}}', data.businessAddress)
         .replace('{{POSTAL_ADDRESS}}', data.postalAddress)
         .replace('{{POSTAL_CODE}}', data.postalCode)
-        .replace('{{ABN}}', data.abn ? 'Yes' : 'No')
-        .replace('{{GST}}', data.gst ? 'Yes' : 'No')
+        .replace('{{ABN}}', data.abn || 'Not provided')
+        .replace('{{BUSINESS_POSTAL_ADDRESS}}', data.businessPostalAddress || 'Not provided')
+        .replace('{{BUSINESS_POSTAL_CODE}}', data.businessPostalCode || 'Not provided')
+        .replace('{{OTHERS_DETAILS}}', data.othersDetails || 'Not provided')
         .replace('{{YEAR}}', new Date().getFullYear().toString());
     
     return htmlTemplate;

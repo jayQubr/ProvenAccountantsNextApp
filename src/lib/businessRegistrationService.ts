@@ -16,6 +16,9 @@ export interface BusinessRegistrationData extends BaseRegistrationData {
     abn: string;
     businessName: string;
     businessAddress: string;
+    businessPostalAddress?: string;
+    businessPostalCode?: string;
+    othersDetails?: string;
 }
 
 const COLLECTION_NAME = 'businessRegistrations';
