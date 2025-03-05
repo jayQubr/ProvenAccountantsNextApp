@@ -7,12 +7,12 @@ import { ArrowLeftIcon, IdentificationIcon } from '@heroicons/react/24/outline'
 import { Toaster, toast } from 'sonner'
 import CustomInput from '@/components/ui/CustomInput'
 import SubmitButton from '@/components/features/SubmitButton'
-import LoadingSpinner from '@/components/features/LoadingSpinner'
 import useStore from '@/utils/useStore'
 import RegistrationStatusBanner from '@/components/features/RegistrationStatusBanner';
 import CustomCheckbox from '@/components/ui/CustomCheckbox';
 import { checkExistingNoticeAssessment, NoticeAssessmentData } from '@/lib/noticeAssesmentService';
 import { RegistrationStatus } from '@/lib/registrationService';
+import SkeletonLoader from '@/components/ui/SkeletonLoader';
 
 const NoticeAssessment = () => {
   // State definitions
@@ -89,7 +89,6 @@ const NoticeAssessment = () => {
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
     if (!noticeData.year.trim()) newErrors.year = 'Year is required'
-    if (!noticeData.details.trim()) newErrors.details = 'Details are required'
     if (!noticeData.agreeToDeclaration) newErrors.agreeToDeclaration = 'You must agree to the declaration'
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -156,7 +155,12 @@ const NoticeAssessment = () => {
     }
   };
 
-  if (loading) return <div className="flex justify-center items-center h-64"><LoadingSpinner size="lg" /></div>
+  const handleConfirmSubmit = () => {
+    const syntheticEvent = { preventDefault: () => {} } as React.FormEvent;
+    handleSubmit(syntheticEvent);
+  };
+
+  if (loading) return <SkeletonLoader/>
 
   return (
     <div className="container mx-auto px-2 py-4 md:px-4 md:py-8 w-full md:max-w-3xl">
@@ -212,6 +216,7 @@ const NoticeAssessment = () => {
               name="details"
               value={noticeData.details}
               onChange={handleChange}
+              required={false}
               errors={errors.details}
               placeholder="Enter assessment details"
               disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
@@ -243,11 +248,13 @@ const NoticeAssessment = () => {
           {existingRegistration?.status !== 'completed' && existingRegistration?.status !== 'in-progress' && (
             <SubmitButton
               isSubmitting={submitting}
+              status={existingRegistration?.status}
               defaultText="Submit Assessment"
               pendingText="Update Assessment"
               rejectedText="Resubmit Assessment"
               completedText="Already Submitted"
-              status={existingRegistration?.status}
+              validateForm={validateForm} 
+              onConfirm={handleConfirmSubmit}
             />
           )}
         </div>
