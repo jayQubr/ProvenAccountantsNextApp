@@ -344,18 +344,6 @@ const htmlTemplateString = `<!DOCTYPE html>
                         </td>
                     </tr>
                     
-                    <!-- BUTTON SECTION -->
-                    <tr>
-                        <td style="padding: 0 30px 30px 30px; text-align: center;margin: 0 auto;display: flex;justify-content: center;">
-                            <table border="0" cellspacing="0" cellpadding="0">
-                                <tr>
-                                    <td align="center" style="border-radius: 4px;" bgcolor="#0369a1">
-                                        <a href="https://admin.provenaccountants.com.au" target="_blank" style="font-size: 16px; font-family: Arial, Helvetica, sans-serif; color: #ffffff; text-decoration: none; padding: 12px 25px; border-radius: 4px; border: 1px solid #0369a1; display: inline-block; font-weight: bold;">Review in Dashboard</a>
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
                     
                     <!-- FOOTER SECTION -->
                     <tr>

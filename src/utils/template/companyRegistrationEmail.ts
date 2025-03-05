@@ -1,23 +1,39 @@
 import fs from 'fs';
 import path from 'path';
 
-interface BusinessRegistrationData {
+interface AuthorizedPerson {
+  fullName: string;
+  email: string;
+  dateOfBirth: string;
+  phone: string;
+  address: string;
+  postalCode: string;
+  taxFileNumber: string;
+  position: string;
+  isDirector: boolean;
+  isShareholder: boolean;
+  shareholderPercentage: string;
+}
+
+interface CompanyRegistrationData {
     userId: string;
     userEmail?: string;
     userName?: string;
-    businessName: string;
-    businessAddress: string;
-    postalAddress: string;
-    postalCode: string;
-    abn: string;
-    businessPostalAddress?: string;
-    businessPostalCode?: string;
-    othersDetails?: string;
-    status: string;
-    user?: any;
+    companyName?: string;
+    companyType?: string;
+    companyAddress?: string;
+    address?: string;
+    postalCode?: string;
+    taxFileNumber?: string;
+    isDirector?: boolean;
+    isShareholder?: boolean;
+    shareholderPercentage?: string;
+    authorizedPersons?: AuthorizedPerson[];
+    status?: string;
     createdAt?: any;
     updatedAt?: any;
     notes?: string;
+    serviceType?: string;
 }
 
 // HTML template as a string (for production where file access might be limited)
@@ -27,7 +43,7 @@ const htmlTemplateString = `<!DOCTYPE html>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Business Registration Request</title>
+    <title>Company Registration Request</title>
     <!--[if mso]>
     <noscript>
         <xml>
@@ -115,7 +131,7 @@ const htmlTemplateString = `<!DOCTYPE html>
 <body id="body" style="margin: 0 !important; padding: 0 !important; background-color: #f5f5f5;">
     <!-- HIDDEN PREHEADER TEXT -->
     <div style="display: none; font-size: 1px; color: #fefefe; line-height: 1px; font-family: Arial, Helvetica, sans-serif; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;">
-        New Business Registration Request - Please review the details
+        New Company Registration Request - Please review the details
     </div>
     
     <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f5f5f5;">
@@ -140,7 +156,7 @@ const htmlTemplateString = `<!DOCTYPE html>
                             <table width="100%" border="0" cellspacing="0" cellpadding="0">
                                 <tr>
                                     <td style="padding: 0 25px 25px 25px; text-align: center;">
-                                        <h1 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: bold;">Business Registration Request</h1>
+                                        <h1 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: bold;">Company Registration Request</h1>
                                         <p style="margin: 10px 0 0 0; color: #e0f2fe; font-size: 14px;">
                                             Submitted on {{DATE}}
                                         </p>
@@ -157,7 +173,7 @@ const htmlTemplateString = `<!DOCTYPE html>
                                         </table>
                                         
                                         <p style="margin: 15px 0 0 0; color: #ffffff; font-size: 15px; line-height: 1.5; max-width: 450px; display: inline-block;">
-                                            A new business registration request has been submitted. Please review the details below:
+                                            A new company registration request has been submitted. Please review the details below:
                                         </p>
                                     </td>
                                 </tr>
@@ -195,54 +211,37 @@ const htmlTemplateString = `<!DOCTYPE html>
                         </td>
                     </tr>
                     
-                    <!-- BUSINESS INFORMATION SECTION -->
+                    <!-- COMPANY INFORMATION SECTION -->
                     <tr>
                         <td style="padding: 0 30px 25px 30px;">
                             <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f9fafb; border-radius: 5px;">
                                 <tr>
                                     <td style="padding: 15px;">
                                         <h2 style="margin: 0 0 15px 0; color: #0369a1; font-size: 16px; font-weight: bold; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px;">
-                                            Business Details
+                                            Company Details
                                         </h2>
                                         
                                         <table width="100%" border="0" cellspacing="0" cellpadding="0">
                                             <tr>
-                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Business Name:</td>
-                                                <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{BUSINESS_NAME}}</td>
+                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Company Name:</td>
+                                                <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{COMPANY_NAME}}</td>
                                             </tr>
                                             <tr>
-                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Business Address:</td>
-                                                <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{BUSINESS_ADDRESS}}</td>
+                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Company Type:</td>
+                                                <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{COMPANY_TYPE}}</td>
                                             </tr>
-                                        </table>
-                                    </td>
-                                </tr>
-                                                                 </table>
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-                    
-                    <!-- ADDRESS SECTION -->
-                    <tr>
-                        <td style="padding: 0 30px 25px 30px;">
-                            <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f9fafb; border-radius: 5px;">
-                                <tr>
-                                    <td style="padding: 15px;">
-                                        <h2 style="margin: 0 0 15px 0; color: #0369a1; font-size: 16px; font-weight: bold; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px;">
-                                            Postal Details
-                                        </h2>
-                                        
-                                        <table width="100%" border="0" cellspacing="0" cellpadding="0">
                                             <tr>
-                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Postal Address:</td>
-                                                <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{POSTAL_ADDRESS}}</td>
+                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Address:</td>
+                                                <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{ADDRESS}}</td>
                                             </tr>
                                             <tr>
                                                 <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Postal Code:</td>
                                                 <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{POSTAL_CODE}}</td>
                                             </tr>
+                                            <tr>
+                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Tax File Number:</td>
+                                                <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{TAX_FILE_NUMBER}}</td>
+                                            </tr>
                                         </table>
                                     </td>
                                 </tr>
@@ -250,32 +249,20 @@ const htmlTemplateString = `<!DOCTYPE html>
                         </td>
                     </tr>
                     
-                    <!-- BUSINESS REGISTRATION DETAILS SECTION -->
+                    <!-- MAIN APPLICANT POSITION SECTION -->
                     <tr>
                         <td style="padding: 0 30px 25px 30px;">
                             <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f9fafb; border-radius: 5px;">
                                 <tr>
                                     <td style="padding: 15px;">
                                         <h2 style="margin: 0 0 15px 0; color: #0369a1; font-size: 16px; font-weight: bold; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px;">
-                                            Registration Details
+                                            Main Applicant Position
                                         </h2>
                                         
                                         <table width="100%" border="0" cellspacing="0" cellpadding="0">
                                             <tr>
-                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">ABN Registration:</td>
-                                                <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{ABN}}</td>
-                                            </tr>
-                                            <tr>
-                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Business Postal Address:</td>
-                                                <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{BUSINESS_POSTAL_ADDRESS}}</td>
-                                            </tr>
-                                            <tr>
-                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Business Postal Code:</td>
-                                                <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{BUSINESS_POSTAL_CODE}}</td>
-                                            </tr>
-                                            <tr>
-                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Others Details:</td>
-                                                <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{OTHERS_DETAILS}}</td>
+                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Position:</td>
+                                                <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{MAIN_POSITION}}</td>
                                             </tr>
                                         </table>
                                     </td>
@@ -283,6 +270,9 @@ const htmlTemplateString = `<!DOCTYPE html>
                             </table>
                         </td>
                     </tr>
+                    
+                    <!-- AUTHORIZED PERSONS SECTION -->
+                    {{AUTHORIZED_PERSONS}}
                     
                     <!-- ACTION REQUIRED SECTION -->
                     <tr>
@@ -292,7 +282,7 @@ const htmlTemplateString = `<!DOCTYPE html>
                                     <td style="padding: 15px;">
                                         <h3 style="margin: 0 0 10px 0; color: #0369a1; font-size: 16px; font-weight: bold;">Action Required</h3>
                                         <p style="margin: 0; color: #333333; font-size: 14px; line-height: 1.5;">
-                                            Please review this business registration request and update the status in the dashboard.
+                                            Please review this company registration request and update the status in the dashboard.
                                         </p>
                                     </td>
                                 </tr>
@@ -318,17 +308,95 @@ const htmlTemplateString = `<!DOCTYPE html>
 </body>
 </html>`;
 
-const businessRegistrationEmail = (data: BusinessRegistrationData) => {
+const companyRegistrationEmail = (data: CompanyRegistrationData) => {
     let htmlTemplate = '';
     
     try {
         // First try to read from file (development environment)
-        const templatePath = path.join(process.cwd(), 'src/utils/template/business-registration-email.html');
+        const templatePath = path.join(process.cwd(), 'src/utils/template/company-registration-email.html');
         htmlTemplate = fs.readFileSync(templatePath, 'utf8');
     } catch (error) {
         // If file reading fails, use the embedded template (production environment)
-        console.log('Using embedded HTML template');
+        console.log('Using embedded HTML template for company registration');
         htmlTemplate = htmlTemplateString;
+    }
+    
+    // Format main applicant position info
+    let mainApplicantPositionInfo = [];
+    if (data.isDirector) mainApplicantPositionInfo.push('Director');
+    if (data.isShareholder) mainApplicantPositionInfo.push(`Shareholder (${data.shareholderPercentage}%)`);
+    
+    // Format authorized persons HTML
+    let authorizedPersonsHtml = '';
+    
+    if (data.authorizedPersons && data.authorizedPersons.length > 0) {
+        data.authorizedPersons.forEach((person, index) => {
+            let positionInfo = [];
+            if (person.isDirector) positionInfo.push('Director');
+            if (person.isShareholder) positionInfo.push(`Shareholder (${person.shareholderPercentage}%)`);
+            
+            authorizedPersonsHtml += `
+            <tr>
+                <td style="padding: 0 30px 25px 30px;">
+                    <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f9fafb; border-radius: 5px;">
+                        <tr>
+                            <td style="padding: 15px;">
+                                <h2 style="margin: 0 0 15px 0; color: #0369a1; font-size: 16px; font-weight: bold; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px;">
+                                    Authorized Person ${index + 1}: ${person.fullName || 'N/A'}
+                                </h2>
+                                
+                                <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                                    <tr>
+                                        <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Email:</td>
+                                        <td style="padding: 5px 0; color: #333333; font-size: 14px;">${person.email || 'N/A'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Date of Birth:</td>
+                                        <td style="padding: 5px 0; color: #333333; font-size: 14px;">${person.dateOfBirth || 'N/A'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Phone:</td>
+                                        <td style="padding: 5px 0; color: #333333; font-size: 14px;">${person.phone || 'N/A'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Address:</td>
+                                        <td style="padding: 5px 0; color: #333333; font-size: 14px;">${person.address || 'N/A'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Postal Code:</td>
+                                        <td style="padding: 5px 0; color: #333333; font-size: 14px;">${person.postalCode || 'N/A'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Tax File Number:</td>
+                                        <td style="padding: 5px 0; color: #333333; font-size: 14px;">${person.taxFileNumber || 'N/A'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Position:</td>
+                                        <td style="padding: 5px 0; color: #333333; font-size: 14px;">${positionInfo.length > 0 ? positionInfo.join(', ') : 'N/A'}</td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>`;
+        });
+    } else {
+        authorizedPersonsHtml = `
+        <tr>
+            <td style="padding: 0 30px 25px 30px;">
+                <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f9fafb; border-radius: 5px;">
+                    <tr>
+                        <td style="padding: 15px;">
+                            <h2 style="margin: 0 0 15px 0; color: #0369a1; font-size: 16px; font-weight: bold; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px;">
+                                Authorized Persons
+                            </h2>
+                            <p style="color: #666666; font-style: italic;">No authorized persons added</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>`;
     }
     
     // Replace placeholders with actual data
@@ -338,21 +406,20 @@ const businessRegistrationEmail = (data: BusinessRegistrationData) => {
             month: 'long', 
             year: 'numeric'
         }))
-        .replace('{{STATUS}}', data.status || 'Pending')
+        .replace('{{STATUS}}', data.status ? data.status.toUpperCase() : 'PENDING')
         .replace('{{NAME}}', data.userName || 'Not provided')
         .replace('{{EMAIL}}', data.userEmail || 'Not provided')
         .replace('{{USER_ID}}', data.userId)
-        .replace('{{BUSINESS_NAME}}', data.businessName)
-        .replace('{{BUSINESS_ADDRESS}}', data.businessAddress)
-        .replace('{{POSTAL_ADDRESS}}', data.postalAddress)
-        .replace('{{POSTAL_CODE}}', data.postalCode)
-        .replace('{{ABN}}', data.abn || 'Not provided')
-        .replace('{{BUSINESS_POSTAL_ADDRESS}}', data.businessPostalAddress || 'Not provided')
-        .replace('{{BUSINESS_POSTAL_CODE}}', data.businessPostalCode || 'Not provided')
-        .replace('{{OTHERS_DETAILS}}', data.othersDetails || 'Not provided')
+        .replace('{{COMPANY_NAME}}', data.companyName || 'Not provided')
+        .replace('{{COMPANY_TYPE}}', data.companyType || 'Not provided')
+        .replace('{{ADDRESS}}', data.address || 'Not provided')
+        .replace('{{POSTAL_CODE}}', data.postalCode || 'Not provided')
+        .replace('{{TAX_FILE_NUMBER}}', data.taxFileNumber || 'Not provided')
+        .replace('{{MAIN_POSITION}}', mainApplicantPositionInfo.length > 0 ? mainApplicantPositionInfo.join(', ') : 'No positions selected')
+        .replace('{{AUTHORIZED_PERSONS}}', authorizedPersonsHtml)
         .replace('{{YEAR}}', new Date().getFullYear().toString());
     
     return htmlTemplate;
 };
 
-export default businessRegistrationEmail;
+export default companyRegistrationEmail;

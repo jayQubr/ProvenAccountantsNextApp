@@ -11,17 +11,31 @@ import useStore from '@/utils/useStore'
 import CustomInput from '@/components/ui/CustomInput'
 import CustomCheckbox from '@/components/ui/CustomCheckbox'
 import PersonalInformation from '@/components/features/PersonaInformation'
-import LoadingSpinner from '@/components/features/LoadingSpinner'
 import SubmitButton from '@/components/features/SubmitButton'
 import RegistrationStatusBanner from '@/components/features/RegistrationStatusBanner'
-import { 
-  submitCompanyRegistration, 
-  checkExistingCompanyRegistration,
-  AuthorizedPerson,
-  CompanyRegistrationData
-} from '@/lib/companyRegistratinoService'
+import { checkExistingCompanyRegistration } from '@/lib/companyService';
+import SkeletonLoader from '@/components/ui/SkeletonLoader';
+import { RegistrationStatus } from '@/lib/registrationService';
 
-interface CompanyFormData {
+// Define proper types for the company data
+interface AuthorizedPerson {
+  fullName: string;
+  email: string;
+  dateOfBirth: string;
+  phone: string;
+  address: string;
+  postalCode: string;
+  taxFileNumber: string;
+  position: string;
+  isDirector: boolean;
+  isShareholder: boolean;
+  shareholderPercentage: string;
+}
+
+interface CompanyData {
+  companyName: string;
+  companyType: string;
+  companyAddress: string;
   address: string;
   postalCode: string;
   taxFileNumber: string;
@@ -33,15 +47,37 @@ interface CompanyFormData {
   shareholderPercentage: string;
 }
 
+interface ExistingRegistration {
+  companyName?: string;
+  status?: RegistrationStatus;
+  notes?: string;
+  createdAt?: number;
+  updatedAt?: number;
+  companyType?: string;
+  companyAddress?: string;
+  address?: string;
+  postalCode?: string;
+  taxFileNumber?: string;
+  authorizedPersons?: AuthorizedPerson[];
+  agreeToDeclaration?: boolean;
+  position?: string;
+  isDirector?: boolean;
+  isShareholder?: boolean;
+  shareholderPercentage?: string;
+}
+
 const CompanyRegistration = () => {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const [existingRegistration, setExistingRegistration] = useState<(CompanyRegistrationData & { id: string }) | null>(null)
+  const [existingRegistration, setExistingRegistration] = useState<ExistingRegistration | null>(null)
   const router = useRouter()
   const { user } = useStore()
 
-  const [companyData, setCompanyData] = useState<CompanyFormData>({
+  const [companyData, setCompanyData] = useState<CompanyData>({
+    companyName: '',
+    companyType: 'Proprietary Limited Company',
+    companyAddress: '',
     address: '',
     postalCode: '',
     taxFileNumber: '',
@@ -56,15 +92,18 @@ const CompanyRegistration = () => {
   useEffect(() => {
     const checkRegistration = async () => {
       if (!user?.uid) return
-      
+
       setLoading(true)
       try {
-        const result = await checkExistingCompanyRegistration(user.uid)
+        const result: any = await checkExistingCompanyRegistration(user.uid)
         if (result.exists && result.data) {
           setExistingRegistration(result.data)
-          
+
           // Pre-fill form with existing data
           setCompanyData({
+            companyName: result.data.companyName || '',
+            companyType: result.data.companyType || 'Proprietary Limited Company',
+            companyAddress: result.data.companyAddress || '',
             address: result.data.address || '',
             postalCode: result.data.postalCode || '',
             taxFileNumber: result.data.taxFileNumber || '',
@@ -87,13 +126,15 @@ const CompanyRegistration = () => {
     checkRegistration()
   }, [user])
 
-  const handleChange = (e: any) => {
-    const { name, value, type, checked } = e.target
-    setCompanyData(prev => ({
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target
+    const checked = (e.target as HTMLInputElement).checked
+    
+    setCompanyData((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }))
-    
+
     // Clear error when field is edited
     if (errors[name]) {
       setErrors(prev => {
@@ -106,8 +147,8 @@ const CompanyRegistration = () => {
 
   const handlePersonChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>, index: number) => {
     const { name, value } = e.target
-    
-    setCompanyData(prev => ({
+
+    setCompanyData((prev) => ({
       ...prev,
       authorizedPersons: prev.authorizedPersons.map((person, i) => {
         if (i === index) {
@@ -116,7 +157,7 @@ const CompanyRegistration = () => {
         return person
       })
     }))
-    
+
     // Clear error when field is edited
     if (errors[`authorizedPersons.${index}.${name}`]) {
       setErrors(prev => {
@@ -128,7 +169,7 @@ const CompanyRegistration = () => {
   }
 
   const addAuthorizedPerson = () => {
-    setCompanyData(prev => ({
+    setCompanyData((prev) => ({
       ...prev,
       authorizedPersons: [
         ...prev.authorizedPersons,
@@ -151,7 +192,7 @@ const CompanyRegistration = () => {
 
   const removeAuthorizedPerson = (index: number) => {
     const updatedAuthorizedPersons = companyData.authorizedPersons.filter((_, i) => i !== index)
-    setCompanyData(prev => ({
+    setCompanyData((prev) => ({
       ...prev,
       authorizedPersons: updatedAuthorizedPersons
     }))
@@ -159,6 +200,14 @@ const CompanyRegistration = () => {
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
+
+    if (!companyData.companyName.trim()) {
+      newErrors.companyName = 'Company name is required'
+    }
+
+    if (!companyData.companyAddress.trim()) {
+      newErrors.companyAddress = 'Company address is required'
+    }
 
     if (!companyData.address.trim()) {
       newErrors.address = 'Address is required'
@@ -182,8 +231,8 @@ const CompanyRegistration = () => {
       if (!companyData.shareholderPercentage) {
         newErrors.shareholderPercentage = 'Shareholder percentage is required'
       } else if (
-        isNaN(Number(companyData.shareholderPercentage)) || 
-        Number(companyData.shareholderPercentage) < 0 || 
+        isNaN(Number(companyData.shareholderPercentage)) ||
+        Number(companyData.shareholderPercentage) < 0 ||
         Number(companyData.shareholderPercentage) > 100
       ) {
         newErrors.shareholderPercentage = 'Percentage must be a number between 0 and 100'
@@ -195,11 +244,18 @@ const CompanyRegistration = () => {
       if (!person.fullName.trim()) {
         newErrors[`authorizedPersons.${index}.fullName`] = 'Full name is required'
       }
-      
+
       if (!person.email.trim()) {
         newErrors[`authorizedPersons.${index}.email`] = 'Email is required'
       } else if (!/\S+@\S+\.\S+/.test(person.email)) {
         newErrors[`authorizedPersons.${index}.email`] = 'Email is invalid'
+      }
+
+      if (!person.taxFileNumber.trim()) {
+        newErrors[`authorizedPersons.${index}.taxFileNumber`] = 'Tax file number is required'
+      }
+      if (!person.isDirector && !person.isShareholder) {
+        newErrors[`authorizedPersons.${index}.position`] = 'At least one position must be selected'
       }
 
       if (!person.dateOfBirth) {
@@ -222,28 +278,21 @@ const CompanyRegistration = () => {
         newErrors[`authorizedPersons.${index}.postalCode`] = 'Postal code must be 4 digits'
       }
 
-      if (!person.taxFileNumber.trim()) {
-        newErrors[`authorizedPersons.${index}.taxFileNumber`] = 'Tax file number is required'
-      }
-      
-      // Validate position - at least one position must be selected
-      if (!person.isDirector && !person.isShareholder) {
-        newErrors[`authorizedPersons.${index}.position`] = 'At least one position must be selected'
-      }
-      
       // Validate shareholder percentage if person is a shareholder
       if (person.isShareholder) {
         if (!person.shareholderPercentage) {
           newErrors[`authorizedPersons.${index}.shareholderPercentage`] = 'Shareholder percentage is required'
         } else if (
-          isNaN(Number(person.shareholderPercentage)) || 
-          Number(person.shareholderPercentage) < 0 || 
+          isNaN(Number(person.shareholderPercentage)) ||
+          Number(person.shareholderPercentage) < 0 ||
           Number(person.shareholderPercentage) > 100
         ) {
           newErrors[`authorizedPersons.${index}.shareholderPercentage`] = 'Percentage must be a number between 0 and 100'
         }
       }
     })
+
+    console.log(newErrors)
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -259,60 +308,55 @@ const CompanyRegistration = () => {
     }
 
     setSubmitting(true)
-    try {
-      const registrationData = {
-        ...companyData,
-        userId: user.uid,
-        userEmail: user.email || '',
-        userName: user.displayName || '',
-        status: existingRegistration?.status || 'pending',
-        isDirector: companyData.isDirector,
-        isShareholder: companyData.isShareholder,
-        shareholderPercentage: companyData.isShareholder ? companyData.shareholderPercentage : '',
-      };
-      
-      const result = await submitCompanyRegistration(registrationData)
-      
-      if (result.success) {
-        toast.success('Company registration submitted successfully!')
-        
-        // Refresh the registration data
-        const updatedResult = await checkExistingCompanyRegistration(user.uid)
-        if (updatedResult.exists && updatedResult.data) {
-          setExistingRegistration(updatedResult.data)
-        }
-        
-        if (!existingRegistration) {
-          // If this was a new submission, wait a moment then redirect
-          setTimeout(() => {
-            router.push('/services')
-          }, 2000)
-        }
-      } else {
-        toast.error('Failed to submit registration. Please try again.')
+
+    const registrationData = {
+      ...companyData,
+      userId: user.uid,
+      userEmail: user.email || '',
+      userName: user.displayName || '',
+      status: existingRegistration?.status || 'pending',
+      isDirector: companyData.isDirector,
+      isShareholder: companyData.isShareholder,
+      shareholderPercentage: companyData.isShareholder ? companyData.shareholderPercentage : '',
+    };
+
+    const response = await fetch('/api/company-registration-service', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ companyRegistrationData: registrationData }),
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      toast.success('Company registration submitted successfully!')
+
+      const updatedResult = await checkExistingCompanyRegistration(user.uid)
+      if (updatedResult.exists && updatedResult.data) {
+        setExistingRegistration(updatedResult.data)
       }
-    } catch (error) {
-      console.error('Error submitting form:', error)
-      toast.error('There was an error submitting your request. Please try again.')
-    } finally {
+
+      setTimeout(() => {
+        router.push('/services')
+      }, 2000)
+    } else {
       setSubmitting(false)
+      toast.error(result.message || 'Failed to submit registration. Please try again.')
     }
   }
 
   const handleConfirmSubmit = () => {
     // syntheticEvent
     const syntheticEvent = {
-      preventDefault: () => {}
+      preventDefault: () => { }
     } as React.FormEvent;
     handleSubmit(syntheticEvent);
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-[60vh]">
-        <LoadingSpinner size="lg" />
-      </div>
-    )
+    return (<SkeletonLoader />)
   }
 
   return (
@@ -320,46 +364,48 @@ const CompanyRegistration = () => {
 
 
       {/* Header */}
-      <motion.div 
+      <motion.div
         className="mb-6"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <button 
-          onClick={() => router.back()} 
+        <button
+          onClick={() => router.back()}
           className="flex items-center text-sky-600 hover:text-sky-700 mb-4 transition-colors"
         >
           <ArrowLeftIcon className="w-4 h-4 mr-2" />
           <span>Back to Services</span>
         </button>
-        
+
         <div className="flex items-center gap-3 mb-2">
           <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-sky-100 flex items-center justify-center text-sky-500">
             <IdentificationIcon className="w-5 h-5" />
           </div>
-          <h1 className="text-xl md:text-2xl font-bold text-gray-800">Company Name Registration</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-gray-800">
+            {companyData.companyName ? `${companyData.companyName} Registration` : 'Company Name Registration'}
+          </h1>
         </div>
-        
+
         <p className="text-gray-600 text-sm">
           Complete the form below to register your company. All fields marked with * are required.
         </p>
       </motion.div>
-      
+
       {/* Registration Status Banner */}
       {existingRegistration && (
-        <RegistrationStatusBanner 
-          title="Company Registration"
-          status={existingRegistration?.status} 
+        <RegistrationStatusBanner
+          title={existingRegistration.companyName ? `${existingRegistration.companyName} Registration` : "Company Registration"}
+          status={existingRegistration?.status || 'pending'}
           notes={existingRegistration?.notes}
           createdAt={existingRegistration?.createdAt}
           updatedAt={existingRegistration?.updatedAt}
           type="company"
         />
       )}
-      
+
       {/* Form */}
-      <motion.form 
+      <motion.form
         onSubmit={handleSubmit}
         className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
         initial={{ opacity: 0, y: 20 }}
@@ -367,38 +413,67 @@ const CompanyRegistration = () => {
         transition={{ duration: 0.4, delay: 0.1 }}
       >
         <div className="p-6 space-y-6">
-          {/* Main Form Fields */}
+          {/* Company Details */}
           <div>
-            <PersonalInformation title="Authorised Person Details"/>
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">Company Details</h2>
             <div className="space-y-4 mt-4">
-              <CustomInput 
-                label="Address" 
-                type="text" 
-                name="address" 
-                value={companyData.address} 
-                onChange={handleChange} 
-                errors={errors.address} 
-                placeholder="Enter your postal address" 
+              <CustomInput
+                label="Company Name"
+                type="text"
+                name="companyName"
+                value={companyData.companyName}
+                onChange={handleChange}
+                errors={errors.companyName}
+                placeholder="Enter your company name"
                 disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
               />
-              <CustomInput 
-                label="Postal Code" 
-                type="text" 
-                name="postalCode" 
-                value={companyData.postalCode} 
-                onChange={handleChange} 
-                errors={errors.postalCode} 
-                placeholder="Enter your postal code" 
+
+              <CustomInput
+                label="Company Registered Address"
+                type="text"
+                name="companyAddress"
+                value={companyData.companyAddress}
+                onChange={handleChange}
+                errors={errors.companyAddress}
+                placeholder="Enter your company registered address"
                 disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
               />
-              <CustomInput 
-                label="Tax File Number" 
-                type="text" 
-                name="taxFileNumber" 
-                value={companyData.taxFileNumber} 
-                onChange={handleChange} 
-                errors={errors.taxFileNumber} 
-                placeholder="Enter your tax file number" 
+
+            </div>
+          </div>
+
+          {/* Authorised Person Details */}
+          <div>
+            <PersonalInformation title="Authorised Person Details" />
+            <div className="space-y-4 mt-4">
+              <CustomInput
+                label="Address"
+                type="text"
+                name="address"
+                value={companyData.address}
+                onChange={handleChange}
+                errors={errors.address}
+                placeholder="Enter your postal address"
+                disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
+              />
+              <CustomInput
+                label="Postal Code"
+                type="text"
+                name="postalCode"
+                value={companyData.postalCode}
+                onChange={handleChange}
+                errors={errors.postalCode}
+                placeholder="Enter your postal code"
+                disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
+              />
+              <CustomInput
+                label="Tax File Number"
+                type="text"
+                name="taxFileNumber"
+                value={companyData.taxFileNumber}
+                onChange={handleChange}
+                errors={errors.taxFileNumber}
+                placeholder="Enter your tax file number"
                 disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
               />
             </div>
@@ -408,21 +483,27 @@ const CompanyRegistration = () => {
           <div>
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Position in Company</h2>
             <div className="space-y-2">
-              <CustomCheckbox 
-                label="Director" 
-                name="isDirector" 
-                checked={companyData.isDirector} 
-                onChange={() => setCompanyData(prev => ({ ...prev, isDirector: !prev.isDirector }))} 
+              <CustomCheckbox
+                label="Director"
+                name="isDirector"
+                checked={companyData.isDirector}
+                onChange={(e) => {
+                  const checked = (e.target as HTMLInputElement).checked;
+                  setCompanyData((prev) => ({ ...prev, isDirector: checked }));
+                }}
                 disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
               />
-              <CustomCheckbox 
-                label="Shareholder" 
-                name="isShareholder" 
-                checked={companyData.isShareholder} 
-                onChange={() => setCompanyData(prev => ({ ...prev, isShareholder: !prev.isShareholder }))} 
+              <CustomCheckbox
+                label="Shareholder"
+                name="isShareholder"
+                checked={companyData.isShareholder}
+                onChange={(e) => {
+                  const checked = (e.target as HTMLInputElement).checked;
+                  setCompanyData((prev) => ({ ...prev, isShareholder: checked }));
+                }}
                 disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
               />
-              
+
               {companyData.isShareholder && (
                 <div className="mt-3 pl-6">
                   <CustomInput
@@ -430,9 +511,9 @@ const CompanyRegistration = () => {
                     name="shareholderPercentage"
                     type="number"
                     value={companyData.shareholderPercentage || ''}
-                    onChange={(e) => setCompanyData(prev => ({ 
-                      ...prev, 
-                      shareholderPercentage: e.target.value 
+                    onChange={(e) => setCompanyData((prev) => ({
+                      ...prev,
+                      shareholderPercentage: e.target.value
                     }))}
                     placeholder="Enter your share percentage"
                     errors={errors.shareholderPercentage}
@@ -452,14 +533,14 @@ const CompanyRegistration = () => {
               </span>
               Authorised Company Person Details
             </h2>
-            
+
             <p className="text-sm text-gray-600 mb-4">
               Add details of individuals who are authorized to act on behalf of the company.
             </p>
-            
+
             {companyData.authorizedPersons && companyData.authorizedPersons.length > 0 ? (
               <div className="space-y-4 mb-4">
-                {companyData.authorizedPersons.map((person, index) => (
+                {companyData.authorizedPersons.map((person: any, index: any) => (
                   <Disclosure key={index} defaultOpen={true}>
                     {({ open }) => (
                       <div className="border border-gray-200 rounded-lg overflow-hidden">
@@ -472,133 +553,151 @@ const CompanyRegistration = () => {
                           </div>
                           <div className="flex items-center">
                             <span className="text-sm text-gray-500 mr-2">{open ? 'Hide Details' : 'Show Details'}</span>
-                            <ChevronDownIcon 
-                              className={`w-5 h-5 text-gray-500 transition-transform ${open ? 'transform rotate-180' : ''}`} 
+                            <ChevronDownIcon
+                              className={`w-5 h-5 text-gray-500 transition-transform ${open ? 'transform rotate-180' : ''}`}
                             />
                           </div>
                         </Disclosure.Button>
-                        
+
                         <Disclosure.Panel className="bg-white p-4 border-t border-gray-200">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <CustomInput 
-                              label="Full Name" 
-                              type="text" 
-                              name="fullName" 
-                              value={person.fullName} 
-                              onChange={(e:any) => handlePersonChange(e, index)} 
-                              errors={errors[`authorizedPersons.${index}.fullName`]} 
-                              placeholder="Enter full name" 
+                            <CustomInput
+                              label="Full Name"
+                              type="text"
+                              name="fullName"
+                              value={person.fullName}
+                              onChange={(e: any) => handlePersonChange(e, index)}
+                              errors={errors[`authorizedPersons.${index}.fullName`]}
+                              placeholder="Enter full name"
                               disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
                             />
-                            
-                            <CustomInput 
-                              label="Email" 
-                              type="email" 
-                              name="email" 
-                              value={person.email} 
-                              onChange={(e:any) => handlePersonChange(e, index)} 
-                              errors={errors[`authorizedPersons.${index}.email`]} 
-                              placeholder="Enter email address" 
+
+                            <CustomInput
+                              label="Email"
+                              type="email"
+                              name="email"
+                              value={person.email}
+                              onChange={(e: any) => handlePersonChange(e, index)}
+                              errors={errors[`authorizedPersons.${index}.email`]}
+                              placeholder="Enter email address"
                               disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
                             />
-                            
-                            <CustomInput 
-                              label="Date of Birth" 
-                              type="date" 
-                              name="dateOfBirth" 
-                              value={person.dateOfBirth} 
-                              onChange={(e:any) => handlePersonChange(e, index)} 
-                              errors={errors[`authorizedPersons.${index}.dateOfBirth`]} 
+
+                            <CustomInput
+                              label="Date of Birth"
+                              type="date"
+                              name="dateOfBirth"
+                              value={person.dateOfBirth}
+                              onChange={(e: any) => handlePersonChange(e, index)}
+                              errors={errors[`authorizedPersons.${index}.dateOfBirth`]}
                               disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
                             />
-                            
-                            <CustomInput 
-                              label="Phone Number" 
-                              type="tel" 
-                              name="phone" 
-                              value={person.phone} 
-                              onChange={(e:any) => handlePersonChange(e, index)} 
-                              errors={errors[`authorizedPersons.${index}.phone`]} 
-                              placeholder="Enter phone number" 
+
+                            <CustomInput
+                              label="Phone Number"
+                              type="tel"
+                              name="phone"
+                              value={person.phone}
+                              onChange={(e: any) => handlePersonChange(e, index)}
+                              errors={errors[`authorizedPersons.${index}.phone`]}
+                              placeholder="Enter phone number"
                               disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
                             />
-                            
+
                             <div className="md:col-span-2">
-                              <CustomInput 
-                                label="Address" 
-                                type="text" 
-                                name="address" 
-                                value={person.address} 
-                                onChange={(e:any) => handlePersonChange(e, index)} 
-                                errors={errors[`authorizedPersons.${index}.address`]} 
-                                placeholder="Enter address" 
+                              <CustomInput
+                                label="Address"
+                                type="text"
+                                name="address"
+                                value={person.address}
+                                onChange={(e: any) => handlePersonChange(e, index)}
+                                errors={errors[`authorizedPersons.${index}.address`]}
+                                placeholder="Enter address"
                                 disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
                               />
                             </div>
-                            
-                            <CustomInput 
-                              label="Postal Code" 
-                              type="text" 
-                              name="postalCode" 
-                              value={person.postalCode} 
-                              onChange={(e:any) => handlePersonChange(e, index)} 
-                              errors={errors[`authorizedPersons.${index}.postalCode`]} 
-                              placeholder="Enter postal code" 
+
+                            <CustomInput
+                              label="Postal Code"
+                              type="text"
+                              name="postalCode"
+                              value={person.postalCode}
+                              onChange={(e: any) => handlePersonChange(e, index)}
+                              errors={errors[`authorizedPersons.${index}.postalCode`]}
+                              placeholder="Enter postal code"
                               maxLength={4}
                               disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
                             />
-                            
-                            <CustomInput 
-                              label="Tax File Number" 
-                              type="text" 
-                              name="taxFileNumber" 
-                              value={person.taxFileNumber} 
-                              onChange={(e:any) => handlePersonChange(e, index)} 
-                              errors={errors[`authorizedPersons.${index}.taxFileNumber`]} 
-                              placeholder="Enter TFN" 
+
+                            <CustomInput
+                              label="Tax File Number"
+                              type="text"
+                              name="taxFileNumber"
+                              value={person.taxFileNumber}
+                              onChange={(e: any) => handlePersonChange(e, index)}
+                              errors={errors[`authorizedPersons.${index}.taxFileNumber`]}
+                              placeholder="Enter TFN"
                               disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
                             />
-                            
+
                             <div className="md:col-span-2">
                               <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Position in Company
                               </label>
                               <div className="space-y-2">
-                                <CustomCheckbox 
-                                  label="Director" 
-                                  name={`authorizedPersons.${index}.isDirector`} 
-                                  checked={person.isDirector} 
+                                <CustomCheckbox
+                                  label="Director"
+                                  name={`authorizedPersons.${index}.isDirector`}
+                                  checked={person.isDirector}
                                   onChange={() => {
                                     const updatedPersons = [...companyData.authorizedPersons];
                                     updatedPersons[index] = {
                                       ...updatedPersons[index],
                                       isDirector: !updatedPersons[index].isDirector
                                     };
-                                    setCompanyData(prev => ({
+                                    setCompanyData((prev) => ({
                                       ...prev,
                                       authorizedPersons: updatedPersons
                                     }));
-                                  }} 
+                                    
+                                    // Clear error if it exists
+                                    if (errors[`authorizedPersons.${index}.position`]) {
+                                      setErrors(prev => {
+                                        const newErrors = { ...prev };
+                                        delete newErrors[`authorizedPersons.${index}.position`];
+                                        return newErrors;
+                                      });
+                                    }
+                                  }}
                                   disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
                                 />
-                                <CustomCheckbox 
-                                  label="Shareholder" 
-                                  name={`authorizedPersons.${index}.isShareholder`} 
-                                  checked={person.isShareholder} 
+                                <CustomCheckbox
+                                  label="Shareholder"
+                                  name={`authorizedPersons.${index}.isShareholder`}
+                                  checked={person.isShareholder}
                                   onChange={() => {
                                     const updatedPersons = [...companyData.authorizedPersons];
                                     updatedPersons[index] = {
                                       ...updatedPersons[index],
                                       isShareholder: !updatedPersons[index].isShareholder
                                     };
-                                    setCompanyData(prev => ({
+                                    setCompanyData((prev) => ({
                                       ...prev,
                                       authorizedPersons: updatedPersons
                                     }));
-                                  }} 
+                                    
+                                    // Clear error if it exists
+                                    if (errors[`authorizedPersons.${index}.position`]) {
+                                      setErrors(prev => {
+                                        const newErrors = { ...prev };
+                                        delete newErrors[`authorizedPersons.${index}.position`];
+                                        return newErrors;
+                                      });
+                                    }
+                                  }}
                                   disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
                                 />
-                                
+
                                 {person.isShareholder && (
                                   <div className="mt-3 pl-6">
                                     <CustomInput
@@ -612,7 +711,7 @@ const CompanyRegistration = () => {
                                           ...updatedPersons[index],
                                           shareholderPercentage: e.target.value
                                         };
-                                        setCompanyData(prev => ({
+                                        setCompanyData((prev) => ({
                                           ...prev,
                                           authorizedPersons: updatedPersons
                                         }));
@@ -627,7 +726,7 @@ const CompanyRegistration = () => {
                               </div>
                             </div>
                           </div>
-                          
+
                           {existingRegistration?.status !== 'completed' && existingRegistration?.status !== 'in-progress' && (
                             <div className="mt-4 pt-3 border-t border-gray-100 flex justify-end">
                               <button
@@ -666,20 +765,20 @@ const CompanyRegistration = () => {
                 </button>
               </div>
             )}
-            
+
             {companyData.authorizedPersons && companyData.authorizedPersons.length > 0 && existingRegistration?.status !== 'completed' && existingRegistration?.status !== 'in-progress' && (
               <div className="flex justify-end">
                 <motion.button
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.1 }}
-                type="button"
-                onClick={addAuthorizedPerson}
-                className="w-1/3 flex items-center justify-center px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg transition-colors"
-              >
-                <PlusIcon className="w-5 h-5 mr-2" />
-                Add Authorized Person
-              </motion.button>
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.1 }}
+                  type="button"
+                  onClick={addAuthorizedPerson}
+                  className="w-1/3 flex items-center justify-center px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg transition-colors"
+                >
+                  <PlusIcon className="w-5 h-5 mr-2" />
+                  Add Authorized Person
+                </motion.button>
               </div>
             )}
           </div>
@@ -687,10 +786,10 @@ const CompanyRegistration = () => {
           {/* Declaration */}
           <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
             <p className="text-sm text-gray-600 mb-3">
-              I/We hereby authorize Mr. AMAN NAGPAL C/O Proven Associated Services Pty Ltd or Proven Accountants to update/add all details with ASIC on my behalf & represent me before various organizations and lodge various documents with the tax office, including updating ABN based on information provided by me from time to time. 
+              I/We hereby authorize Mr. AMAN NAGPAL C/O Proven Associated Services Pty Ltd or Proven Accountants to update/add all details with ASIC on my behalf & represent me before various organizations and lodge various documents with the tax office, including updating ABN based on information provided by me from time to time.
             </p>
             <p className="text-sm text-gray-600 mb-3">
-            I/We further declare that:
+              I/We further declare that:
             </p>
             <ol className="list-decimal list-inside text-sm text-gray-600 mb-3">
               <li>None of the mentioned applicant(s) is/are disqualified from managing corporations under Section 206B(1) of the Corporations Act 2001.</li>
@@ -699,11 +798,11 @@ const CompanyRegistration = () => {
               <li>The information supplied is accurate and complete to the best of my knowledge, and any false information provided may lead to penalties under applicable acts, rules, and regulations.</li>
               <li>All the persons mentioned in the application have consented to act for the respective roles.</li>
             </ol>
-            <CustomCheckbox 
-              label="Authorisation Approval Provided" 
-              name="agreeToDeclaration" 
-              checked={companyData.agreeToDeclaration} 
-              onChange={handleChange} 
+            <CustomCheckbox
+              label="Authorisation Approval Provided"
+              name="agreeToDeclaration"
+              checked={companyData.agreeToDeclaration}
+              onChange={handleChange}
               errors={errors.agreeToDeclaration}
               disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
             />
@@ -719,7 +818,7 @@ const CompanyRegistration = () => {
           >
             Cancel
           </button>
-          
+
           {existingRegistration?.status !== 'completed' && existingRegistration?.status !== 'in-progress' && (
             <SubmitButton
               isSubmitting={submitting}

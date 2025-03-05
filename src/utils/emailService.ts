@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer';
 import { serviceRequestEmail } from './template/noticeAssesmentEmail';
 import atoRegistrationEmail from './template/atoRegistrationEmail';
+import companyRegistrationEmail from './template/companyRegistrationEmail';
 
 interface ServiceRequestData {
   userId: string;
@@ -25,6 +26,12 @@ interface ServiceRequestData {
   authorizedPersons?: any[];
   status?: string;
   user?: any;
+  isDirector?: boolean;
+  isShareholder?: boolean;
+  shareholderPercentage?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  notes?: string;
   // ATO Registration fields
   abn?: boolean;
   gst?: boolean;
@@ -145,32 +152,52 @@ ${authorizedPersonsDetails}
         break;
       case 'Company Registration':
         emailData.year = 'N/A';
-        // If details is not provided, generate it from the company data
-        if (!emailData.details) {
-          const authorizedPersonsDetails = data.authorizedPersons && data.authorizedPersons.length > 0
-            ? data.authorizedPersons.map((person: any, index: number) => 
-                `Person ${index + 1}: ${person.fullName || 'N/A'}, Position: ${person.position || 'N/A'}, Email: ${person.email || 'N/A'}`
-              ).join('\n')
-            : 'No authorized persons added';
+        
+        // Format authorized persons details
+        const companyAuthorizedPersonsDetails = data.authorizedPersons && data.authorizedPersons.length > 0
+          ? data.authorizedPersons.map((person: any, index: number) => {
+              let positionInfo = [];
+              if (person.isDirector) positionInfo.push('Director');
+              if (person.isShareholder) positionInfo.push(`Shareholder (${person.shareholderPercentage}%)`);
+              
+              return `
+Person ${index + 1}: ${person.fullName || 'N/A'}
+Email: ${person.email || 'N/A'}
+Date of Birth: ${person.dateOfBirth || 'N/A'}
+Phone: ${person.phone || 'N/A'}
+Address: ${person.address || 'N/A'}
+Postal Code: ${person.postalCode || 'N/A'}
+Tax File Number: ${person.taxFileNumber || 'N/A'}
+Position: ${positionInfo.length > 0 ? positionInfo.join(', ') : 'N/A'}
 
-            emailData.details = `
-                Company Name: ${data.companyName}
-                Company Type: ${data.companyType}
-                Address: ${data.address}
-                Postal Code: ${data.postalCode}
-                Tax File Number: ${data.taxFileNumber}
+              `;
+            }).join('\n\n')
+          : 'No authorized persons added';
 
-                Authorized Persons:
-                ${authorizedPersonsDetails}
-          `;
-        }
+        // Format main applicant position info
+        let mainApplicantPositionInfo = [];
+        if (data.isDirector) mainApplicantPositionInfo.push('Director');
+        if (data.isShareholder) mainApplicantPositionInfo.push(`Shareholder (${data.shareholderPercentage}%)`);
+        
+        emailData.details = `
+Company Name: ${data.companyName || 'N/A'}
+Company Type: ${data.companyType || 'N/A'}
+Address: ${data.address || 'N/A'}
+Postal Code: ${data.postalCode || 'N/A'}
+Tax File Number: ${data.taxFileNumber || 'N/A'}
+
+Main Applicant Position: ${mainApplicantPositionInfo.length > 0 ? mainApplicantPositionInfo.join(', ') : 'N/A'}
+
+Authorized Persons:
+${companyAuthorizedPersonsDetails}
+        `;
         break;
     }
 
     // Generate HTML content for email
     let emailHtml;
     
-    // Use specialized template for ATO Registration
+    // Use specialized template based on service type
     if (data.serviceType === 'ATO Registration') {
       // Convert flat structure to nested structure expected by atoRegistrationEmail
       const atoData = {
@@ -202,6 +229,28 @@ ${authorizedPersonsDetails}
       };
       
       emailHtml = atoRegistrationEmail(atoData);
+    } else if (data.serviceType === 'Company Registration') {
+      // Use the specialized company registration template
+      const companyData = {
+        userId: data.userId,
+        userEmail: data.userEmail,
+        userName: data.userName,
+        companyName: data.companyName,
+        companyType: data.companyType,
+        address: data.address,
+        postalCode: data.postalCode,
+        taxFileNumber: data.taxFileNumber,
+        isDirector: data.isDirector,
+        isShareholder: data.isShareholder,
+        shareholderPercentage: data.shareholderPercentage,
+        authorizedPersons: data.authorizedPersons || [],
+        status: data.status || 'pending',
+        createdAt: data.createdAt,
+        updatedAt: data.updatedAt,
+        notes: data.notes
+      };
+      
+      emailHtml = companyRegistrationEmail(companyData);
     } else {
       // Use generic template for other service types
       emailHtml = serviceRequestEmail(emailData);
