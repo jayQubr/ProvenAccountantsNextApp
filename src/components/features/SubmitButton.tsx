@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion';
 import React, { useState, useEffect } from 'react';
 
 interface SubmitButtonProps {
@@ -27,8 +28,7 @@ const SubmitButton: React.FC<SubmitButtonProps> = ({
   confirmMessage = 'Are you sure you want to submit this registration?',
   validateForm,
 }) => {
-  console.log("status", status)
-  
+
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
 
@@ -39,7 +39,7 @@ const SubmitButton: React.FC<SubmitButtonProps> = ({
     }
   }, [isSubmitting, isConfirming]);
 
-  const isDisabled = isSubmitting || disabled || status === 'in-progress' || status === 'completed';
+  const isDisabled = isSubmitting || disabled || status === 'in-progress' || status === 'completed' || status === 'pending' || status === 'rejected';
 
   const buttonText = isSubmitting 
     ? processingText
@@ -81,7 +81,10 @@ const SubmitButton: React.FC<SubmitButtonProps> = ({
 
   return (
     <div className="relative">
-      <button
+      <motion.button
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
         type="button"
         disabled={isDisabled}
         onClick={handleButtonClick}
@@ -100,7 +103,7 @@ const SubmitButton: React.FC<SubmitButtonProps> = ({
         ) : (
           buttonText
         )}
-      </button>
+      </motion.button>
 
       {showConfirmation && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

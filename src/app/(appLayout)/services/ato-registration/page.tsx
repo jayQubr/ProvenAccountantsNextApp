@@ -247,6 +247,11 @@ const ATORegistrationPage = () => {
     }
   };
 
+  const handleConfirmSubmit = () => {
+    const syntheticEvent = { preventDefault: () => {} } as React.FormEvent;
+    handleSubmit(syntheticEvent);
+  };
+
   if (isLoading) {
     return (
       <SkeletonLoader />
@@ -756,6 +761,7 @@ const ATORegistrationPage = () => {
             rejectedText="Resubmit Registration"
             completedText="Already Submitted"
             validateForm={validateForm}
+            onConfirm={handleConfirmSubmit}
           />
         </div>
       </motion.form>
