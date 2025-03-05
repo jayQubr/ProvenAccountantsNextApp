@@ -11,7 +11,7 @@ interface SubmitButtonProps {
   processingText?: string;
   onConfirm?: () => void;
   confirmMessage?: string;
-  formValidation?: boolean;
+  validateForm: () => boolean; // <-- Accept validation function from parent
 }
 
 const SubmitButton: React.FC<SubmitButtonProps> = ({
@@ -25,21 +25,20 @@ const SubmitButton: React.FC<SubmitButtonProps> = ({
   processingText = 'Processing...',
   onConfirm,
   confirmMessage = 'Are you sure you want to submit this registration?',
-  formValidation = true
+  validateForm, // <-- Receive validation function from parent
 }) => {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
-  
-  // Close the confirmation modal when submission completes
+
   useEffect(() => {
     if (isConfirming && !isSubmitting) {
       setShowConfirmation(false);
       setIsConfirming(false);
     }
   }, [isSubmitting, isConfirming]);
-  
+
   const isDisabled = isSubmitting || disabled || status === 'in-progress' || status === 'completed';
-  
+
   const buttonText = isSubmitting 
     ? processingText
     : status === 'pending'
@@ -52,31 +51,23 @@ const SubmitButton: React.FC<SubmitButtonProps> = ({
 
   const handleButtonClick = (e: React.MouseEvent) => {
     e.preventDefault();
+
+    // Validate the form before showing confirmation
+    if (!validateForm()) {
+      return; // Stop if validation fails
+    }
+
     if (!isDisabled) {
-      if (formValidation) {
-        setShowConfirmation(true);
-      } else {
-        // If form validation is disabled, submit the form immediately
-        const form = (e.target as HTMLElement).closest('form');
-        if (form) {
-          form.requestSubmit();
-        }
-      }
+      setShowConfirmation(true);
     }
   };
 
   const handleConfirm = (e: React.MouseEvent) => {
     e.preventDefault();
     setIsConfirming(true);
-    
+
     if (onConfirm) {
       onConfirm();
-    } else {
-      // If no onConfirm handler is provided, submit the parent form
-      const form = (e.target as HTMLElement).closest('form');
-      if (form) {
-        form.requestSubmit();
-      }
     }
   };
 
@@ -109,7 +100,6 @@ const SubmitButton: React.FC<SubmitButtonProps> = ({
         )}
       </button>
 
-      {/* Confirmation Dialog */}
       {showConfirmation && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
