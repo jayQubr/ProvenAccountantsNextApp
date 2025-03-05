@@ -3,7 +3,7 @@
 import { useState, useEffect, ChangeEvent, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { ArrowLeftIcon, PlusIcon, MinusIcon, UserPlusIcon, ChevronDownIcon, UserGroupIcon } from '@heroicons/react/24/outline'
+import { ArrowLeftIcon, PlusIcon, MinusIcon, UserPlusIcon, ChevronDownIcon, UserGroupIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { IdentificationIcon } from '@heroicons/react/24/outline'
 import { Disclosure } from '@headlessui/react'
 import { toast, Toaster } from 'sonner'
@@ -19,6 +19,7 @@ import {
   TrustAuthorizedPerson,
   TrustRegistrationData
 } from '@/lib/trustRegistrationService'
+import SkeletonLoader from '@/components/ui/SkeletonLoader';
 
 interface TrustFormData {
   address: string;
@@ -26,9 +27,8 @@ interface TrustFormData {
   taxFileNumber: string;
   authorizedPersons: TrustAuthorizedPerson[];
   agreeToDeclaration: boolean;
-  position: string;
   trustName: string;
-  trustType: string;
+  trustAddress: string;
 }
 
 const TrustRegistration = () => {
@@ -45,9 +45,8 @@ const TrustRegistration = () => {
     taxFileNumber: '',
     authorizedPersons: [],
     agreeToDeclaration: false,
-    position: '',
     trustName: '',
-    trustType: ''
+    trustAddress: '',
   })
 
   useEffect(() => {
@@ -67,9 +66,8 @@ const TrustRegistration = () => {
             taxFileNumber: result.data.taxFileNumber || '',
             authorizedPersons: result.data.authorizedPersons || [],
             agreeToDeclaration: result.data.agreeToDeclaration || false,
-            position: result.data.position || '',
             trustName: result.data.trustName || '',
-            trustType: result.data.trustType || ''
+            trustAddress: result.data.trustAddress || ''
           })
         }
       } catch (error) {
@@ -159,8 +157,8 @@ const TrustRegistration = () => {
       newErrors.trustName = 'Trust name is required'
     }
 
-    if (!trustData.trustType.trim()) {
-      newErrors.trustType = 'Trust type is required'
+    if (!trustData.trustAddress.trim()) {
+      newErrors.trustAddress = 'Trust address is required'
     }
 
     if (!trustData.address.trim()) {
@@ -193,13 +191,8 @@ const TrustRegistration = () => {
         } else if (!/\S+@\S+\.\S+/.test(person.email)) {
           newErrors[`authorizedPersons.${index}.email`] = 'Email is invalid'
         }
-
-        if (!person.position) {
-          newErrors[`authorizedPersons.${index}.position`] = 'Position is required'
-        }
       })
     }
-
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -275,11 +268,14 @@ const TrustRegistration = () => {
     }
   }
 
+  const handleConfirmSubmit = () => {
+    const syntheticEvent = { preventDefault: () => {} } as React.FormEvent;
+    handleSubmit(syntheticEvent);
+  };
+
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-[60vh]">
-        <LoadingSpinner size="lg" />
-      </div>
+      <SkeletonLoader />
     )
   }
 
@@ -349,31 +345,16 @@ const TrustRegistration = () => {
                 placeholder="Enter trust name"
                 disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
               />
-              <div>
-                <label htmlFor="trustType" className="block text-sm font-medium text-gray-700 mb-1">
-                  Trust Type
-                </label>
-                <select
-                  id="trustType"
-                  name="trustType"
-                  value={trustData.trustType}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
-                  disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
-                >
-                  <option value="">Select trust type</option>
-                  <option value="Discretionary">Discretionary Trust</option>
-                  <option value="Unit">Unit Trust</option>
-                  <option value="Fixed">Fixed Trust</option>
-                  <option value="Hybrid">Hybrid Trust</option>
-                  <option value="Testamentary">Testamentary Trust</option>
-                  <option value="Charitable">Charitable Trust</option>
-                  <option value="Other">Other</option>
-                </select>
-                {errors.trustType && (
-                  <p className="mt-1 text-sm text-red-600">{errors.trustType}</p>
-                )}
-              </div>
+              <CustomInput
+                label="Trust Address"
+                type="text"
+                name="trustAddress"
+                value={trustData.trustAddress}
+                onChange={handleChange}
+                errors={errors.trustAddress}
+                placeholder="Enter trust address"
+                disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
+              />
             </div>
           </div>
 
@@ -409,27 +390,6 @@ const TrustRegistration = () => {
                 onChange={handleChange}
                 errors={errors.taxFileNumber}
                 placeholder="Enter your tax file number"
-                disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
-              />
-            </div>
-          </div>
-
-          {/* Position in Trust */}
-          <div>
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Position in Trust</h2>
-            <div className="space-y-2">
-              <CustomCheckbox
-                label="Trustee"
-                name="position"
-                checked={trustData.position === 'Trustee'}
-                onChange={() => setTrustData(prev => ({ ...prev, position: 'Trustee' }))}
-                disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
-              />
-              <CustomCheckbox
-                label="Beneficiary"
-                name="position"
-                checked={trustData.position === 'Beneficiary'}
-                onChange={() => setTrustData(prev => ({ ...prev, position: 'Beneficiary' }))}
                 disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
               />
             </div>
@@ -549,31 +509,6 @@ const TrustRegistration = () => {
                               placeholder="Enter TFN"
                               disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
                             />
-
-                            <div className="md:col-span-2">
-                              <label htmlFor={`position-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
-                                Position in Trust
-                              </label>
-                              <select
-                                id={`position-${index}`}
-                                name="position"
-                                value={person.position}
-                                onChange={(e:any) => handlePersonChange(e, index)}
-                                className="w-full px-4 py-2 rounded-lg border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
-                                disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
-                              >
-                                <option value="">Select position</option>
-                                <option value="Trustee">Trustee</option>
-                                <option value="Beneficiary">Beneficiary</option>
-                                <option value="Appointor">Appointor</option>
-                                <option value="Settlor">Settlor</option>
-                                <option value="Guardian">Guardian</option>
-                                <option value="Other">Other</option>
-                              </select>
-                              {errors[`authorizedPersons.${index}.position`] && (
-                                <p className="mt-1 text-sm text-red-600">{errors[`authorizedPersons.${index}.position`]}</p>
-                              )}
-                            </div>
                           </div>
 
                           {existingRegistration?.status !== 'completed' && existingRegistration?.status !== 'in-progress' && (
@@ -583,8 +518,8 @@ const TrustRegistration = () => {
                                 onClick={() => removeAuthorizedPerson(index)}
                                 className="px-4 py-2 flex items-center text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
                               >
-                                <MinusIcon className="w-4 h-4 mr-1" />
-                                Remove Person
+                                <XMarkIcon className="w-4 h-4 mr-1" />
+                                Remove
                               </button>
                             </div>
                           )}
@@ -616,14 +551,21 @@ const TrustRegistration = () => {
             )}
 
             {trustData.authorizedPersons && trustData.authorizedPersons.length > 0 && existingRegistration?.status !== 'completed' && existingRegistration?.status !== 'in-progress' && (
-              <button
+              <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.1 }}
+              className="flex items-center justify-end"
+              >
+                <button
                 type="button"
                 onClick={addAuthorizedPerson}
-                className="w-full flex items-center justify-center px-4 py-3 bg-sky-500 hover:bg-sky-600 text-white rounded-lg transition-colors"
+                className="w-2/4 flex items-center justify-center px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg transition-colors"
               >
                 <PlusIcon className="w-5 h-5 mr-2" />
-                Add Another Authorized Person
+                Add Authorized Person
               </button>
+              </motion.div>
             )}
           </div>
 
@@ -665,9 +607,13 @@ const TrustRegistration = () => {
             <SubmitButton
               isSubmitting={submitting}
               defaultText="Submit Registration"
-              pendingText="Submitting..."
+              pendingText="Update Registration"
               rejectedText="Resubmit Registration"
               status={existingRegistration?.status}
+              validateForm={validateForm}
+              onConfirm={handleConfirmSubmit}
+              completedText="Already Submitted"
+
             />
           )}
         </div>

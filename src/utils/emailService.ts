@@ -128,8 +128,7 @@ export const sendServiceRequestEmails = async (data: ServiceRequestData): Promis
         emailData.details = atoDetails;
         break;
       case 'Trust Registration':
-        emailData.year = 'N/A'; // Not applicable for trust registrations
-        // If details is not provided, generate it from the trust data
+        emailData.year = 'N/A';
         if (!emailData.details) {
           const authorizedPersonsDetails = data.authorizedPersons && data.authorizedPersons.length > 0
             ? data.authorizedPersons.map((person: any, index: number) => 
@@ -138,15 +137,13 @@ export const sendServiceRequestEmails = async (data: ServiceRequestData): Promis
             : 'No authorized persons added';
 
           emailData.details = `
-Trust Name: ${data.trustName}
-Trust Type: ${data.trustType}
-Address: ${data.address}
-Postal Code: ${data.postalCode}
-Tax File Number: ${data.taxFileNumber}
-Position: ${data.position}
-
-Authorized Persons:
-${authorizedPersonsDetails}
+                Trust Name: ${data.trustName}
+                Trust Type: ${data.trustType}
+                Address: ${data.address}
+                Postal Code: ${data.postalCode}
+                Tax File Number: ${data.taxFileNumber}
+                Authorized Persons:
+                ${authorizedPersonsDetails}
           `;
         }
         break;
@@ -161,15 +158,14 @@ ${authorizedPersonsDetails}
               if (person.isShareholder) positionInfo.push(`Shareholder (${person.shareholderPercentage}%)`);
               
               return `
-Person ${index + 1}: ${person.fullName || 'N/A'}
-Email: ${person.email || 'N/A'}
-Date of Birth: ${person.dateOfBirth || 'N/A'}
-Phone: ${person.phone || 'N/A'}
-Address: ${person.address || 'N/A'}
-Postal Code: ${person.postalCode || 'N/A'}
-Tax File Number: ${person.taxFileNumber || 'N/A'}
-Position: ${positionInfo.length > 0 ? positionInfo.join(', ') : 'N/A'}
-
+                  Person ${index + 1}: ${person.fullName || 'N/A'}
+                  Email: ${person.email || 'N/A'}
+                  Date of Birth: ${person.dateOfBirth || 'N/A'}
+                  Phone: ${person.phone || 'N/A'}
+                  Address: ${person.address || 'N/A'}
+                  Postal Code: ${person.postalCode || 'N/A'}
+                  Tax File Number: ${person.taxFileNumber || 'N/A'}
+                  Position: ${positionInfo.length > 0 ? positionInfo.join(', ') : 'N/A'}
               `;
             }).join('\n\n')
           : 'No authorized persons added';
@@ -180,16 +176,16 @@ Position: ${positionInfo.length > 0 ? positionInfo.join(', ') : 'N/A'}
         if (data.isShareholder) mainApplicantPositionInfo.push(`Shareholder (${data.shareholderPercentage}%)`);
         
         emailData.details = `
-Company Name: ${data.companyName || 'N/A'}
-Company Type: ${data.companyType || 'N/A'}
-Address: ${data.address || 'N/A'}
-Postal Code: ${data.postalCode || 'N/A'}
-Tax File Number: ${data.taxFileNumber || 'N/A'}
+              Company Name: ${data.companyName || 'N/A'}
+              Company Type: ${data.companyType || 'N/A'}
+              Address: ${data.address || 'N/A'}
+              Postal Code: ${data.postalCode || 'N/A'}
+              Tax File Number: ${data.taxFileNumber || 'N/A'}
 
-Main Applicant Position: ${mainApplicantPositionInfo.length > 0 ? mainApplicantPositionInfo.join(', ') : 'N/A'}
+              Main Applicant Position: ${mainApplicantPositionInfo.length > 0 ? mainApplicantPositionInfo.join(', ') : 'N/A'}
 
-Authorized Persons:
-${companyAuthorizedPersonsDetails}
+              Authorized Persons:
+              ${companyAuthorizedPersonsDetails}
         `;
         break;
     }

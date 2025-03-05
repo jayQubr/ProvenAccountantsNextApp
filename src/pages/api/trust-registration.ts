@@ -20,15 +20,19 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             return res.status(400).json({ success: false, message: 'Missing trust registration data or user ID' });
         }
 
+        const sanitizedAuthorizedPersons = trustRegistrationData.authorizedPersons?.map((person:any) => {
+            const { taxFileNumber, ...sanitizedPerson } = person;
+            return sanitizedPerson;
+        }) || [];
+
         // Prepare data for storage
         const dataToStore = {
             trustName: trustRegistrationData.trustName,
-            trustType: trustRegistrationData.trustType,
+            trustAddress: trustRegistrationData.trustAddress,
             address: trustRegistrationData.address,
             postalCode: trustRegistrationData.postalCode,
-            taxFileNumber: trustRegistrationData.taxFileNumber,
-            position: trustRegistrationData.position,
-            authorizedPersons: trustRegistrationData.authorizedPersons || [],
+            // taxFileNumber: trustRegistrationData.taxFileNumber,
+            authorizedPersons: sanitizedAuthorizedPersons,
             agreeToDeclaration: trustRegistrationData.agreeToDeclaration,
             userId: trustRegistrationData.userId,
             status: trustRegistrationData.status || 'pending',
@@ -51,15 +55,13 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             : 'No authorized persons added';
 
         const details = `
-Trust Name: ${trustRegistrationData.trustName}
-Trust Type: ${trustRegistrationData.trustType}
-Address: ${trustRegistrationData.address}
-Postal Code: ${trustRegistrationData.postalCode}
-Tax File Number: ${trustRegistrationData.taxFileNumber}
-Position: ${trustRegistrationData.position}
-
-Authorized Persons:
-${authorizedPersonsDetails}
+            Trust Name: ${trustRegistrationData.trustName}
+            Trust Address: ${trustRegistrationData.trustAddress}
+            Address: ${trustRegistrationData.address}
+            Postal Code: ${trustRegistrationData.postalCode}
+            Tax File Number: ${trustRegistrationData.taxFileNumber}
+            Authorized Persons:
+            ${authorizedPersonsDetails}
         `;
 
         // Send email with the necessary information

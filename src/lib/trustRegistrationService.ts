@@ -27,9 +27,8 @@ export interface TrustRegistrationData extends BaseRegistrationData {
     taxFileNumber: string;
     authorizedPersons: TrustAuthorizedPerson[];
     agreeToDeclaration: boolean;
-    position: string;
     trustName: string;
-    trustType: string;
+    trustAddress: string;
 }
 
 const COLLECTION_NAME = 'trustRegistrations';
