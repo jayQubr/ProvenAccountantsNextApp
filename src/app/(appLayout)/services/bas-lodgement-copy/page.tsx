@@ -7,15 +7,17 @@ import { ArrowLeftIcon, IdentificationIcon } from '@heroicons/react/24/outline';
 import { Toaster, toast } from 'sonner';
 import CustomInput from '@/components/ui/CustomInput';
 import SubmitButton from '@/components/features/SubmitButton';
-import { checkExistingBASLodgement, submitBASLodgement } from '@/lib/basLodgementCopy';
+import { checkExistingBASLodgement } from '@/lib/basLodgementCopy';
 import LoadingSpinner from '@/components/features/LoadingSpinner';
 import useStore from '@/utils/useStore';
 import RegistrationStatusBanner from '@/components/features/RegistrationStatusBanner';
+import CustomCheckbox from '@/components/ui/CustomCheckbox';
 import { RegistrationStatus } from '@/lib/registrationService';
 
 interface BASLodgementData {
   quarter: string;
   details: string;
+  agreeToDeclaration?: boolean;
   userId?: string;
   userEmail?: string;
   userName?: string;
@@ -23,6 +25,11 @@ interface BASLodgementData {
   createdAt?: number;
   updatedAt?: number;
   notes?: string;
+  user?: {
+    phone?: string;
+    address?: string;
+    [key: string]: any;
+  };
 }
 
 const BASLodgementCopy = () => {
@@ -35,6 +42,7 @@ const BASLodgementCopy = () => {
   const [basData, setBasData] = useState({
     quarter: '',
     details: '',
+    agreeToDeclaration: false
   });
 
   useEffect(() => {
@@ -57,6 +65,7 @@ const BASLodgementCopy = () => {
           setBasData({
             quarter: result.data.quarter || '',
             details: result.data.details || '',
+            agreeToDeclaration: result.data.agreeToDeclaration || false
           });
 
           if (result.data.status === 'completed') {
@@ -79,10 +88,12 @@ const BASLodgementCopy = () => {
   }, [user]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
+    const { name, value, type } = e.target;
+    const checked = type === 'checkbox' ? (e.target as HTMLInputElement).checked : undefined;
+
     setBasData(prev => ({
       ...prev,
-      [name]: value,
+      [name]: type === 'checkbox' ? checked : value,
     }));
 
     if (errors[name]) {
@@ -98,6 +109,7 @@ const BASLodgementCopy = () => {
     const newErrors: Record<string, string> = {};
     if (!basData.quarter.trim()) newErrors.quarter = 'Quarter is required';
     if (!basData.details.trim()) newErrors.details = 'Details are required';
+    if (!basData.agreeToDeclaration) newErrors.agreeToDeclaration = 'You must agree to the declaration';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -108,30 +120,51 @@ const BASLodgementCopy = () => {
     setSubmitting(true);
 
     try {
-      const userId = user.uid;
+      const userId = user.uid || user.id;
       if (!userId) {
         throw new Error('User ID is undefined');
       }
 
-      const submissionData = {
+      const basLodgementData = {
         ...basData,
-        userId: user.uid || user.id,
+        userId: userId,
         userEmail: user.email || '',
-        userName: user.name || '',
+        userName: user.displayName || user.firstName || '',
         status: 'pending' as const,
+        user: {
+          phone: user.phone || '',
+          address: user.address || '',
+          ...user
+        }
       };
 
-      const result = await submitBASLodgement(submissionData as any);
+      const response = await fetch('/api/bas-lodgement-copy', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ basLodgementData }),
+      });
+
+      const result = await response.json();
 
       if (result.success) {
-        toast.success('BAS Lodgement Copy submitted successfully!', { style: { background: '#10B981', color: 'white' } });
-        setTimeout(() => router.push('/services'), 2000);
+        toast.success('BAS Lodgement Copy submitted successfully!');
+        
+        const updatedResult = await checkExistingBASLodgement(userId);
+        if (updatedResult.exists && updatedResult.data) {
+          setExistingBAS(updatedResult.data);
+        }
+        
+        setTimeout(() => {
+          router.push('/services');
+        }, 2000);
       } else {
-        throw new Error('Failed to submit');
+        toast.error(result.message || 'Failed to submit BAS lodgement. Please try again.');
       }
     } catch (error) {
       console.error('Submission error:', error);
-      toast.error('Error submitting request', { style: { background: '#EF4444', color: 'white' } });
+      toast.error('Error submitting request');
     } finally {
       setSubmitting(false);
     }
@@ -154,7 +187,7 @@ const BASLodgementCopy = () => {
           </div>
           <h1 className="text-xl md:text-2xl font-bold text-gray-800">BAS Lodgement Copy</h1>
         </div>
-        <p className="text-gray-600 text-sm">Complete the form below to register your BAS lodgement copy.</p>
+        <p className="text-gray-600 text-sm">Complete the form below to request a copy of your BAS lodgement.</p>
       </motion.div>
 
       {existingBAS && (
@@ -162,7 +195,8 @@ const BASLodgementCopy = () => {
           status={existingBAS.status as RegistrationStatus}
           title="BAS Lodgement Copy"
           createdAt={existingBAS.createdAt}
-          notes={existingBAS.notes as string}
+          updatedAt={existingBAS.updatedAt}
+          notes={existingBAS.details}
           type="BAS Lodgement Copy"
         />
       )}
@@ -170,24 +204,44 @@ const BASLodgementCopy = () => {
       <motion.form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
         <div className="p-6 space-y-6">
-          <CustomInput
-            label="Specify the Quarter *"
-            type="text"
-            name="quarter"
-            value={basData.quarter}
-            onChange={handleChange}
-            errors={errors.quarter}
-            placeholder="Enter the BAS quarter"
-          />
-          <CustomInput
-            label="Details *"
-            type="textarea"
-            name="details"
-            value={basData.details}
-            onChange={handleChange}
-            errors={errors.details}
-            placeholder="Enter lodgement details"
-          />
+          <div className="space-y-4 mt-4">
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">BAS Lodgement Copy</h2>
+            <CustomInput
+              label="Specify the Quarter"
+              type="text"
+              name="quarter"
+              required={true}
+              value={basData.quarter}
+              onChange={handleChange}
+              errors={errors.quarter}
+              placeholder="Enter the BAS quarter"
+              disabled={existingBAS?.status === 'completed' || existingBAS?.status === 'in-progress'}
+            />
+            <CustomInput
+              label="Details"
+              type="textarea"
+              name="details"
+              value={basData.details}
+              onChange={handleChange}
+              errors={errors.details}
+              placeholder="Enter lodgement details"
+              disabled={existingBAS?.status === 'completed' || existingBAS?.status === 'in-progress'}
+            />
+          </div>
+
+          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <p className="text-xs md:text-sm text-gray-600 mb-3">
+              I authorize Proven Associated Services to process this BAS lodgement copy request on my behalf.
+            </p>
+            <CustomCheckbox 
+              label="I agree to the declaration" 
+              name="agreeToDeclaration" 
+              checked={basData.agreeToDeclaration} 
+              onChange={handleChange} 
+              errors={errors.agreeToDeclaration}
+              disabled={existingBAS?.status === 'completed' || existingBAS?.status === 'in-progress'}
+            />
+          </div>
         </div>
 
         <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
@@ -195,14 +249,16 @@ const BASLodgementCopy = () => {
             Cancel
           </button>
 
-          <SubmitButton
-            isSubmitting={submitting}
-            defaultText="Submit BAS Lodgement"
-            pendingText="Submitting..."
-            rejectedText="Resubmit BAS Lodgement"
-            status={existingBAS?.status as RegistrationStatus}
-            disabled={existingBAS?.status === 'completed'}
-          />
+          {existingBAS?.status !== 'completed' && existingBAS?.status !== 'in-progress' && (
+            <SubmitButton
+              isSubmitting={submitting}
+              defaultText="Submit Request"
+              pendingText="Update Request"
+              rejectedText="Resubmit Request"
+              completedText="Already Submitted"
+              status={existingBAS?.status}
+            />
+          )}
         </div>
       </motion.form>
     </div>
