@@ -11,6 +11,7 @@ interface SubmitButtonProps {
   processingText?: string;
   onConfirm?: () => void;
   confirmMessage?: string;
+  formValidation?: boolean;
 }
 
 const SubmitButton: React.FC<SubmitButtonProps> = ({
@@ -23,7 +24,8 @@ const SubmitButton: React.FC<SubmitButtonProps> = ({
   completedText = 'Already Submitted',
   processingText = 'Processing...',
   onConfirm,
-  confirmMessage = 'Are you sure you want to submit this registration?'
+  confirmMessage = 'Are you sure you want to submit this registration?',
+  formValidation = true
 }) => {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
@@ -51,7 +53,15 @@ const SubmitButton: React.FC<SubmitButtonProps> = ({
   const handleButtonClick = (e: React.MouseEvent) => {
     e.preventDefault();
     if (!isDisabled) {
-      setShowConfirmation(true);
+      if (formValidation) {
+        setShowConfirmation(true);
+      } else {
+        // If form validation is disabled, submit the form immediately
+        const form = (e.target as HTMLElement).closest('form');
+        if (form) {
+          form.requestSubmit();
+        }
+      }
     }
   };
 

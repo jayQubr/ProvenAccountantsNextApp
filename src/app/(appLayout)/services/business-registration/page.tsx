@@ -4,32 +4,28 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
-import { IdentificationIcon } from '@heroicons/react/24/outline';
-import { Toaster, toast } from 'sonner';
-import CustomInput from '@/components/ui/CustomInput';
+import { BuildingOffice2Icon } from '@heroicons/react/24/outline';
+import { toast } from 'sonner';
 import CustomCheckbox from '@/components/ui/CustomCheckbox';
-import LoadingSpinner from '@/components/features/LoadingSpinner';
+import CustomInput from '@/components/ui/CustomInput';
 import SubmitButton from '@/components/features/SubmitButton';
 import PersonalInformation from '@/components/features/PersonaInformation';
 import RegistrationStatusBanner from '@/components/features/RegistrationStatusBanner';
 import useStore from '@/utils/useStore';
-import { 
-  checkExistingBusinessRegistration, 
-  submitBusinessRegistration, 
-  BusinessRegistrationStatus,
-  BusinessRegistrationData
-} from '@/lib/businessRegistrationService';
+import { checkExistingBusinessRegistration, BusinessRegistrationStatus, BusinessRegistrationData } from '@/lib/businessRegistrationService';
+import SkeletonLoader from '@/components/ui/SkeletonLoader';
 
 const BusinessRegistrationPage = () => {
   const router = useRouter();
   const { user: userStore } = useStore();
   const [existingRegistration, setExistingRegistration] = useState<(BusinessRegistrationData & { id: string }) | null>(null);
   const [formData, setFormData] = useState({
-    postalAddress: '',
-    postalCode: '',
-    abn: '',
     businessName: '',
     businessAddress: '',
+    postalAddress: '',
+    postalCode: '',
+    abn: false,
+    gst: false,
     agreeToDeclaration: false
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -42,17 +38,18 @@ const BusinessRegistrationPage = () => {
       
       setIsLoading(true);
       try {
-        const result = await checkExistingBusinessRegistration(userStore.uid);
+        const result:any = await checkExistingBusinessRegistration(userStore.uid);
         if (result.exists && result.data) {
           setExistingRegistration(result.data);
           
           // Pre-fill form with existing data
           setFormData({
-            postalAddress: result.data.postalAddress || '',
-            postalCode: result.data.postalCode || '',
-            abn: result.data.abn || '',
             businessName: result.data.businessName || '',
             businessAddress: result.data.businessAddress || '',
+            postalAddress: result.data.postalAddress || '',
+            postalCode: result.data.postalCode || '',
+            abn: result.data.abn || false,
+            gst: result.data.gst || false,
             agreeToDeclaration: true
           });
         }
@@ -85,7 +82,7 @@ const BusinessRegistrationPage = () => {
       });
     }
   };
-
+  
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
@@ -111,7 +108,7 @@ const BusinessRegistrationPage = () => {
       newErrors.agreeToDeclaration = 'You must agree to the declaration';
     }
     
-    if(!formData.abn.trim()) {
+    if(!formData.abn) {
       newErrors.abn = 'ABN is required';
     }
     
@@ -121,27 +118,38 @@ const BusinessRegistrationPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm() || !userStore?.uid) {
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     try {
       const registrationData = {
         userId: userStore.uid,
         userEmail: userStore.email || '',
         userName: userStore.displayName || '',
+        businessName: formData.businessName,
+        businessAddress: formData.businessAddress,
         postalAddress: formData.postalAddress,
         postalCode: formData.postalCode,
         abn: formData.abn,
-        businessName: formData.businessName,
-        businessAddress: formData.businessAddress,
-        status: 'pending' as BusinessRegistrationStatus
+        gst: formData.gst,
+        status: 'pending' as BusinessRegistrationStatus, 
+        user: userStore
       };
 
-      const result = await submitBusinessRegistration(registrationData);
+      // Send data to API endpoint
+      const response = await fetch('/api/business-registration', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ registrationData }),
+      });
+
+      const result = await response.json();
 
       if (result.success) {
         toast.success('Business Registration request submitted successfully!');
@@ -157,7 +165,7 @@ const BusinessRegistrationPage = () => {
           router.push('/services');
         }, 2000);
       } else {
-        toast.error('Failed to submit registration. Please try again.');
+        toast.error(result.message || 'Failed to submit registration. Please try again.');
       }
     } catch (error) {
       console.error('Error submitting form:', error);
@@ -169,56 +177,53 @@ const BusinessRegistrationPage = () => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <LoadingSpinner />
-      </div>
+      <SkeletonLoader />
     );
   }
 
   return (
     <div className="container mx-auto px-2 py-4 md:px-4 md:py-8 w-full md:max-w-3xl">
-      <Toaster position="top-center" richColors />
-      
       {/* Header */}
-      <motion.div 
+      <motion.div
         className="mb-6"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <button 
-          onClick={() => router.back()} 
+        <button
+          onClick={() => router.back()}
           className="flex items-center text-sky-600 hover:text-sky-700 mb-4 transition-colors"
         >
           <ArrowLeftIcon className="w-4 h-4 mr-2" />
           <span>Back to Services</span>
         </button>
-        
+
         <div className="flex items-center gap-3 mb-2">
           <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-sky-100 flex items-center justify-center text-sky-500">
-            <IdentificationIcon className="w-5 h-5" />
+            <BuildingOffice2Icon className="w-5 h-5" />
           </div>
           <h1 className="text-xl md:text-2xl font-bold text-gray-800">Business Registration</h1>
         </div>
-        
+
         <p className="text-gray-600 text-sm">
-          Complete the form below to register your business. All fields marked with * are required.
+          Complete the form below to request business registration services. All fields marked with * are required.
         </p>
       </motion.div>
-      
+
       {/* Existing Registration Status */}
       {existingRegistration && (
         <RegistrationStatusBanner
           status={existingRegistration.status}
           title="Business Registration"
           createdAt={existingRegistration.createdAt}
+          updatedAt={existingRegistration.updatedAt}
           notes={existingRegistration.notes}
-          type="business"
+          type="Business"
         />
       )}
-      
+
       {/* Form */}
-      <motion.form 
+      <motion.form
         onSubmit={handleSubmit}
         className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
         initial={{ opacity: 0, y: 20 }}
@@ -227,14 +232,38 @@ const BusinessRegistrationPage = () => {
       >
         <div className="p-6 space-y-6">
           <PersonalInformation/>
-          {/* Address Information Section */}
+          
+          {/* Business Information */}
           <div>
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Address Information</h2>
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">Business Information</h2>
             <div className="space-y-4">
-              {/* Postal Address */}
+              <CustomInput 
+                label="Business Name" 
+                name="businessName" 
+                value={formData.businessName} 
+                onChange={handleChange} 
+                errors={errors.businessName} 
+                placeholder="Enter your business name" 
+                disabled={existingRegistration?.status === 'in-progress' || existingRegistration?.status === 'completed'}
+              />
+              <CustomInput 
+                label="Business Address" 
+                name="businessAddress" 
+                value={formData.businessAddress} 
+                onChange={handleChange} 
+                errors={errors.businessAddress} 
+                placeholder="Enter your business address" 
+                disabled={existingRegistration?.status === 'in-progress' || existingRegistration?.status === 'completed'}
+              />
+            </div>
+          </div>
+          
+          {/* Address Information */}
+          <div>
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">Postal Information</h2>
+            <div className="space-y-4">
               <CustomInput 
                 label="Postal Address" 
-                type="text" 
                 name="postalAddress" 
                 value={formData.postalAddress} 
                 onChange={handleChange} 
@@ -250,43 +279,28 @@ const BusinessRegistrationPage = () => {
                 onChange={handleChange} 
                 errors={errors.postalCode} 
                 placeholder="Enter your postal code" 
+                maxLength={4} 
                 disabled={existingRegistration?.status === 'in-progress' || existingRegistration?.status === 'completed'}
               />
             </div>
           </div>
 
-          {/* Business Registration Options Section */}
+          {/* Registration Options */}
           <div>
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Business Registration Details</h2>
-            <div className="space-y-4">
-              <CustomInput 
-                label="ABN" 
-                type="text" 
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">Registration Options</h2>
+            <div className="space-y-3">
+              <CustomCheckbox 
+                label="ABN Registration Required" 
                 name="abn" 
-                value={formData.abn} 
+                checked={formData.abn} 
                 onChange={handleChange} 
-                errors={errors.abn} 
-                placeholder="Enter ABN" 
                 disabled={existingRegistration?.status === 'in-progress' || existingRegistration?.status === 'completed'}
               />
-              <CustomInput 
-                label="Business Name" 
-                type="text" 
-                name="businessName" 
-                value={formData.businessName} 
+              <CustomCheckbox 
+                label="GST Registration Required" 
+                name="gst" 
+                checked={formData.gst} 
                 onChange={handleChange} 
-                errors={errors.businessName} 
-                placeholder="Enter your business name" 
-                disabled={existingRegistration?.status === 'in-progress' || existingRegistration?.status === 'completed'}
-              />
-              <CustomInput 
-                label="Business Address" 
-                type="text" 
-                name="businessAddress" 
-                value={formData.businessAddress} 
-                onChange={handleChange} 
-                errors={errors.businessAddress} 
-                placeholder="Enter your business address" 
                 disabled={existingRegistration?.status === 'in-progress' || existingRegistration?.status === 'completed'}
               />
             </div>
@@ -295,20 +309,10 @@ const BusinessRegistrationPage = () => {
           {/* Declaration */}
           <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
             <p className="text-xs md:text-sm text-gray-600 mb-3">
-              I/We hereby authorize Mr. AMAN NAGPAL C/O Proven Associated Services Pty Ltd or Proven Accountants to update/add all details with ASIC on my behalf & represent me before various organizations and lodge various documents with the tax office, including updating ABN based on information provided by me from time to time. 
+              Declaration: We hereby authorise Proven Associated Services Pty Ltd & Mr Aman Nagpal T/A Proven Accountants, Tax agents to add us in their tax portal, represent us before various organisations and to provide Accounting & tax services including lodgement of Business Activity Statements(if any), tax returns and other documents required by tax office & other departments (based on information provided by us) from time to time.
             </p>
-            <p className="text-xs md:text-sm text-gray-600 mb-3">
-              I/We further declare that:
-            </p>
-            <ul className="list-disc list-inside text-xs md:text-sm text-gray-600 mb-3">
-              <li>None of the mentioned applicant(s) is/are disqualified from managing corporations under Section 206B(1) of the Corporations Act 2001.</li>
-              <li>Within the last 5 years, none of the above-mentioned applicants has been convicted or released from prison after being convicted, or serving a term of imprisonment for any of the criminal offenses referred to in Section 32(1)(c) or (d) of the Business Names Registration Act 2011.</li>
-              <li>This application is submitted under and compliant with the terms and conditions of the ASIC Electronic Lodgement Protocol details.</li>
-              <li>The information supplied is accurate and complete to the best of my knowledge, and any false information provided may lead to penalties under applicable acts, rules, and regulations.</li>
-              <li>All the persons mentioned in the application have consented to act for the respective roles.</li>
-            </ul>
             <CustomCheckbox 
-              label="I agree to the declaration" 
+              label="Authorisation Approval Provided" 
               name="agreeToDeclaration" 
               checked={formData.agreeToDeclaration} 
               onChange={handleChange} 
@@ -327,7 +331,7 @@ const BusinessRegistrationPage = () => {
           >
             Cancel
           </button>
-          
+
           <SubmitButton 
             isSubmitting={isSubmitting}
             status={existingRegistration?.status}
