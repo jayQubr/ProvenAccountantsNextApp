@@ -24,7 +24,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         const dataToStore = {
             year: taxReturnData.year,
             details: taxReturnData.details,
-            agreeToDeclaration: taxReturnData.agreeToDeclaration,
             userId: taxReturnData.userId,
             status: 'pending' as const,
             createdAt: Date.now(),

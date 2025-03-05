@@ -4,21 +4,19 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ArrowLeftIcon, IdentificationIcon } from '@heroicons/react/24/outline';
-import { Toaster, toast } from 'sonner';
+import { toast } from 'sonner';
 import CustomInput from '@/components/ui/CustomInput';
 import SubmitButton from '@/components/features/SubmitButton';
-import { checkExistingUpdateAddress, submitUpdateAddress } from '@/lib/updateAddressService';
-import LoadingSpinner from '@/components/features/LoadingSpinner';
+import { checkExistingUpdateAddress } from '@/lib/updateAddressService';
 import useStore from '@/utils/useStore';
 import RegistrationStatusBanner from '@/components/features/RegistrationStatusBanner';
 import { RegistrationStatus } from '@/lib/registrationService';
+import SkeletonLoader from '@/components/ui/SkeletonLoader';
 
 interface UpdateAddressData {
   oldAddress: string;
   newAddress: string;
   userId?: string;
-  userEmail?: string;
-  userName?: string;
   status?: 'pending' | 'in-progress' | 'completed' | 'rejected';
   createdAt?: number;
   updatedAt?: number;
@@ -113,21 +111,42 @@ const UpdateAddress = () => {
         throw new Error('User ID is undefined');
       }
 
-      const submissionData = {
-        ...addressData,
+      // Only send essential data to the API
+      const updateAddressData = {
+        oldAddress: addressData.oldAddress,
+        newAddress: addressData.newAddress,
         userId: userId,
         userEmail: user.email || '',
-        userName: user.name || '',
+        userName: user.firstName + ' ' + user.lastName || user.displayName || '',
         status: 'pending' as const,
+        user: {
+          phone: user.phone || '',
+          address: user.address || '',
+          ...user
+        }
       };
 
-      const result = await submitUpdateAddress(submissionData);
+      const response = await fetch('/api/update-address', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ updateAddressData }),
+      });
+
+      const result = await response.json();
 
       if (result.success) {
         toast.success('Address update submitted successfully!', { style: { background: '#10B981', color: 'white' } });
+        
+        const updatedResult = await checkExistingUpdateAddress(userId);
+        if (updatedResult.exists && updatedResult.data) {
+          setExistingAddress(updatedResult.data);
+        }
+        
         setTimeout(() => router.push('/services'), 2000);
       } else {
-        throw new Error('Failed to submit');
+        toast.error(result.message || 'Failed to submit address update. Please try again.');
       }
     } catch (error) {
       console.error('Submission error:', error);
@@ -137,11 +156,10 @@ const UpdateAddress = () => {
     }
   };
 
-  if (loading) return <div className="flex justify-center items-center h-64"><LoadingSpinner size="lg" /></div>;
+  if (loading) return <SkeletonLoader />;
 
   return (
     <div className="container mx-auto px-2 py-4 md:px-4 md:py-8 w-full md:max-w-3xl">
-      <Toaster richColors position="top-right" />
 
       <motion.div className="mb-6" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
         <button onClick={() => router.back()} className="flex items-center text-sky-600 hover:text-sky-700 mb-4">
@@ -162,6 +180,7 @@ const UpdateAddress = () => {
           status={existingAddress.status as RegistrationStatus}
           title="Update Address"
           createdAt={existingAddress.createdAt}
+          updatedAt={existingAddress.updatedAt}
           notes={existingAddress.notes as string}
           type="Update Address"
         />
@@ -170,8 +189,26 @@ const UpdateAddress = () => {
       <motion.form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
         <div className="p-6 space-y-6">
-          <CustomInput label="Current Address *" type="text" name="oldAddress" value={addressData.oldAddress} onChange={handleChange} errors={errors.oldAddress} placeholder="Enter current address" />
-          <CustomInput label="New Address *" type="text" name="newAddress" value={addressData.newAddress} onChange={handleChange} errors={errors.newAddress} placeholder="Enter new address" />
+          <CustomInput 
+            label="Current Address *" 
+            type="text" 
+            name="oldAddress" 
+            value={addressData.oldAddress} 
+            onChange={handleChange} 
+            errors={errors.oldAddress} 
+            placeholder="Enter current address" 
+            disabled={existingAddress?.status === 'completed' || existingAddress?.status === 'in-progress'}
+          />
+          <CustomInput 
+            label="New Address *" 
+            type="text" 
+            name="newAddress" 
+            value={addressData.newAddress} 
+            onChange={handleChange} 
+            errors={errors.newAddress} 
+            placeholder="Enter new address" 
+            disabled={existingAddress?.status === 'completed' || existingAddress?.status === 'in-progress'}
+          />
         </div>
 
         <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
@@ -179,14 +216,16 @@ const UpdateAddress = () => {
             Cancel
           </button>
 
-          <SubmitButton
-            isSubmitting={submitting}
-            defaultText="Submit Address Update"
-            pendingText="Submitting..."
-            rejectedText="Resubmit Address Update"
-            status={existingAddress?.status as RegistrationStatus}
-            disabled={existingAddress?.status === 'completed'}
-          />
+          {existingAddress?.status !== 'completed' && existingAddress?.status !== 'in-progress' && (
+            <SubmitButton
+              isSubmitting={submitting}
+              defaultText="Submit Address Update"
+              pendingText="Update Request"
+              rejectedText="Resubmit Request"
+              completedText="Already Submitted"
+              status={existingAddress?.status}
+            />
+          )}
         </div>
       </motion.form>
     </div>

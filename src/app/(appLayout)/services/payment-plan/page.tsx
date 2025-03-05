@@ -4,24 +4,21 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { ArrowLeftIcon, IdentificationIcon } from '@heroicons/react/24/outline'
-import { Toaster, toast } from 'sonner'
+import { toast } from 'sonner'
 import CustomInput from '@/components/ui/CustomInput'
 import CustomCheckbox from '@/components/ui/CustomCheckbox'
 import SubmitButton from '@/components/features/SubmitButton'
-import { checkExistingPaymentPlan, submitPaymentPlan } from '@/lib/paymentPlanService'
-import LoadingSpinner from '@/components/features/LoadingSpinner'
+  import { checkExistingPaymentPlan } from '@/lib/paymentPlanService'
 import useStore from '@/utils/useStore'
 import RegistrationStatusBanner from '@/components/features/RegistrationStatusBanner';
 import { RegistrationStatus } from '@/lib/registrationService';
-
+import SkeletonLoader from '@/components/ui/SkeletonLoader';
 interface PaymentPlanData {
   planType: string;
   amount: number;
   details: string;
   agreeToDeclaration: boolean;
-  userId?: any;
-  userEmail?: string;
-  userName?: string;
+  userId?: string;
   status?: 'pending' | 'in-progress' | 'completed' | 'rejected';
   createdAt?: number;
   updatedAt?: number;
@@ -88,7 +85,7 @@ const PaymentPlan = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target
-    const checked = (e.target as HTMLInputElement).checked
+    const checked = type === 'checkbox' ? (e.target as HTMLInputElement).checked : undefined
     
     setPaymentData(prev => ({
       ...prev,
@@ -125,22 +122,45 @@ const PaymentPlan = () => {
         throw new Error('User ID is undefined');
       }
 
-      const submissionData = {
-        ...paymentData,
+
+      
+      // Only send essential data to the API
+      const paymentPlanData = {
+        planType: paymentData.planType,
         amount: Number(paymentData.amount),
+        details: paymentData.details,
         userId: userId,
         userEmail: user.email || '',
-        userName: user.name || '',
-        status: 'pending' as const
+        userName: user.firstName + ' ' + user.lastName || user.displayName || '',
+        status: 'pending' as const,
+        user: {
+          phone: user.phone || '',
+          address: user.address || '',
+          ...user
+        }
       };
 
-      const result = await submitPaymentPlan(submissionData);
+      const response = await fetch('/api/payment-plan', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ paymentPlanData }),
+      });
+
+      const result = await response.json();
 
       if (result.success) {
         toast.success('Payment Plan submitted successfully!', { style: { background: '#10B981', color: 'white' } });
+        
+        const updatedResult = await checkExistingPaymentPlan(userId);
+        if (updatedResult.exists && updatedResult.data) {
+          setExistingPaymentPlan(updatedResult.data);
+        }
+        
         setTimeout(() => router.push('/services'), 2000);
       } else {
-        throw new Error('Failed to submit');
+        toast.error(result.message || 'Failed to submit payment plan. Please try again.');
       }
     } catch (error) {
       console.error('Submission error:', error);
@@ -150,11 +170,10 @@ const PaymentPlan = () => {
     }
   };
 
-  if (loading) return <div className="flex justify-center items-center h-64"><LoadingSpinner size="lg" /></div>
+  if (loading) return <SkeletonLoader />;
 
   return (
     <div className="container mx-auto px-2 py-4 md:px-4 md:py-8 w-full md:max-w-3xl">
-      <Toaster richColors position="top-right" />
 
       <motion.div className="mb-6" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
         <button onClick={() => router.back()} className="flex items-center text-sky-600 hover:text-sky-700 mb-4">
@@ -175,6 +194,7 @@ const PaymentPlan = () => {
           status={existingPaymentPlan.status as RegistrationStatus}
           title="Payment Plan"
           createdAt={existingPaymentPlan.createdAt}
+          updatedAt={existingPaymentPlan.updatedAt}
           notes={existingPaymentPlan.notes as string}
           type="Payment Plan"
         />
@@ -184,22 +204,26 @@ const PaymentPlan = () => {
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
         <div className="p-6 space-y-6">
           <CustomInput
-            label="Payment Plan *"
+            label="Payment Plan"
             type="text"
             name="planType"
+            required={true}
             value={paymentData.planType}
             onChange={handleChange}
             errors={errors.planType}
             placeholder="Enter payment plan type"
+            disabled={existingPaymentPlan?.status === 'completed' || existingPaymentPlan?.status === 'in-progress'}
           />
           <CustomInput
-            label="Amount *"
+            label="Amount"
             type="number"
             name="amount"
+            required={true}
             value={paymentData.amount}
             onChange={handleChange}
             errors={errors.amount}
             placeholder="Enter amount"
+            disabled={existingPaymentPlan?.status === 'completed' || existingPaymentPlan?.status === 'in-progress'}
           />
           <CustomInput
             label="Details"
@@ -208,7 +232,9 @@ const PaymentPlan = () => {
             value={paymentData.details}
             onChange={handleChange}
             errors={errors.details}
+            required={false}
             placeholder="Enter details"
+            disabled={existingPaymentPlan?.status === 'completed' || existingPaymentPlan?.status === 'in-progress'}
           />
 
           <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
@@ -216,11 +242,12 @@ const PaymentPlan = () => {
               I understand that this agreement may be terminated if I do not meet my responsibilities. If this agreement is terminated the ATO may take further action to collect the debt. I hereby authorize Proven Accountant to submit a payment plan with ATO.
             </p>
             <CustomCheckbox 
-              label="Authorisation Approval Provided *" 
+              label="Authorisation Approval Provided" 
               name="agreeToDeclaration" 
               checked={paymentData.agreeToDeclaration} 
               onChange={handleChange}
               errors={errors.agreeToDeclaration}
+              disabled={existingPaymentPlan?.status === 'completed' || existingPaymentPlan?.status === 'in-progress'}
             />
           </div>
         </div>
@@ -230,14 +257,16 @@ const PaymentPlan = () => {
             Cancel
           </button>
 
-          <SubmitButton
-            isSubmitting={submitting}
-            defaultText="Submit Payment Plan"
-            pendingText="Submitting..."
-            rejectedText="Resubmit Payment Plan"
-            status={existingPaymentPlan?.status as RegistrationStatus}
-            disabled={existingPaymentPlan?.status === 'completed'}
-          />
+          {existingPaymentPlan?.status !== 'completed' && existingPaymentPlan?.status !== 'in-progress' && (
+            <SubmitButton
+              isSubmitting={submitting}
+              defaultText="Submit Payment Plan"
+              pendingText="Update Request"
+              rejectedText="Resubmit Request"
+              completedText="Already Submitted"
+              status={existingPaymentPlan?.status}
+            />
+          )}
         </div>
       </motion.form>
     </div>
