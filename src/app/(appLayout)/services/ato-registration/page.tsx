@@ -163,11 +163,15 @@ const ATORegistrationPage = () => {
       newErrors.agreeToDeclaration = 'You must agree to the declaration';
     }
 
-    const { selected, ...data } = formData.fuelTaxCredit;
-    const hasSelected = Object.values(data).some(value => value === true);
+    // const { selected, ...data } = formData.fuelTaxCredit;
+    // const hasSelected = Object.values(data).some(value => value === true);
 
-    if (!hasSelected) {
-      newErrors.fuelTaxCredit = 'You must select at least one option';
+    // if (!hasSelected) {
+    //   newErrors.fuelTaxCredit = 'You must select at least one option';
+    // }
+
+    if (!formData.abn.selected && !formData.gst.selected && !formData.fuelTaxCredit.selected) {
+      newErrors.registrationType = 'You must select at least one registration type';
     }
 
     setErrors(newErrors);
@@ -367,10 +371,14 @@ const ATORegistrationPage = () => {
                   description={option.description}
                   icon={option.icon}
                   isSelected={(formData as any)[option.key]?.selected || false}
-                  // isSelected={formData[option.key as keyof typeof formData].selected as any}
                   onClick={() => {
                     if (existingRegistration?.status !== "in-progress" && existingRegistration?.status !== "completed") {
+                      setErrors((prev: any) => ({
+                        ...prev,
+                        registrationType: ''
+                      }));
                       setFormData((prev: any) => ({
+                   
                         ...prev,
                         [option.key]: { ...prev[option.key], selected: !prev[option.key].selected },
                       }));
@@ -379,7 +387,15 @@ const ATORegistrationPage = () => {
                   isDisabled={existingRegistration?.status === "in-progress" || existingRegistration?.status === "completed"}
                 />
               ))}
+
             </div>
+              {errors.registrationType && (
+                <motion.p
+                  initial={{ x: 0 }}
+                  animate={{ x: [0, -5, 5, -5, 5, 0] }}
+                  transition={{ duration: 0.3 }}
+                  className="text-red-500 text-sm mt-2">{errors.registrationType}</motion.p>
+              )}
 
             {/* Conditional ABN fields */}
             {formData.abn.selected && (
