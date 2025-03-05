@@ -13,6 +13,15 @@ interface ServiceRequestData {
   newAddress?: string;
   planType?: string;
   amount?: number;
+  trustName?: string;
+  companyName?: string;
+  address?: string;
+  postalCode?: string;
+  taxFileNumber?: string;
+  position?: string;
+  trustType?: string;
+  companyType?: string;
+  authorizedPersons?: any[];
   status?: string;
   user?: any;
   serviceType: 
@@ -21,7 +30,9 @@ interface ServiceRequestData {
     | 'BAS Lodgement Copy' 
     | 'Update Address' 
     | 'ATO Portal Copy' 
-    | 'Payment Plan';
+    | 'Payment Plan'
+    | 'Trust Registration'
+    | 'Company Registration';
 }
 
 /**
@@ -59,6 +70,51 @@ export const sendServiceRequestEmails = async (data: ServiceRequestData): Promis
         emailData.year = 'N/A'; // Not applicable for payment plans
         emailData.details = `Plan Type: ${data.planType}\nAmount: $${data.amount}\n${data.details || ''}`;
         break;
+      case 'Trust Registration':
+        emailData.year = 'N/A'; // Not applicable for trust registrations
+        // If details is not provided, generate it from the trust data
+        if (!emailData.details) {
+          const authorizedPersonsDetails = data.authorizedPersons && data.authorizedPersons.length > 0
+            ? data.authorizedPersons.map((person: any, index: number) => 
+                `Person ${index + 1}: ${person.fullName || 'N/A'}, Position: ${person.position || 'N/A'}, Email: ${person.email || 'N/A'}`
+              ).join('\n')
+            : 'No authorized persons added';
+
+          emailData.details = `
+Trust Name: ${data.trustName}
+Trust Type: ${data.trustType}
+Address: ${data.address}
+Postal Code: ${data.postalCode}
+Tax File Number: ${data.taxFileNumber}
+Position: ${data.position}
+
+Authorized Persons:
+${authorizedPersonsDetails}
+          `;
+        }
+        break;
+      case 'Company Registration':
+        emailData.year = 'N/A'; // Not applicable for company registrations
+        // If details is not provided, generate it from the company data
+        if (!emailData.details) {
+          const authorizedPersonsDetails = data.authorizedPersons && data.authorizedPersons.length > 0
+            ? data.authorizedPersons.map((person: any, index: number) => 
+                `Person ${index + 1}: ${person.fullName || 'N/A'}, Position: ${person.position || 'N/A'}, Email: ${person.email || 'N/A'}`
+              ).join('\n')
+            : 'No authorized persons added';
+
+          emailData.details = `
+Company Name: ${data.companyName}
+Company Type: ${data.companyType}
+Address: ${data.address}
+Postal Code: ${data.postalCode}
+Tax File Number: ${data.taxFileNumber}
+
+Authorized Persons:
+${authorizedPersonsDetails}
+          `;
+        }
+        break;
     }
 
     // Generate HTML content for email
@@ -80,6 +136,10 @@ export const sendServiceRequestEmails = async (data: ServiceRequestData): Promis
           return `New ATO Portal Copy Request: ${clientName}`;
         case 'Payment Plan':
           return `New Payment Plan Request: ${clientName}`;
+        case 'Trust Registration':
+          return `New Trust Registration Request: ${clientName}`;
+        case 'Company Registration':
+          return `New Company Registration Request: ${clientName}`;
         default:
           return `New Service Request: ${clientName}`;
       }
@@ -101,6 +161,10 @@ export const sendServiceRequestEmails = async (data: ServiceRequestData): Promis
           return `New ATO Portal Copy request from ${clientName} for period ${data.period}. Please check the details.`;
         case 'Payment Plan':
           return `New Payment Plan request from ${clientName}. Plan type: ${data.planType}, Amount: $${data.amount}. Please check the details.`;
+        case 'Trust Registration':
+          return `New Trust Registration request from ${clientName} for trust "${data.trustName}". Please check the details.`;
+        case 'Company Registration':
+          return `New Company Registration request from ${clientName} for company "${data.companyName}". Please check the details.`;
         default:
           return `New service request from ${clientName}. Please check the details.`;
       }
@@ -140,6 +204,12 @@ export const sendServiceRequestEmails = async (data: ServiceRequestData): Promis
           break;
         case 'Payment Plan':
           confirmationText = `Thank you for submitting your payment plan request (${data.planType}) for $${data.amount}. We will process it shortly.`;
+          break;
+        case 'Trust Registration':
+          confirmationText = `Thank you for submitting your trust registration request for "${data.trustName}". We will process it shortly.`;
+          break;
+        case 'Company Registration':
+          confirmationText = `Thank you for submitting your company registration request for "${data.companyName}". We will process it shortly.`;
           break;
         default:
           confirmationText = `Thank you for submitting your service request. We will process it shortly.`;

@@ -15,7 +15,6 @@ import LoadingSpinner from '@/components/features/LoadingSpinner'
 import SubmitButton from '@/components/features/SubmitButton'
 import RegistrationStatusBanner from '@/components/features/RegistrationStatusBanner'
 import {
-  submitTrustRegistration,
   checkExistingTrustRegistration,
   TrustAuthorizedPerson,
   TrustRegistrationData
@@ -72,23 +71,6 @@ const TrustRegistration = () => {
             trustName: result.data.trustName || '',
             trustType: result.data.trustType || ''
           })
-        } else {
-          // Initialize with one empty authorized person
-          setTrustData(prev => ({
-            ...prev,
-            authorizedPersons: [
-              {
-                fullName: '',
-                email: '',
-                dateOfBirth: '',
-                phone: '',
-                address: '',
-                postalCode: '',
-                taxFileNumber: '',
-                position: ''
-              }
-            ]
-          }))
         }
       } catch (error) {
         console.error('Error checking registration:', error)
@@ -199,22 +181,24 @@ const TrustRegistration = () => {
       newErrors.agreeToDeclaration = 'You must agree to the declaration'
     }
 
-    // Validate authorized persons
-    trustData.authorizedPersons.forEach((person, index) => {
-      if (!person.fullName.trim()) {
-        newErrors[`authorizedPersons.${index}.fullName`] = 'Full name is required'
-      }
+    // Validate authorized persons if any exist
+    if (trustData.authorizedPersons && trustData.authorizedPersons.length > 0) {
+      trustData.authorizedPersons.forEach((person, index) => {
+        if (!person.fullName.trim()) {
+          newErrors[`authorizedPersons.${index}.fullName`] = 'Full name is required'
+        }
 
-      if (!person.email.trim()) {
-        newErrors[`authorizedPersons.${index}.email`] = 'Email is required'
-      } else if (!/\S+@\S+\.\S+/.test(person.email)) {
-        newErrors[`authorizedPersons.${index}.email`] = 'Email is invalid'
-      }
+        if (!person.email.trim()) {
+          newErrors[`authorizedPersons.${index}.email`] = 'Email is required'
+        } else if (!/\S+@\S+\.\S+/.test(person.email)) {
+          newErrors[`authorizedPersons.${index}.email`] = 'Email is invalid'
+        }
 
-      if (!person.position) {
-        newErrors[`authorizedPersons.${index}.position`] = 'Position is required'
-      }
-    })
+        if (!person.position) {
+          newErrors[`authorizedPersons.${index}.position`] = 'Position is required'
+        }
+      })
+    }
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -233,15 +217,31 @@ const TrustRegistration = () => {
 
     setSubmitting(true)
     try {
-      const registrationData = {
+      const userId = user.uid || user.id;
+      
+      // Include user information in the request
+      const trustRegistrationData = {
         ...trustData,
-        userId: user.uid,
-        userEmail: user.email || '',
-        userName: user.displayName || '',
-        status: existingRegistration?.status || 'pending'
+        userId: userId,
+        userName: user.displayName || user.firstName || user.name || 'Client',
+        userEmail: user.email,
+        status: existingRegistration?.status || 'pending',
+        user: {
+          phone: user.phone || '',
+          address: user.address || '',
+          ...user
+        }
       };
 
-      const result = await submitTrustRegistration(registrationData)
+      const response = await fetch('/api/trust-registration', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ trustRegistrationData }),
+      });
+
+      const result = await response.json();
 
       if (result.success) {
         toast.success('Trust registration submitted successfully!', {
@@ -261,7 +261,7 @@ const TrustRegistration = () => {
           }, 2000)
         }
       } else {
-        toast.error('Failed to submit registration. Please try again.', {
+        toast.error(result.message || 'Failed to submit registration. Please try again.', {
           style: { backgroundColor: '#f87171', color: 'white' }
         })
       }
@@ -603,17 +603,26 @@ const TrustRegistration = () => {
                 <p className="text-gray-600 mb-4">
                   Add details of individuals who will be authorized to act on behalf of the trust.
                 </p>
+                <button
+                  type="button"
+                  onClick={addAuthorizedPerson}
+                  className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg transition-colors inline-flex items-center"
+                  disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
+                >
+                  <PlusIcon className="w-5 h-5 mr-2" />
+                  Add Authorized Person
+                </button>
               </div>
             )}
 
-            {existingRegistration?.status !== 'completed' && existingRegistration?.status !== 'in-progress' && (
+            {trustData.authorizedPersons && trustData.authorizedPersons.length > 0 && existingRegistration?.status !== 'completed' && existingRegistration?.status !== 'in-progress' && (
               <button
                 type="button"
                 onClick={addAuthorizedPerson}
                 className="w-full flex items-center justify-center px-4 py-3 bg-sky-500 hover:bg-sky-600 text-white rounded-lg transition-colors"
               >
                 <PlusIcon className="w-5 h-5 mr-2" />
-                Add Authorized Person
+                Add Another Authorized Person
               </button>
             )}
           </div>

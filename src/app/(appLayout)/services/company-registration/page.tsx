@@ -6,7 +6,7 @@ import { motion } from 'framer-motion'
 import { ArrowLeftIcon, PlusIcon, MinusIcon, UserPlusIcon, ChevronDownIcon, UserGroupIcon } from '@heroicons/react/24/outline'
 import { IdentificationIcon } from '@heroicons/react/24/outline'
 import { Disclosure } from '@headlessui/react'
-import { toast, Toaster } from 'sonner'
+import { toast } from 'sonner'
 import useStore from '@/utils/useStore'
 import CustomInput from '@/components/ui/CustomInput'
 import CustomCheckbox from '@/components/ui/CustomCheckbox'
@@ -66,23 +66,6 @@ const CompanyRegistration = () => {
             agreeToDeclaration: result.data.agreeToDeclaration || false,
             position: result.data.position || ''
           })
-        } else {
-          // Initialize with one empty authorized person
-          setCompanyData(prev => ({
-            ...prev,
-            authorizedPersons: [
-              {
-                fullName: '',
-                email: '',
-                dateOfBirth: '',
-                phone: '',
-                address: '',
-                postalCode: '',
-                taxFileNumber: '',
-                position: ''
-              }
-            ]
-          }))
         }
       } catch (error) {
         console.error('Error checking registration:', error)
@@ -375,11 +358,11 @@ const CompanyRegistration = () => {
               <span className="w-6 h-6 rounded-full bg-sky-100 text-sky-500 flex items-center justify-center text-xs mr-2">
                 <UserGroupIcon className="w-4 h-4" />
               </span>
-              Authorized Persons
+              Authorised Company Person Details
             </h2>
             
             <p className="text-sm text-gray-600 mb-4">
-              Add details of all individuals who are authorized to act on behalf of the company.
+              Add details of individuals who are authorized to act on behalf of the company.
             </p>
             
             {companyData.authorizedPersons && companyData.authorizedPersons.length > 0 ? (
@@ -536,19 +519,28 @@ const CompanyRegistration = () => {
                 </div>
                 <h3 className="text-lg font-medium text-gray-800 mb-1">No Authorized Persons Added</h3>
                 <p className="text-gray-600 mb-4">
-                  Add details of individuals who will be authorized to act on behalf of the company.
+                  Add details of individuals who will be authorized to act on behalf of the trust.
                 </p>
+                <button
+                  type="button"
+                  onClick={addAuthorizedPerson}
+                  className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg transition-colors inline-flex items-center"
+                  disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
+                >
+                  <PlusIcon className="w-5 h-5 mr-2" />
+                  Add Authorized Person
+                </button>
               </div>
             )}
             
-            {existingRegistration?.status !== 'completed' && existingRegistration?.status !== 'in-progress' && (
+            {companyData.authorizedPersons && companyData.authorizedPersons.length > 0 && existingRegistration?.status !== 'completed' && existingRegistration?.status !== 'in-progress' && (
               <button
                 type="button"
                 onClick={addAuthorizedPerson}
                 className="w-full flex items-center justify-center px-4 py-3 bg-sky-500 hover:bg-sky-600 text-white rounded-lg transition-colors"
               >
                 <PlusIcon className="w-5 h-5 mr-2" />
-                Add Authorized Person
+                Add Another Authorized Person
               </button>
             )}
           </div>
