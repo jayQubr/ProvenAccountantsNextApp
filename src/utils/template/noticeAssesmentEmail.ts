@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-interface NoticeAssessmentData {
+interface ServiceRequestData {
     userId: string;
     userEmail?: string;
     userName?: string;
@@ -9,6 +9,7 @@ interface NoticeAssessmentData {
     details: string;
     status: string;
     user?: any;
+    serviceType?: 'Notice of Assessment' | 'Tax Return Copy';
 }
 
 // HTML template as a string (for production where file access might be limited)
@@ -18,7 +19,7 @@ const htmlTemplateString = `<!DOCTYPE html>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Notice of Assessment Request</title>
+    <title>{{SERVICE_TYPE}} Request</title>
     <!--[if mso]>
     <noscript>
         <xml>
@@ -106,7 +107,7 @@ const htmlTemplateString = `<!DOCTYPE html>
 <body id="body" style="margin: 0 !important; padding: 0 !important; background-color: #f5f5f5;">
     <!-- HIDDEN PREHEADER TEXT -->
     <div style="display: none; font-size: 1px; color: #fefefe; line-height: 1px; font-family: Arial, Helvetica, sans-serif; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;">
-        New Notice of Assessment Request - Please review the details
+        New {{SERVICE_TYPE}} Request - Please review the details
     </div>
     
     <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f5f5f5;">
@@ -131,7 +132,7 @@ const htmlTemplateString = `<!DOCTYPE html>
                             <table width="100%" border="0" cellspacing="0" cellpadding="0">
                                 <tr>
                                     <td style="padding: 0 25px 25px 25px; text-align: center;">
-                                        <h1 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: bold;">Notice of Assessment Request</h1>
+                                        <h1 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: bold;">{{SERVICE_TYPE}} Request</h1>
                                         <p style="margin: 10px 0 0 0; color: #e0f2fe; font-size: 14px;">
                                             Submitted on {{DATE}}
                                         </p>
@@ -148,7 +149,7 @@ const htmlTemplateString = `<!DOCTYPE html>
                                         </table>
                                         
                                         <p style="margin: 15px 0 0 0; color: #ffffff; font-size: 15px; line-height: 1.5; max-width: 450px; display: inline-block;">
-                                            A new notice of assessment request has been submitted. Please review the details below:
+                                            A new {{SERVICE_TYPE}} request has been submitted. Please review the details below:
                                         </p>
                                     </td>
                                 </tr>
@@ -198,19 +199,19 @@ const htmlTemplateString = `<!DOCTYPE html>
     </td>
 </tr>
                     
-                    <!-- ASSESSMENT DETAILS SECTION -->
+                    <!-- REQUEST DETAILS SECTION -->
                     <tr>
                         <td style="padding: 0 30px 25px 30px;">
                             <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f9fafb; border-radius: 5px;">
                                 <tr>
                                     <td style="padding: 15px;">
                                         <h2 style="margin: 0 0 15px 0; color: #0369a1; font-size: 16px; font-weight: bold; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px;">
-                                            Assessment Details
+                                            {{SERVICE_TYPE}} Details
                                         </h2>
                                         
                                         <table width="100%" border="0" cellspacing="0" cellpadding="0">
                                             <tr>
-                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Assessment Year:</td>
+                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Year:</td>
                                                 <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{YEAR}}</td>
                                             </tr>
                                             <tr>
@@ -232,7 +233,7 @@ const htmlTemplateString = `<!DOCTYPE html>
                                     <td style="padding: 15px;">
                                         <h3 style="margin: 0 0 10px 0; color: #0369a1; font-size: 16px; font-weight: bold;">Action Required</h3>
                                         <p style="margin: 0; color: #333333; font-size: 14px; line-height: 1.5;">
-                                            Please review this notice of assessment request and update the status in the dashboard.
+                                            Please review this {{SERVICE_TYPE}} request and update the status in the dashboard.
                                         </p>
                                     </td>
                                 </tr>
@@ -271,12 +272,15 @@ const htmlTemplateString = `<!DOCTYPE html>
 </body>
 </html>`;
 
-const noticeAssessmentEmail = (data: NoticeAssessmentData) => {
+const serviceRequestEmail = (data: ServiceRequestData) => {
+    // Set default service type if not provided
+    const serviceType = data.serviceType || 'Notice of Assessment';
+    
     let htmlTemplate = '';
     
     try {
         // First try to read from file (development environment)
-        const templatePath = path.join(process.cwd(), 'src/utils/template/notice-assessment-email.html');
+        const templatePath = path.join(process.cwd(), 'src/utils/template/service-request-email.html');
         htmlTemplate = fs.readFileSync(templatePath, 'utf8');
     } catch (error) {
         // If file reading fails, use the embedded template (production environment)
@@ -285,6 +289,7 @@ const noticeAssessmentEmail = (data: NoticeAssessmentData) => {
     }
     
     htmlTemplate = htmlTemplate
+    .replace(/\{\{SERVICE_TYPE\}\}/g, serviceType)
     .replace('{{DATE}}', new Date().toLocaleDateString('en-AU', { 
         day: 'numeric', 
         month: 'long', 
@@ -310,4 +315,14 @@ const noticeAssessmentEmail = (data: NoticeAssessmentData) => {
 return htmlTemplate;
 };
 
+// For backward compatibility
+const noticeAssessmentEmail = (data: ServiceRequestData) => {
+    return serviceRequestEmail({
+        ...data,
+        serviceType: 'Notice of Assessment'
+    });
+};
+
+// Export both functions
+export { serviceRequestEmail };
 export default noticeAssessmentEmail;

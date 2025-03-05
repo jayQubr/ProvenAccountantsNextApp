@@ -7,10 +7,11 @@ import { ArrowLeftIcon, IdentificationIcon } from '@heroicons/react/24/outline'
 import { Toaster, toast } from 'sonner'
 import CustomInput from '@/components/ui/CustomInput'
 import SubmitButton from '@/components/features/SubmitButton'
-import { checkExistingTaxReturn, submitTaxReturn } from '@/lib/taxReturnCopyService'
 import LoadingSpinner from '@/components/features/LoadingSpinner'
 import useStore from '@/utils/useStore'
 import RegistrationStatusBanner from '@/components/features/RegistrationStatusBanner';
+import CustomCheckbox from '@/components/ui/CustomCheckbox';
+import { checkExistingTaxReturn } from '@/lib/taxReturnCopyService';
 import { RegistrationStatus } from '@/lib/registrationService';
 
 interface TaxReturnData {
@@ -23,9 +24,11 @@ interface TaxReturnData {
   createdAt?: number;
   updatedAt?: number;
   notes?: string;
+  agreeToDeclaration?: boolean;
 }
 
 const TaxReturnCopy = () => {
+  // State definitions
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [submitting, setSubmitting] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -35,8 +38,10 @@ const TaxReturnCopy = () => {
   const [taxData, setTaxData] = useState({
     year: '',
     details: '',
+    agreeToDeclaration: false
   })
 
+  // Check for existing registration
   useEffect(() => {
     const checkRegistration = async () => {
       if (!user) {
@@ -44,7 +49,9 @@ const TaxReturnCopy = () => {
         return;
       }
 
+      // Use consistent user ID (prefer uid if available)
       const userId = user.uid || user.id;
+
       if (!userId) {
         setLoading(false);
         return;
@@ -52,24 +59,18 @@ const TaxReturnCopy = () => {
 
       try {
         const result = await checkExistingTaxReturn(userId);
+
         if (result.exists && result.data) {
           setExistingTaxReturn(result.data);
           setTaxData({
             year: result.data.year || '',
             details: result.data.details || '',
+            agreeToDeclaration: result.data.agreeToDeclaration || false
           });
-
-          if (result.data.status === 'completed') {
-            toast.success('Tax Return Copy processed successfully!', { style: { background: '#10B981', color: 'white' } });
-          } else if (result.data.status === 'in-progress') {
-            toast.info('Tax Return Copy is being processed', { style: { background: '#3B82F6', color: 'white' } });
-          } else if (result.data.status === 'rejected') {
-            toast.error('Tax Return Copy was rejected', { style: { background: '#EF4444', color: 'white' } });
-          }
         }
       } catch (error) {
         console.error('Failed to check tax return copy:', error);
-        toast.error('Failed to check registration', { style: { background: '#EF4444', color: 'white' } });
+        toast.error('Failed to check registration');
       } finally {
         setLoading(false);
       }
@@ -78,13 +79,17 @@ const TaxReturnCopy = () => {
     checkRegistration();
   }, [user]);
 
+  // Form handlers
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
+    const { name, value, type } = e.target
+    const checked = type === 'checkbox' ? (e.target as HTMLInputElement).checked : undefined
+
     setTaxData(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     }))
 
+    // Clear error
     if (errors[name]) {
       setErrors(prev => {
         const newErrors = { ...prev }
@@ -98,6 +103,7 @@ const TaxReturnCopy = () => {
     const newErrors: Record<string, string> = {}
     if (!taxData.year.trim()) newErrors.year = 'Year is required'
     if (!taxData.details.trim()) newErrors.details = 'Details are required'
+    if (!taxData.agreeToDeclaration) newErrors.agreeToDeclaration = 'You must agree to the declaration'
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -108,30 +114,56 @@ const TaxReturnCopy = () => {
     setSubmitting(true);
 
     try {
+      // Use consistent user ID (prefer uid if available)
       const userId = user.uid || user.id;
+
       if (!userId) {
         throw new Error('User ID is undefined');
       }
 
-      const submissionData = {
+      const taxReturnData = {
         ...taxData,
         userId: userId,
         userEmail: user.email || '',
-        userName: user.name || '',
-        status: 'pending' as const
+        userName: user.displayName || user.firstName || '',
+        status: 'pending' as const,
+        user: {
+          phone: user.phone || '',
+          address: user.address || '',
+          ...user
+        }
       };
 
-      const result = await submitTaxReturn(submissionData);
+      // Send data to API endpoint
+      const response = await fetch('/api/tax-return-copy', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ taxReturnData }),
+      });
+
+      const result = await response.json();
 
       if (result.success) {
-        toast.success('Tax Return Copy submitted successfully!', { style: { background: '#10B981', color: 'white' } });
-        setTimeout(() => router.push('/services'), 2000);
+        toast.success('Tax Return Copy submitted successfully!');
+        
+        // Fetch the updated registration
+        const updatedResult = await checkExistingTaxReturn(userId);
+        if (updatedResult.exists && updatedResult.data) {
+          setExistingTaxReturn(updatedResult.data);
+        }
+        
+        // Wait for toast to be visible before redirecting
+        setTimeout(() => {
+          router.push('/services');
+        }, 2000);
       } else {
-        throw new Error('Failed to submit');
+        toast.error(result.message || 'Failed to submit tax return copy. Please try again.');
       }
     } catch (error) {
       console.error('Submission error:', error);
-      toast.error('Error submitting request', { style: { background: '#EF4444', color: 'white' } });
+      toast.error('Error submitting request');
     } finally {
       setSubmitting(false);
     }
@@ -143,6 +175,7 @@ const TaxReturnCopy = () => {
     <div className="container mx-auto px-2 py-4 md:px-4 md:py-8 w-full md:max-w-3xl">
       <Toaster richColors position="top-right" />
 
+      {/* Header */}
       <motion.div className="mb-6" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
         <button onClick={() => router.back()} className="flex items-center text-sky-600 hover:text-sky-700 mb-4">
           <ArrowLeftIcon className="w-4 h-4 mr-2" /><span>Back to Services</span>
@@ -154,7 +187,7 @@ const TaxReturnCopy = () => {
           </div>
           <h1 className="text-xl md:text-2xl font-bold text-gray-800">Tax Return Copy</h1>
         </div>
-        <p className="text-gray-600 text-sm">Complete the form below to register your tax return copy.</p>
+        <p className="text-gray-600 text-sm">Complete the form below to request a copy of your tax return.</p>
       </motion.div>
 
       {existingTaxReturn && (
@@ -162,48 +195,74 @@ const TaxReturnCopy = () => {
           status={existingTaxReturn.status as RegistrationStatus}
           title="Tax Return Copy"
           createdAt={existingTaxReturn.createdAt}
-          notes={existingTaxReturn.notes as string}
+          updatedAt={existingTaxReturn.updatedAt}
+          notes={existingTaxReturn.details}
           type="Tax Return Copy"
         />
       )}
 
+      {/* Form */}
       <motion.form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
         <div className="p-6 space-y-6">
-          <CustomInput
-            label="Specify the year *"
-            type="number"
-            name="year"
-            value={taxData.year}
-            onChange={handleChange}
-            errors={errors.year}
-            placeholder="Enter tax year"
-          />
-          <CustomInput
-            label="Details *"
-            type="textarea"
-            name="details"
-            value={taxData.details}
-            onChange={handleChange}
-            errors={errors.details}
-            placeholder="Enter tax details"
-          />
+          {/* Form Fields */}
+          <div className="space-y-4 mt-4">
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">Tax Return Copy</h2>
+            <CustomInput
+              label="Specify the year"
+              type="number"
+              name="year"
+              required={true}
+              value={taxData.year}
+              onChange={handleChange}
+              errors={errors.year}
+              placeholder="Enter tax year"
+              disabled={existingTaxReturn?.status === 'completed' || existingTaxReturn?.status === 'in-progress'}
+            />
+            <CustomInput
+              label="Details"
+              type="textarea"
+              name="details"
+              value={taxData.details}
+              onChange={handleChange}
+              errors={errors.details}
+              placeholder="Enter tax return details"
+              disabled={existingTaxReturn?.status === 'completed' || existingTaxReturn?.status === 'in-progress'}
+            />
+          </div>
+
+          {/* Declaration */}
+          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <p className="text-xs md:text-sm text-gray-600 mb-3">
+              I authorize Proven Associated Services to process this tax return copy request on my behalf.
+            </p>
+            <CustomCheckbox 
+              label="I agree to the declaration" 
+              name="agreeToDeclaration" 
+              checked={taxData.agreeToDeclaration} 
+              onChange={handleChange} 
+              errors={errors.agreeToDeclaration}
+              disabled={existingTaxReturn?.status === 'completed' || existingTaxReturn?.status === 'in-progress'}
+            />
+          </div>
         </div>
 
+        {/* Submit Button */}
         <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
           <button type="button" onClick={() => router.back()} className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700">
             Cancel
           </button>
 
-          <SubmitButton
-            isSubmitting={submitting}
-            defaultText="Submit Tax Return"
-            pendingText="Submitting..."
-            rejectedText="Resubmit Tax Return"
-            status={existingTaxReturn?.status as RegistrationStatus}
-            disabled={existingTaxReturn?.status === 'completed'}
-            
-          />
+          {existingTaxReturn?.status !== 'completed' && existingTaxReturn?.status !== 'in-progress' && (
+            <SubmitButton
+              isSubmitting={submitting}
+              defaultText="Submit Request"
+              pendingText="Update Request"
+              rejectedText="Resubmit Request"
+              completedText="Already Submitted"
+              status={existingTaxReturn?.status}
+            />
+          )}
         </div>
       </motion.form>
     </div>

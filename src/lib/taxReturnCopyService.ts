@@ -9,12 +9,18 @@ import {
   export interface TaxReturnData {
       year: string;
       details: string;
+      agreeToDeclaration?: boolean;
       userId?: any;
       userEmail?: string;
       userName?: string;
       status?: 'pending' | 'in-progress' | 'completed' | 'rejected';
       createdAt?: number;
       updatedAt?: number;
+      user?: {
+          phone?: string;
+          address?: string;
+          [key: string]: any;
+      };
   }
   
   const COLLECTION_NAME = 'taxReturnCopies';

@@ -117,7 +117,6 @@ const NoticeAssessment = () => {
         user: {
           phone: user.phone || '',
           address: user.address || '',
-          // Include any other user fields that might be useful
           ...user
         }
       };
@@ -197,9 +196,10 @@ const NoticeAssessment = () => {
           <div className="space-y-4 mt-4">
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Notice of Assessment</h2>
             <CustomInput
-              label="Specify the year *"
+              label="Specify the year"
               type="number"
               name="year"
+              required={true}
               value={noticeData.year}
               onChange={handleChange}
               errors={errors.year}
@@ -207,7 +207,7 @@ const NoticeAssessment = () => {
               disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
             />
             <CustomInput
-              label="Details *"
+              label="Details"
               type="textarea"
               name="details"
               value={noticeData.details}
