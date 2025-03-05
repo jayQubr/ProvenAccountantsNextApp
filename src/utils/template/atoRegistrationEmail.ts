@@ -241,8 +241,16 @@ const htmlTemplateString = `<!DOCTYPE html>
                                         </h2>
                                         
                                         <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                                            <!-- ABN SECTION -->
                                             <tr>
-                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">ABN Registration:</td>
+                                                <td colspan="2" style="padding: 10px 0 5px 0;">
+                                                    <h3 style="margin: 0; color: #4b5563; font-size: 15px; font-weight: bold; border-bottom: 1px dashed #e5e7eb; padding-bottom: 5px;">
+                                                        ABN Registration
+                                                    </h3>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Selected:</td>
                                                 <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{ABN}}</td>
                                             </tr>
                                             {{#if ABN_DETAILS}}
@@ -259,8 +267,17 @@ const htmlTemplateString = `<!DOCTYPE html>
                                                 <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{BUSINESS_ADDRESS}}</td>
                                             </tr>
                                             {{/if}}
+                                            
+                                            <!-- GST SECTION -->
                                             <tr>
-                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">GST Registration:</td>
+                                                <td colspan="2" style="padding: 15px 0 5px 0;">
+                                                    <h3 style="margin: 0; color: #4b5563; font-size: 15px; font-weight: bold; border-bottom: 1px dashed #e5e7eb; padding-bottom: 5px;">
+                                                        GST Registration
+                                                    </h3>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Selected:</td>
                                                 <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{GST}}</td>
                                             </tr>
                                             {{#if GST_DETAILS}}
@@ -277,8 +294,17 @@ const htmlTemplateString = `<!DOCTYPE html>
                                                 <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{ACCOUNTING_METHOD}}</td>
                                             </tr>
                                             {{/if}}
+                                            
+                                            <!-- FUEL TAX CREDIT SECTION -->
                                             <tr>
-                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Fuel Tax Credit:</td>
+                                                <td colspan="2" style="padding: 15px 0 5px 0;">
+                                                    <h3 style="margin: 0; color: #4b5563; font-size: 15px; font-weight: bold; border-bottom: 1px dashed #e5e7eb; padding-bottom: 5px;">
+                                                        Fuel Tax Credit
+                                                    </h3>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td width="120" style="padding: 5px 0; color: #666666; font-size: 14px; font-weight: bold;">Selected:</td>
                                                 <td style="padding: 5px 0; color: #333333; font-size: 14px;">{{FUEL_TAX_CREDIT}}</td>
                                             </tr>
                                             {{#if FUEL_TAX_DETAILS}}

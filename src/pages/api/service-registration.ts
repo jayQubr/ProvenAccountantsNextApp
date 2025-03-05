@@ -68,12 +68,33 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
                 fuelTaxCredit: registrationData.fuelTaxCredit
             };
 
-            // Use the email service if available, otherwise fall back to direct email
-            if (typeof sendServiceRequestEmails === 'function') {
-                await sendServiceRequestEmails(serviceRequestData);
-            } else {
-                // Fall back to direct email
-                await transporter.sendMail(mailOptions);
+            // Use the specialized ATO registration email template
+            const emailHtml = atoRegistrationEmail(serviceRequestData);
+            
+            // Configure admin email options with the ATO template
+            const adminMailOptions = {
+                from: process.env.NEXT_PUBLIC_EMAIL_USER,
+                replyTo: serviceRequestData.userEmail || 'no-reply@example.com',
+                to: process.env.NEXT_PUBLIC_EMAIL_USER,
+                subject: `New ATO Registration Request: ${serviceRequestData.userName || 'Client'}`,
+                text: `New ATO Registration request from ${serviceRequestData.userName || 'Client'}. Please check the details.`,
+                html: emailHtml
+            };
+
+            // Send email to admin
+            await transporter.sendMail(adminMailOptions);
+            
+            // Also send confirmation to user if email is available
+            if (serviceRequestData.userEmail) {
+                const userMailOptions = {
+                    from: process.env.NEXT_PUBLIC_EMAIL_USER,
+                    to: serviceRequestData.userEmail,
+                    subject: `Your ATO Registration Request Confirmation`,
+                    text: `Thank you for submitting your ATO registration request. We will process it shortly.`,
+                    html: emailHtml
+                };
+                
+                await transporter.sendMail(userMailOptions);
             }
         } catch (emailError) {
             console.error('Error sending email:', emailError);

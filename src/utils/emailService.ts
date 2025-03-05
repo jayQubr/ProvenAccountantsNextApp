@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import { serviceRequestEmail } from './template/noticeAssesmentEmail';
+import atoRegistrationEmail from './template/atoRegistrationEmail';
 
 interface ServiceRequestData {
   userId: string;
@@ -167,7 +168,44 @@ ${authorizedPersonsDetails}
     }
 
     // Generate HTML content for email
-    const emailHtml = serviceRequestEmail(emailData);
+    let emailHtml;
+    
+    // Use specialized template for ATO Registration
+    if (data.serviceType === 'ATO Registration') {
+      // Convert flat structure to nested structure expected by atoRegistrationEmail
+      const atoData = {
+        userId: data.userId,
+        userEmail: data.userEmail,
+        userName: data.userName,
+        postalAddress: data.address || '',
+        postalCode: data.postalCode || '',
+        status: data.status || 'Pending',
+        user: data.user,
+        abn: {
+          selected: !!data.abn,
+          businessActivity: data.businessActivity,
+          registrationDate: data.abnRegistrationDate,
+          businessAddress: data.businessAddress
+        },
+        gst: {
+          selected: !!data.gst,
+          annualIncome: data.annualIncome,
+          registrationDate: data.gstRegistrationDate,
+          accountingMethod: data.accountingMethod
+        },
+        fuelTaxCredit: {
+          selected: !!data.fuelTaxCredit,
+          hasTrucks: !!data.hasTrucks,
+          hasMachinery: !!data.hasMachinery,
+          hasAgriculture: !!data.hasAgriculture
+        }
+      };
+      
+      emailHtml = atoRegistrationEmail(atoData);
+    } else {
+      // Use generic template for other service types
+      emailHtml = serviceRequestEmail(emailData);
+    }
 
     // Get appropriate subject line text based on service type
     const getSubjectText = () => {
