@@ -606,7 +606,7 @@ const TrustRegistration = () => {
           {existingRegistration?.status !== 'completed' && existingRegistration?.status !== 'in-progress' && (
             <SubmitButton
               isSubmitting={submitting}
-              defaultText="Submit Registration"
+              defaultText="Submit"
               pendingText="Update Registration"
               rejectedText="Resubmit Registration"
               status={existingRegistration?.status}

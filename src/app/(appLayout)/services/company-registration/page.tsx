@@ -832,7 +832,7 @@ const CompanyRegistration = () => {
             <SubmitButton
               isSubmitting={submitting}
               status={existingRegistration?.status}
-              defaultText="Submit Registration"
+              defaultText="Submit"
               pendingText="Update Registration"
               processingText="Submitting..."
               rejectedText="Resubmit Registration"

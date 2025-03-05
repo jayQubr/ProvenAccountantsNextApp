@@ -249,7 +249,7 @@ const NoticeAssessment = () => {
             <SubmitButton
               isSubmitting={submitting}
               status={existingRegistration?.status}
-              defaultText="Submit Assessment"
+              defaultText="Submit"
               pendingText="Update Assessment"
               rejectedText="Resubmit Assessment"
               completedText="Already Submitted"

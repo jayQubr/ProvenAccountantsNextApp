@@ -772,7 +772,7 @@ const ATORegistrationPage = () => {
           <SubmitButton
             isSubmitting={isSubmitting}
             status={existingRegistration?.status}
-            defaultText="Submit Registration"
+            defaultText="Submit"
             pendingText="Update Registration"
             rejectedText="Resubmit Registration"
             completedText="Already Submitted"

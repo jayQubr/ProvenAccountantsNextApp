@@ -7,12 +7,12 @@ import { ArrowLeftIcon, IdentificationIcon } from '@heroicons/react/24/outline'
 import { Toaster, toast } from 'sonner'
 import CustomInput from '@/components/ui/CustomInput'
 import SubmitButton from '@/components/features/SubmitButton'
-import LoadingSpinner from '@/components/features/LoadingSpinner'
 import useStore from '@/utils/useStore'
 import RegistrationStatusBanner from '@/components/features/RegistrationStatusBanner';
 import CustomCheckbox from '@/components/ui/CustomCheckbox';
 import { checkExistingTaxReturn } from '@/lib/taxReturnCopyService';
 import { RegistrationStatus } from '@/lib/registrationService';
+import SkeletonLoader from '@/components/ui/SkeletonLoader';
 
 interface TaxReturnData {
   year: string;
@@ -102,7 +102,6 @@ const TaxReturnCopy = () => {
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
     if (!taxData.year.trim()) newErrors.year = 'Year is required'
-    if (!taxData.details.trim()) newErrors.details = 'Details are required'
     if (!taxData.agreeToDeclaration) newErrors.agreeToDeclaration = 'You must agree to the declaration'
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -169,7 +168,12 @@ const TaxReturnCopy = () => {
     }
   };
 
-  if (loading) return <div className="flex justify-center items-center h-64"><LoadingSpinner size="lg" /></div>
+  const handleConfirmSubmit = () => {
+    const syntheticEvent = { preventDefault: () => {} } as React.FormEvent;
+    handleSubmit(syntheticEvent);
+  };
+
+  if (loading) return <SkeletonLoader/>
 
   return (
     <div className="container mx-auto px-2 py-4 md:px-4 md:py-8 w-full md:max-w-3xl">
@@ -223,6 +227,7 @@ const TaxReturnCopy = () => {
               label="Details"
               type="textarea"
               name="details"
+              required={false}
               value={taxData.details}
               onChange={handleChange}
               errors={errors.details}
@@ -256,11 +261,13 @@ const TaxReturnCopy = () => {
           {existingTaxReturn?.status !== 'completed' && existingTaxReturn?.status !== 'in-progress' && (
             <SubmitButton
               isSubmitting={submitting}
-              defaultText="Submit Request"
+              defaultText="Submit"
               pendingText="Update Request"
               rejectedText="Resubmit Request"
               completedText="Already Submitted"
               status={existingTaxReturn?.status}
+              validateForm={validateForm}
+              onConfirm={handleConfirmSubmit}
             />
           )}
         </div>

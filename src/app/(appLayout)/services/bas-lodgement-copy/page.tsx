@@ -101,7 +101,6 @@ const BASLodgementCopy = () => {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     if (!basData.quarter.trim()) newErrors.quarter = 'Quarter is required';
-    if (!basData.details.trim()) newErrors.details = 'Details are required';
     if (!basData.agreeToDeclaration) newErrors.agreeToDeclaration = 'You must agree to the declaration';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -158,6 +157,11 @@ const BASLodgementCopy = () => {
     }
   };
 
+  const handleConfirmSubmit = () => {
+    const syntheticEvent = { preventDefault: () => {} } as React.FormEvent;
+    handleSubmit(syntheticEvent);
+  };
+
   if (loading) return <SkeletonLoader />;
 
   return (
@@ -194,7 +198,7 @@ const BASLodgementCopy = () => {
             <h2 className="text-lg font-semibold text-gray-800 mb-4">BAS Lodgement Copy</h2>
             <CustomInput
               label="Specify the Quarter"
-              type="text"
+              type="number"
               name="quarter"
               required={true}
               value={basData.quarter}
@@ -207,6 +211,7 @@ const BASLodgementCopy = () => {
               label="Details"
               type="textarea"
               name="details"
+              required={false}
               value={basData.details}
               onChange={handleChange}
               errors={errors.details}
@@ -238,11 +243,13 @@ const BASLodgementCopy = () => {
           {existingBAS?.status !== 'completed' && existingBAS?.status !== 'in-progress' && (
             <SubmitButton
               isSubmitting={submitting}
-              defaultText="Submit Request"
+              defaultText="Submit"
               pendingText="Update Request"
               rejectedText="Resubmit Request"
               completedText="Already Submitted"
               status={existingBAS?.status}
+              validateForm={validateForm}
+              onConfirm={handleConfirmSubmit}
             />
           )}
         </div>

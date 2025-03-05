@@ -156,6 +156,11 @@ const UpdateAddress = () => {
     }
   };
 
+  const handleConfirmSubmit = () => {
+    const syntheticEvent = { preventDefault: () => {} } as React.FormEvent;
+    handleSubmit(syntheticEvent);
+  };
+
   if (loading) return <SkeletonLoader />;
 
   return (
@@ -190,7 +195,7 @@ const UpdateAddress = () => {
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
         <div className="p-6 space-y-6">
           <CustomInput 
-            label="Current Address *" 
+            label="Current Address" 
             type="text" 
             name="oldAddress" 
             value={addressData.oldAddress} 
@@ -200,7 +205,7 @@ const UpdateAddress = () => {
             disabled={existingAddress?.status === 'completed' || existingAddress?.status === 'in-progress'}
           />
           <CustomInput 
-            label="New Address *" 
+            label="New Address" 
             type="text" 
             name="newAddress" 
             value={addressData.newAddress} 
@@ -219,11 +224,13 @@ const UpdateAddress = () => {
           {existingAddress?.status !== 'completed' && existingAddress?.status !== 'in-progress' && (
             <SubmitButton
               isSubmitting={submitting}
-              defaultText="Submit Address Update"
-              pendingText="Update Request"
+              defaultText="Submit"
+              pendingText="Updating Address"
               rejectedText="Resubmit Request"
               completedText="Already Submitted"
               status={existingAddress?.status}
+              validateForm={validateForm}
+              onConfirm={handleConfirmSubmit}
             />
           )}
         </div>

@@ -95,7 +95,6 @@ const ATOPortalCopy = () => {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     if (!atoData.period.trim()) newErrors.period = 'Period is required';
-    if (!atoData.details.trim()) newErrors.details = 'Details are required';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -148,6 +147,11 @@ const ATOPortalCopy = () => {
     }
   };
 
+  const handleConfirmSubmit = () => {
+    const syntheticEvent = { preventDefault: () => {} } as React.FormEvent;
+    handleSubmit(syntheticEvent);
+  };
+
   if (loading) return <SkeletonLoader />;
 
   return (
@@ -181,8 +185,8 @@ const ATOPortalCopy = () => {
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
         <div className="p-6 space-y-6">
           <CustomInput
-            label="Specify the Period *"
-            type="text"
+            label="Specify the Period"
+            type="number"
             name="period"
             value={atoData.period}
             onChange={handleChange}
@@ -191,9 +195,10 @@ const ATOPortalCopy = () => {
             disabled={existingATO?.status === 'completed' || existingATO?.status === 'in-progress'}
           />
           <CustomInput
-            label="Details *"
+            label="Details"
             type="textarea"
             name="details"
+            required={false}
             value={atoData.details}
             onChange={handleChange}
             errors={errors.details}
@@ -210,11 +215,13 @@ const ATOPortalCopy = () => {
           {existingATO?.status !== 'completed' && existingATO?.status !== 'in-progress' && (
             <SubmitButton
               isSubmitting={submitting}
-              defaultText="Submit ATO Portal Copy"
+              defaultText="Submit"
               pendingText="Update Request"
               rejectedText="Resubmit Request"
               completedText="Already Submitted"
               status={existingATO?.status}
+              validateForm={validateForm}
+              onConfirm={handleConfirmSubmit}
             />
           )}
         </div>

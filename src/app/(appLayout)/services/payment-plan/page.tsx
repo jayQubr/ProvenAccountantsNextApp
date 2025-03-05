@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { ArrowLeftIcon, IdentificationIcon } from '@heroicons/react/24/outline'
@@ -8,11 +8,15 @@ import { toast } from 'sonner'
 import CustomInput from '@/components/ui/CustomInput'
 import CustomCheckbox from '@/components/ui/CustomCheckbox'
 import SubmitButton from '@/components/features/SubmitButton'
-  import { checkExistingPaymentPlan } from '@/lib/paymentPlanService'
+import { checkExistingPaymentPlan } from '@/lib/paymentPlanService'
 import useStore from '@/utils/useStore'
 import RegistrationStatusBanner from '@/components/features/RegistrationStatusBanner';
 import { RegistrationStatus } from '@/lib/registrationService';
 import SkeletonLoader from '@/components/ui/SkeletonLoader';
+import * as Select from '@radix-ui/react-select';
+import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
+import SelectItem from '@/components/ui/SelectItem';
+
 interface PaymentPlanData {
   planType: string;
   amount: number;
@@ -121,9 +125,6 @@ const PaymentPlan = () => {
       if (!userId) {
         throw new Error('User ID is undefined');
       }
-
-
-      
       // Only send essential data to the API
       const paymentPlanData = {
         planType: paymentData.planType,
@@ -170,6 +171,11 @@ const PaymentPlan = () => {
     }
   };
 
+  const handleConfirmSubmit = () => {
+    const syntheticEvent = { preventDefault: () => {} } as React.FormEvent;
+    handleSubmit(syntheticEvent);
+  };
+
   if (loading) return <SkeletonLoader />;
 
   return (
@@ -203,17 +209,75 @@ const PaymentPlan = () => {
       <motion.form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
         <div className="p-6 space-y-6">
-          <CustomInput
-            label="Payment Plan"
-            type="text"
-            name="planType"
-            required={true}
-            value={paymentData.planType}
-            onChange={handleChange}
-            errors={errors.planType}
-            placeholder="Enter payment plan type"
-            disabled={existingPaymentPlan?.status === 'completed' || existingPaymentPlan?.status === 'in-progress'}
-          />
+          <div className="space-y-1">
+            <label htmlFor="planType" className="block text-sm font-medium text-gray-700">
+              Payment Plan <span className="text-red-500">*</span>
+            </label>
+            <Select.Root
+              value={paymentData.planType}
+              onValueChange={(value) => {
+                setPaymentData((prev) => ({
+                  ...prev,
+                  planType: value
+                }));
+                
+                // Clear error when field is edited
+                if (errors.planType) {
+                  setErrors(prev => {
+                    const newErrors = { ...prev };
+                    delete newErrors.planType;
+                    return newErrors;
+                  });
+                }
+              }}
+              disabled={existingPaymentPlan?.status === 'completed' || existingPaymentPlan?.status === 'in-progress'}
+              defaultValue="Weekly"
+            >
+              <Select.Trigger
+                className={`inline-flex items-center justify-between rounded-md px-4 py-2 text-sm w-full bg-white border ${
+                  errors.planType ? 'border-red-500' : 'border-gray-300'
+                } focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 ${
+                  existingPaymentPlan?.status === 'completed' || existingPaymentPlan?.status === 'in-progress'
+                    ? 'opacity-70 cursor-not-allowed'
+                    : ''
+                }`}
+                aria-label="Payment Plan"
+              >
+                <Select.Value placeholder="Select payment frequency" />
+                <Select.Icon className="ml-2">
+                  <ChevronDownIcon className="h-4 w-4 text-gray-500" />
+                </Select.Icon>
+              </Select.Trigger>
+              
+              <Select.Portal>
+                <Select.Content
+                  className="overflow-hidden bg-white rounded-md shadow-lg border border-gray-200 z-50"
+                  position="popper"
+                  sideOffset={5}
+                >
+                  <Select.ScrollUpButton className="flex items-center justify-center h-6 bg-white text-gray-700 cursor-default">
+                    <ChevronUpIcon className="h-4 w-4" />
+                  </Select.ScrollUpButton>
+                  
+                  <Select.Viewport className="p-1">
+                    <Select.Group>
+                      <SelectItem value="Weekly">Weekly</SelectItem>
+                      <SelectItem value="Fortnightly">Fortnightly</SelectItem>
+                      <SelectItem value="Monthly">Monthly</SelectItem>
+                    </Select.Group>
+                  </Select.Viewport>
+                  
+                  <Select.ScrollDownButton className="flex items-center justify-center h-6 bg-white text-gray-700 cursor-default">
+                    <ChevronDownIcon className="h-4 w-4" />
+                  </Select.ScrollDownButton>
+                </Select.Content>
+              </Select.Portal>
+            </Select.Root>
+            
+            {errors.planType && (
+              <p className="mt-1 text-sm text-red-600">{errors.planType}</p>
+            )}
+          </div>
           <CustomInput
             label="Amount"
             type="number"
@@ -260,11 +324,13 @@ const PaymentPlan = () => {
           {existingPaymentPlan?.status !== 'completed' && existingPaymentPlan?.status !== 'in-progress' && (
             <SubmitButton
               isSubmitting={submitting}
-              defaultText="Submit Payment Plan"
+              defaultText="Submit"
               pendingText="Update Request"
               rejectedText="Resubmit Request"
               completedText="Already Submitted"
               status={existingPaymentPlan?.status}
+              validateForm={validateForm}
+              onConfirm={handleConfirmSubmit}
             />
           )}
         </div>
