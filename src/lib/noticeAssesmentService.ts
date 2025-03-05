@@ -10,6 +10,11 @@ export interface NoticeAssessmentData {
     status?: 'pending' | 'in-progress' | 'completed' | 'rejected';
     createdAt?: number;
     updatedAt?: number;
+    user?: {
+        phone?: string;
+        address?: string;
+        [key: string]: any;
+    };
 }
 
 const COLLECTION_NAME = 'noticeAssessments';

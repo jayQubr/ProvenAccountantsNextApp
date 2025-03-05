@@ -7,17 +7,12 @@ import { ArrowLeftIcon, IdentificationIcon } from '@heroicons/react/24/outline'
 import { Toaster, toast } from 'sonner'
 import CustomInput from '@/components/ui/CustomInput'
 import SubmitButton from '@/components/features/SubmitButton'
-import { BaseRegistrationData } from '@/lib/registrationService'
-import { submitNoticeAssessment, checkExistingNoticeAssessment } from '@/lib/noticeAssementService'
 import LoadingSpinner from '@/components/features/LoadingSpinner'
 import useStore from '@/utils/useStore'
 import RegistrationStatusBanner from '@/components/features/RegistrationStatusBanner';
-
-interface NoticeAssessmentData extends BaseRegistrationData {
-  year: string;
-  details: string;
-  agreeToDeclaration?: boolean;
-}
+import CustomCheckbox from '@/components/ui/CustomCheckbox';
+import { checkExistingNoticeAssessment, NoticeAssessmentData } from '@/lib/noticeAssesmentService';
+import { RegistrationStatus } from '@/lib/registrationService';
 
 const NoticeAssessment = () => {
   // State definitions
@@ -37,7 +32,6 @@ const NoticeAssessment = () => {
   useEffect(() => {
     const checkRegistration = async () => {
       if (!user) {
-        console.log('User not available yet', user);
         setLoading(false);
         return;
       }
@@ -46,40 +40,24 @@ const NoticeAssessment = () => {
       const userId = user.uid || user.id;
 
       if (!userId) {
-        console.log('No user ID available', user);
         setLoading(false);
         return;
       }
 
-      console.log('Checking registration for user:', userId);
-
       try {
         const result = await checkExistingNoticeAssessment(userId);
-        console.log('Registration check result:', result);
 
         if (result.exists && result.data) {
-          console.log('Existing registration found:', result.data);
           setExistingRegistration(result.data);
           setNoticeData({
             year: result.data.year || '',
             details: result.data.details || '',
             agreeToDeclaration: result.data.agreeToDeclaration || false
           });
-
-          // Show toast based on status
-          if (result.data.status === 'completed') {
-            toast.success('Assessment processed successfully', { style: { background: '#10B981', color: 'white' } });
-          } else if (result.data.status === 'in-progress') {
-            toast.info('Assessment is being processed', { style: { background: '#3B82F6', color: 'white' } });
-          } else if (result.data.status === 'rejected') {
-            toast.error('Assessment was rejected', { style: { background: '#EF4444', color: 'white' } });
-          }
-        } else {
-          console.log('No existing registration found');
         }
       } catch (error) {
         console.error('Failed to check registration:', error);
-        toast.error('Failed to check registration', { style: { background: '#EF4444', color: 'white' } });
+        toast.error('Failed to check registration');
       } finally {
         setLoading(false);
       }
@@ -87,8 +65,6 @@ const NoticeAssessment = () => {
 
     checkRegistration();
   }, [user]);
-
-
 
   // Form handlers
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -132,25 +108,50 @@ const NoticeAssessment = () => {
         throw new Error('User ID is undefined');
       }
 
-      const submissionData = {
+      const assessmentData = {
         ...noticeData,
         userId: userId,
         userEmail: user.email || '',
-        userName: user.name || '',
-        status: 'pending' as const
+        userName: user.displayName || user.firstName || '',
+        status: 'pending' as const,
+        user: {
+          phone: user.phone || '',
+          address: user.address || '',
+          // Include any other user fields that might be useful
+          ...user
+        }
       };
 
-      const result = await submitNoticeAssessment(submissionData);
+      // Send data to API endpoint
+      const response = await fetch('/api/notice-assessment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ assessmentData }),
+      });
+
+      const result = await response.json();
 
       if (result.success) {
-        toast.success('Assessment submitted successfully!', { style: { background: '#10B981', color: 'white' } });
-        setTimeout(() => router.push('/services'), 2000);
+        toast.success('Assessment submitted successfully!');
+        
+        // Fetch the updated registration
+        const updatedResult = await checkExistingNoticeAssessment(userId);
+        if (updatedResult.exists && updatedResult.data) {
+          setExistingRegistration(updatedResult.data);
+        }
+        
+        // Wait for toast to be visible before redirecting
+        setTimeout(() => {
+          router.push('/services');
+        }, 2000);
       } else {
-        throw new Error('Failed to submit');
+        toast.error(result.message || 'Failed to submit assessment. Please try again.');
       }
     } catch (error) {
       console.error('Submission error:', error);
-      toast.error('Error submitting request', { style: { background: '#EF4444', color: 'white' } });
+      toast.error('Error submitting request');
     } finally {
       setSubmitting(false);
     }
@@ -179,10 +180,11 @@ const NoticeAssessment = () => {
 
       {existingRegistration && (
         <RegistrationStatusBanner
-          status={existingRegistration.status}
+          status={existingRegistration.status as RegistrationStatus}
           title="Notice of Assessment"
           createdAt={existingRegistration.createdAt}
-          notes={existingRegistration.notes}
+          updatedAt={existingRegistration.updatedAt}
+          notes={existingRegistration.details}
           type="Notice of Assessment"
         />
       )}
@@ -218,24 +220,17 @@ const NoticeAssessment = () => {
 
           {/* Declaration */}
           <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-            <p className="text-sm text-gray-600 mb-3">
+            <p className="text-xs md:text-sm text-gray-600 mb-3">
               I authorize Proven Associated Services to process this notice of assessment on my behalf.
             </p>
-            <div className="flex items-start mt-4">
-              <input
-                id="agreeToDeclaration"
-                name="agreeToDeclaration"
-                type="checkbox"
-                checked={noticeData.agreeToDeclaration}
-                onChange={handleChange}
-                className="focus:ring-sky-500 h-4 w-4 text-sky-600 border-gray-300 rounded mt-1"
-                disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
-              />
-              <label htmlFor="agreeToDeclaration" className="ml-3 text-sm font-medium text-gray-700">
-                I agree to the declaration *
-                {errors.agreeToDeclaration && <p className="mt-1 text-sm text-red-600">{errors.agreeToDeclaration}</p>}
-              </label>
-            </div>
+            <CustomCheckbox 
+              label="I agree to the declaration" 
+              name="agreeToDeclaration" 
+              checked={noticeData.agreeToDeclaration} 
+              onChange={handleChange} 
+              errors={errors.agreeToDeclaration}
+              disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
+            />
           </div>
         </div>
 
@@ -249,8 +244,9 @@ const NoticeAssessment = () => {
             <SubmitButton
               isSubmitting={submitting}
               defaultText="Submit Assessment"
-              pendingText="Submitting..."
+              pendingText="Update Assessment"
               rejectedText="Resubmit Assessment"
+              completedText="Already Submitted"
               status={existingRegistration?.status}
             />
           )}
