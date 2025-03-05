@@ -19,6 +19,9 @@ export interface AuthorizedPerson {
     postalCode: string;
     taxFileNumber: string;
     position: string;
+    isDirector: boolean;
+    isShareholder: boolean;
+    shareholderPercentage: string;
 }
 
 export interface CompanyRegistrationData extends BaseRegistrationData {
@@ -28,6 +31,9 @@ export interface CompanyRegistrationData extends BaseRegistrationData {
     authorizedPersons: AuthorizedPerson[];
     agreeToDeclaration: boolean;
     position: string;
+    isDirector: boolean;
+    isShareholder: boolean;
+    shareholderPercentage: string;
 }
 
 const COLLECTION_NAME = 'companyRegistrations';
