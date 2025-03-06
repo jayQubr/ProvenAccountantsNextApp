@@ -77,14 +77,14 @@ const IntroductionModal = ({ isOpen = false, setIsOpen, userData, setIsIntroduct
         previousAccountantPhone: '',
         accountType: 'individual'
     })
-    const [open, setOpen] = useState(isOpen)
+    // const [open, setOpen] = useState(isOpen)
     const [isSubmitting, setIsSubmitting] = useState(false)
 
-    useEffect(() => {
-        if (isOpen !== undefined) {
-            setOpen(isOpen);
-        }
-    }, [isOpen]);
+    // useEffect(() => {
+    //     if (isOpen !== undefined) {
+    //         setOpen(isOpen);
+    //     }
+    // }, [isOpen]);
 
     useEffect(() => {
         // Pre-fill form with user data if available
@@ -109,7 +109,7 @@ const IntroductionModal = ({ isOpen = false, setIsOpen, userData, setIsIntroduct
     }, [activeTab]);
 
     const handleOpenChange = (newOpen: boolean) => {
-        setOpen(newOpen);
+        // setOpen(newOpen);
         if (setIsOpen) {
             setIsOpen(newOpen);
         }

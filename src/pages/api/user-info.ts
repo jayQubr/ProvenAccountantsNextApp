@@ -5,6 +5,9 @@ import { IncomingForm } from 'formidable';
 import fs from 'fs';
 import path from 'path';
 import newClientRegistration from "@/utils/template/newClientRegistration";
+import sharp from 'sharp';
+import { promises as fsPromises } from 'fs';
+import os from 'os';
 
 export const config = {
     api: {
@@ -108,16 +111,48 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
                 // Prepare attachments for email
                 const attachments: any = [];
+                const tempFilesToCleanup: string[] = [];
 
-                // Process ID documents
+                // Process ID documents with compression for images
                 if (files.idDocuments) {
                     const idDocs = Array.isArray(files.idDocuments) ? files.idDocuments : [files.idDocuments];
-                    idDocs.forEach((file: any, index: any) => {
-                        attachments.push({
-                            filename: `ID_Document_${index + 1}${path.extname(file.originalFilename || '')}`,
-                            content: fs.createReadStream(file.filepath)
-                        });
-                    });
+                    for (let index = 0; index < idDocs.length; index++) {
+                        const file = idDocs[index];
+                        try {
+                            const ext = path.extname(file.originalFilename || '').toLowerCase();
+                            // Only compress image files
+                            if (['.jpg', '.jpeg', '.png'].includes(ext)) {
+                                const tempOutputPath = path.join(os.tmpdir(), `compressed_${path.basename(file.filepath)}${ext}`);
+                                
+                                // Compress the image
+                                await sharp(file.filepath)
+                                    .resize(1200) // Resize to max width of 1200px
+                                    .jpeg({ quality: 80 }) // Reduce quality
+                                    .toFile(tempOutputPath);
+                                
+                                attachments.push({
+                                    filename: `ID_Document_${index + 1}${ext}`,
+                                    content: fs.createReadStream(tempOutputPath)
+                                });
+                                
+                                // Add cleanup for the compressed file
+                                tempFilesToCleanup.push(tempOutputPath);
+                            } else {
+                                // For non-image files, use as is
+                                attachments.push({
+                                    filename: `ID_Document_${index + 1}${ext}`,
+                                    content: fs.createReadStream(file.filepath)
+                                });
+                            }
+                        } catch (compressionError) {
+                            console.error('Error compressing file:', compressionError);
+                            // Fall back to original file
+                            attachments.push({
+                                filename: `ID_Document_${index + 1}${path.extname(file.originalFilename || '')}`,
+                                content: fs.createReadStream(file.filepath)
+                            });
+                        }
+                    }
                 }
 
                 // Process other documents
@@ -152,7 +187,18 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
                 };
 
                 // Send email
-                await transporter.sendMail(mailOptions);
+                try {
+                    await transporter.sendMail(mailOptions);
+                    console.log('Email sent successfully');
+                } catch (emailError: any) {
+                    console.error('Error sending email:', emailError);
+                    // Still return success since the database update worked
+                    return res.status(200).json({ 
+                        success: true, 
+                        message: 'Registration completed successfully, but notification email could not be sent.',
+                        emailError: emailError.message
+                    });
+                }
 
                 // Clean up temporary files
                 if (files.idDocuments) {
