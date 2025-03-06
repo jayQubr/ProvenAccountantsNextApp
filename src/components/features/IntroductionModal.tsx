@@ -1,9 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import * as Dialog from '@radix-ui/react-dialog'
-import * as Tabs from '@radix-ui/react-tabs'
-import * as Form from '@radix-ui/react-form'
 import Modal from '../ui/Modal'
 import CustomInput from '../ui/CustomInput'
 import PhoneInput from 'react-phone-number-input'
@@ -11,6 +8,9 @@ import 'react-phone-number-input/style.css'
 import { isValidPhoneNumber } from 'react-phone-number-input'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
+import { UserIcon, UploadIcon, Mail, Calendar, MapPin, Hash } from 'lucide-react'
+import { BuildingOffice2Icon } from '@heroicons/react/24/solid'
+import CustomCheckbox from '../ui/CustomCheckbox'
 
 type FormData = {
     firstName: string
@@ -230,7 +230,7 @@ const IntroductionModal = ({ isOpen = false, setIsOpen, userData, setIsIntroduct
 
             // Common fields for both forms
             const commonFields = {
-                uid: userData.uid,
+                uid: userData?.uid || '', // Ensure uid is not undefined
                 firstName: formData.firstName,
                 lastName: formData.lastName,
                 email: formData.email,
@@ -242,7 +242,7 @@ const IntroductionModal = ({ isOpen = false, setIsOpen, userData, setIsIntroduct
                 declaration: formData.declaration,
                 accountType: activeTab
             };
-
+            
             // Add form type specific fields
             const userInfo = activeTab === 'individual' 
                 ? {
@@ -452,59 +452,142 @@ const IntroductionModal = ({ isOpen = false, setIsOpen, userData, setIsIntroduct
     }
 
     return (
-        <Modal open={open} handleOpenChange={handleOpenChange} >
+        <Modal open={isOpen} handleOpenChange={handleOpenChange}>
+            <div className="flex flex-col space-y-6 mt-6">
+                {/* Account Type Selection - Modern Tabs */}
+                <div className="mb-8">
+                    <h3 className="text-lg font-medium text-gray-800 mb-3">Select Account Type</h3>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                        <button
+                            type="button"
+                            onClick={() => setFormData({ ...formData, accountType: 'individual' })}
+                            className={`flex-1 relative overflow-hidden rounded-xl border-2 transition-all duration-200 p-4 ${
+                                formData.accountType === 'individual'
+                                    ? 'border-sky-500 bg-sky-50'
+                                    : 'border-gray-100 bg-white hover:border-gray-200'
+                            }`}
+                        >
+                            <div className="flex flex-col items-center">
+                                <div className={`rounded-full p-3 mb-3 ${
+                                    formData.accountType === 'individual' 
+                                        ? 'bg-sky-100' 
+                                        : 'bg-gray-100'
+                                }`}>
+                                    <UserIcon className={`h-6 w-6 ${
+                                        formData.accountType === 'individual' 
+                                            ? 'text-sky-600' 
+                                            : 'text-gray-500'
+                                    }`} />
+                                </div>
+                                <span className={`font-medium ${
+                                    formData.accountType === 'individual' 
+                                        ? 'text-sky-700' 
+                                        : 'text-gray-700'
+                                }`}>Individual</span>
+                                <p className="text-xs text-gray-500 mt-1">Personal tax & finances</p>
+                            </div>
+                            {formData.accountType === 'individual' && (
+                                <motion.div 
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    className="absolute top-2 right-2"
+                                >
+                                    <div className="bg-sky-500 text-white rounded-full p-0.5">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                        </svg>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </button>
+                        
+                        <button
+                            type="button"
+                            onClick={() => setFormData({ ...formData, accountType: 'organization' })}
+                            className={`flex-1 relative overflow-hidden rounded-xl border-2 transition-all duration-200 p-4 ${
+                                formData.accountType === 'organization'
+                                    ? 'border-sky-500 bg-sky-50'
+                                    : 'border-gray-100 bg-white hover:border-gray-200'
+                            }`}
+                        >
+                            <div className="flex flex-col items-center">
+                                <div className={`rounded-full p-3 mb-3 ${
+                                    formData.accountType === 'organization' 
+                                        ? 'bg-sky-100' 
+                                        : 'bg-gray-100'
+                                }`}>
+                                    <BuildingOffice2Icon className={`h-6 w-6 ${
+                                        formData.accountType === 'organization' 
+                                            ? 'text-sky-600' 
+                                            : 'text-gray-500'
+                                    }`} />
+                                </div>
+                                <span className={`font-medium ${
+                                    formData.accountType === 'organization' 
+                                        ? 'text-sky-700' 
+                                        : 'text-gray-700'
+                                }`}>Organization</span>
+                                <p className="text-xs text-gray-500 mt-1">Business & company accounts</p>
+                            </div>
+                            {formData.accountType === 'organization' && (
+                                <motion.div 
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    className="absolute top-2 right-2"
+                                >
+                                    <div className="bg-sky-500 text-white rounded-full p-0.5">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                        </svg>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </button>
+                    </div>
+                </div>
 
-            <Tabs.Root value={activeTab} onValueChange={setActiveTab} className="mt-8">
-                <Tabs.List className="flex space-x-1 rounded-lg bg-gray-50 p-1" aria-label="Introduction type">
-                    <Tabs.Trigger
-                        value="individual"
-                        className={`flex-1 rounded-md py-3 text-sm font-medium leading-none transition-all ${activeTab === 'individual' ? 'bg-white text-sky-600 shadow-md' : 'text-gray-600 hover:text-gray-900'
-                            } focus:outline-none focus-visible:ring focus-visible:ring-sky-500 focus-visible:ring-opacity-75`}
-                    >
-                        Individual
-                    </Tabs.Trigger>
-                    <Tabs.Trigger
-                        value="organization"
-                        className={`flex-1 rounded-md py-3 text-sm font-medium leading-none transition-all ${activeTab === 'organization' ? 'bg-white text-sky-600 shadow-md' : 'text-gray-600 hover:text-gray-900'
-                            } focus:outline-none focus-visible:ring focus-visible:ring-sky-500 focus-visible:ring-opacity-75`}
-                    >
-                        Organization
-                    </Tabs.Trigger>
-                </Tabs.List>
-
-                <Form.Root className="mt-8" onSubmit={handleSubmit}>
-                    <Tabs.Content value="individual" className="focus:outline-none">
-                        <div className="space-y-6">
-                            <h3 className="text-lg font-medium text-gray-900">Individual Details</h3>
-                            <div className="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-2">
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* Form Fields - Improved Layout with CustomInput */}
+                    {formData.accountType === 'individual' && (
+                        <div className="bg-white rounded-lg">
+                            <div className="border-b border-gray-200 pb-3 mb-4">
+                                <h3 className="text-lg font-medium text-gray-800">Personal Information</h3>
+                                <p className="text-sm text-gray-500 mt-1">Please provide your personal details</p>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                                 <CustomInput
-                                    name="firstName"
                                     label="First Name"
-                                    type="text"
-                                    placeholder="John"
+                                    name="firstName"
                                     value={formData.firstName}
+                                    onChange={handleChange}
                                     errors={errors.firstName || ''}
-                                    onChange={handleChange}
+                                    placeholder="Enter your first name"
+                                    required={true}
                                 />
+                                
                                 <CustomInput
-                                    name="lastName"
                                     label="Last Name"
-                                    type="text"
-                                    placeholder="Doe"
+                                    name="lastName"
                                     value={formData.lastName}
+                                    onChange={handleChange}
                                     errors={errors.lastName || ''}
-                                    onChange={handleChange}
+                                    placeholder="Enter your last name"
+                                    required={true}
                                 />
+                                
                                 <CustomInput
-                                    name="email"
                                     label="Email"
-                                    type="email"
-                                    placeholder="john@example.com"
+                                    name="email"
                                     value={formData.email}
-                                    errors={errors.email || ''}
                                     onChange={handleChange}
+                                    errors={errors.email || ''}
+                                    placeholder="Enter your email"
+                                    type="email"
+                                    icon={<Mail className="h-5 w-5 text-gray-400" />}
+                                    required={true}
                                 />
-
+                                
                                 <div className="relative w-full">
                                     <label htmlFor="mobileNumber" className="block text-sm font-medium text-gray-700 mb-1">
                                         Mobile Number <span className="text-red-500">*</span>
@@ -528,220 +611,106 @@ const IntroductionModal = ({ isOpen = false, setIsOpen, userData, setIsIntroduct
                                         </motion.p>
                                     )}
                                 </div>
-
+                                
                                 <CustomInput
-                                    name="dateOfBirth"
                                     label="Date of Birth"
-                                    type="date"
+                                    name="dateOfBirth"
                                     value={formData.dateOfBirth}
+                                    onChange={handleChange}
                                     errors={errors.dateOfBirth || ''}
-                                    onChange={handleChange}
+                                    type="date"
+                                    icon={<Calendar className="h-5 w-5 text-gray-400" />}
+                                    required={true}
                                 />
+                                
                                 <CustomInput
-                                    name="postalAddress"
-                                    label="Postal Address"
-                                    type="text"
-                                    placeholder="123 Business Street"
-                                    value={formData.postalAddress}
-                                    errors={errors.postalAddress || ''}
-                                    onChange={handleChange}
-                                />
-                                <CustomInput
-                                    name="postalCode"
-                                    label="Postal Code"
-                                    type="text"
-                                    placeholder="3000"
-                                    value={formData.postalCode}
-                                    errors={errors.postalCode || ''}
-                                    onChange={handleChange}
-                                    maxLength={4}
-                                />
-                            </div>
-                        </div>
-                        <div className="mt-8 space-y-6 border-t border-gray-100 pt-8">
-                            <h3 className="text-lg font-medium text-gray-900">Tax File Details</h3>
-                            <div className="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-2">
-                                <CustomInput
-                                    name="taxFileNumber"
                                     label="Tax File Number"
-                                    type="text"
-                                    placeholder="123456789"
+                                    name="taxFileNumber"
                                     value={formData.taxFileNumber}
+                                    onChange={handleChange}
                                     errors={errors.taxFileNumber || ''}
-                                    onChange={handleChange}
+                                    placeholder="Enter your TFN"
                                     maxLength={9}
+                                    icon={<Hash className="h-5 w-5 text-gray-400" />}
+                                    required={true}
                                 />
-                            </div>
-                        </div>
-
-                        <div className="mt-8 space-y-6 border-t border-gray-100 pt-8">
-                            <h3 className="text-lg font-medium text-gray-900">Additional Details</h3>
-                            <div className="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-2">
-                                <div className="relative w-full">
-                                    <label htmlFor="accountantLocation" className="block text-sm font-medium text-gray-700 mb-1">
-                                        Preferred Location <span className="text-red-500">*</span>
-                                    </label>
-                                    <select
-                                        id="accountantLocation"
-                                        name="accountantLocation"
-                                        value={formData.accountantLocation}
-                                        onChange={handleSelectChange}
-                                        className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 transition-colors appearance-none"
-                                        style={{
-                                            backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
-                                            backgroundPosition: 'right 0.5rem center',
-                                            backgroundRepeat: 'no-repeat',
-                                            backgroundSize: '1.5em 1.5em',
-                                            paddingRight: '2.5rem'
-                                        }}
-                                    >
-                                        <option value="runcorn">RUNCORN (Aman Nagpal)</option>
-                                        <option value="logan">LOGAN (MR Behzad Ahmad)</option>
-                                        <option value="beenleigh">Beenleigh (Navpreet Kaur)</option>
-                                    </select>
+                                
+                                <div className="md:col-span-2">
+                                    <CustomInput
+                                        label="Postal Address"
+                                        name="postalAddress"
+                                        value={formData.postalAddress}
+                                        onChange={handleChange}
+                                        errors={errors.postalAddress || ''}
+                                        placeholder="Enter your postal address"
+                                        icon={<MapPin className="h-5 w-5 text-gray-400" />}
+                                        required={true}
+                                    />
                                 </div>
-
+                                
                                 <CustomInput
-                                    name="otherDetails"
-                                    label="Other Details"
-                                    type="textarea"
-                                    required={false}
-                                    placeholder="Any additional information you'd like to provide"
-                                    value={formData.otherDetails}
-                                    errors={errors.otherDetails || ''}
+                                    label="Postal Code"
+                                    name="postalCode"
+                                    value={formData.postalCode}
                                     onChange={handleChange}
+                                    errors={errors.postalCode || ''}
+                                    placeholder="Enter postal code"
+                                    maxLength={4}
+                                    required={true}
                                 />
-                            </div>
-                        </div>
-
-                        <div className="mt-8 space-y-6 border-t border-gray-100 pt-8">
-                            <h3 className="text-lg font-medium text-gray-900">ID Documents</h3>
-                            <div className="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-2">
-                                <div className="relative w-full">
-                                    <label htmlFor="idDocuments" className="block text-sm font-medium text-gray-700 mb-1">
-                                        ID Documents <span className="text-red-500">*</span>
-                                    </label>
-                                    <div className={`w-full px-4 py-3 rounded-lg border ${errors.idDocuments ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'} focus-within:ring-1 focus-within:ring-sky-500 focus-within:border-sky-500 transition-colors`}>
-                                        <div className="flex items-center justify-center">
-                                            <label htmlFor="idDocuments" className="cursor-pointer w-full">
-                                                <div className="flex flex-col items-center justify-center py-2">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                                    </svg>
-                                                    <p className="text-sm text-gray-500">
-                                                        {formData.idDocuments
-                                                            ? `${formData.idDocuments.length} file(s) selected`
-                                                            : 'Drag & drop or click to upload'}
-                                                    </p>
-                                                    <p className="text-xs text-gray-400 mt-1">
-                                                        Maximum file size: 5MB per file. Accepted formats: Images, PDF, DOC
-                                                    </p>
-                                                </div>
-                                                <input
-                                                    id="idDocuments"
-                                                    name="idDocuments"
-                                                    type="file"
-                                                    className="hidden"
-                                                    onChange={(e) => handleFileChange(e, 'idDocuments')}
-                                                    accept="image/*,.pdf,.doc,.docx"
-                                                    multiple={true}
-                                                    max-size="5242880"
-                                                />
-                                            </label>
-                                        </div>
-                                    </div>
-                                    {errors.idDocuments && (
-                                        <motion.p
-                                            initial={{ opacity: 0, y: -5 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ duration: 0.3 }}
-                                            className="mt-1 text-sm text-red-600"
-                                        >
-                                            {errors.idDocuments}
-                                        </motion.p>
-                                    )}
-                                </div>
-
-                                <div className="relative w-full">
-                                    <label htmlFor="otherDocuments" className="block text-sm font-medium text-gray-700 mb-1">
-                                        Other Documents
-                                    </label>
-                                    <div className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus-within:ring-1 focus-within:ring-sky-500 focus-within:border-sky-500 transition-colors">
-                                        <div className="flex items-center justify-center">
-                                            <label htmlFor="otherDocuments" className="cursor-pointer w-full">
-                                                <div className="flex flex-col items-center justify-center py-2">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                                    </svg>
-                                                    <p className="text-sm text-gray-500">
-                                                        {formData.otherDocuments
-                                                            ? `${formData.otherDocuments.length} file(s) selected`
-                                                            : 'Drag & drop or click to upload'}
-                                                    </p>
-                                                    <p className="text-xs text-gray-400 mt-1">
-                                                        Maximum file size: 5MB per file. Accepted formats: Images, PDF, DOC
-                                                    </p>
-                                                </div>
-                                                <input
-                                                    id="otherDocuments"
-                                                    name="otherDocuments"
-                                                    type="file"
-                                                    className="hidden"
-                                                    onChange={(e) => handleFileChange(e, 'otherDocuments')}
-                                                    accept="image/*,.pdf,.doc,.docx"
-                                                    multiple={true}
-                                                />
-                                            </label>
-                                        </div>
-                                    </div>
+                                
+                                <div className="md:col-span-2">
+                                    <CustomInput
+                                        label="Other Details"
+                                        name="otherDetails"
+                                        value={formData.otherDetails}
+                                        onChange={handleChange}
+                                        errors={errors.otherDetails || ''}
+                                        placeholder="Any additional information"
+                                        type="textarea"
+                                        required={false}
+                                    />
                                 </div>
                             </div>
                         </div>
-                    </Tabs.Content>
-
-                    <Tabs.Content value="organization" className="focus:outline-none">
-                        <div className="space-y-6">
-                            <h3 className="text-lg font-medium text-gray-900">Organization Details</h3>
-                            <div className="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-2">
+                    )}
+                    
+                    {/* Organization Form with CustomInput */}
+                    {formData.accountType === 'organization' && (
+                        <div className="bg-white rounded-lg">
+                            <div className="border-b border-gray-200 pb-3 mb-4">
+                                <h3 className="text-lg font-medium text-gray-800">Organization Information</h3>
+                                <p className="text-sm text-gray-500 mt-1">Please provide your organization details</p>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                                <div className="md:col-span-2">
+                                    <CustomInput
+                                        label="Company/Organization Name"
+                                        name="companyName"
+                                        value={formData.companyName}
+                                        onChange={handleChange}
+                                        errors={errors.companyName || ''}
+                                        placeholder="Enter company name"
+                                        icon={<BuildingOffice2Icon className="h-5 w-5 text-gray-400" />}
+                                        required={true}
+                                    />
+                                </div>
+                                
                                 <CustomInput
-                                    name="companyName"
-                                    label="Company/Organization Name"
-                                    type="text"
-                                    placeholder="Company Pty Ltd"
-                                    value={formData.companyName}
-                                    errors={errors.companyName || ''}
-                                    onChange={handleChange}
-                                />
-                                <CustomInput
-                                    name="companyEmail"
                                     label="Company Email"
-                                    type="email"
-                                    placeholder="contact@company.com"
+                                    name="companyEmail"
                                     value={formData.companyEmail}
+                                    onChange={handleChange}
                                     errors={errors.companyEmail || ''}
-                                    onChange={handleChange}
+                                    placeholder="Enter company email"
+                                    type="email"
+                                    icon={<Mail className="h-5 w-5 text-gray-400" />}
+                                    required={true}
                                 />
-                                <CustomInput
-                                    name="ABN"
-                                    label="Australian Business Number (ABN)"
-                                    type="text"
-                                    placeholder="12 345 678 901"
-                                    value={formData.ABN}
-                                    errors={errors.ABN || ''}
-                                    onChange={handleChange}
-                                    maxLength={11}
-                                />
-                                <CustomInput
-                                    name="acn"
-                                    label="Australian Company Number"
-                                    type="text"
-                                    placeholder="000 000 000"
-                                    value={formData.acn}
-                                    errors={errors.acn || ''}
-                                    onChange={handleChange}
-                                />
+                                
                                 <div className="relative w-full">
-                                    <label htmlFor="mobileNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                                    <label htmlFor="companyMobileNumber" className="block text-sm font-medium text-gray-700 mb-1">
                                         Company Phone <span className="text-red-500">*</span>
                                     </label>
                                     <PhoneInput
@@ -750,301 +719,306 @@ const IntroductionModal = ({ isOpen = false, setIsOpen, userData, setIsIntroduct
                                         id="companyMobileNumber"
                                         value={formData.companyMobileNumber}
                                         onChange={(value) => handlePhoneChange(value, 'companyMobileNumber')}
-                                        className={`w-full px-4 py-3 rounded-lg border ${errors.companyMobileNumber ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'}`}
+                                        className={`w-full px-4 py-3 rounded-lg border ${errors.companyMobileNumber ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'} focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 transition-colors`}
                                     />
                                     {errors.companyMobileNumber && (
-                                        <motion.p className="mt-1 text-sm text-red-600">
+                                        <motion.p
+                                            initial={{ opacity: 0, y: -5 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ duration: 0.3 }}
+                                            className="mt-1 text-sm text-red-600"
+                                        >
                                             {errors.companyMobileNumber}
                                         </motion.p>
                                     )}
                                 </div>
-                  
+                                
                                 <CustomInput
+                                    label="Australian Business Number (ABN)"
+                                    name="ABN"
+                                    value={formData.ABN}
+                                    onChange={handleChange}
+                                    errors={errors.ABN || ''}
+                                    placeholder="Enter ABN"
+                                    maxLength={11}
+                                    required={true}
+                                />
+                                
+                                <CustomInput
+                                    label="Australian Company Number (ACN)"
+                                    name="acn"
+                                    value={formData.acn}
+                                    onChange={handleChange}
+                                    errors={errors.acn || ''}
+                                    placeholder="Enter ACN"
+                                    maxLength={9}
+                                    required={true}
+                                />
+                                
+                                <CustomInput
+                                    label="Establishment Date"
                                     name="companyDateOfBirth"
-                                    label="Date of Birth"
-                                    type="date"
                                     value={formData.companyDateOfBirth}
+                                    onChange={handleChange}
                                     errors={errors.companyDateOfBirth || ''}
-                                    onChange={handleChange}
-                                />
-                                <CustomInput
-                                    name="registeredAddress"
-                                    label="Registered Address"
-                                    type="text"
-                                    placeholder="123 Business St"
-                                    value={formData.registeredAddress}
-                                    errors={errors.registeredAddress || ''}
-                                    onChange={handleChange}
-                                />
-                                <CustomInput
-                                    name="postalAddress"
-                                    label="Postal Address"
-                                    type="text"
-                                    placeholder="PO Box 123"
-                                    value={formData.postalAddress}
-                                    errors={errors.postalAddress || ''}
-                                    onChange={handleChange}
-                                />
-                                <CustomInput
-                                    name="postalCode"
-                                    label="Postal Code"
-                                    type="text"
-                                    placeholder="3000"
-                                    value={formData.postalCode}
-                                    errors={errors.postalCode || ''}
-                                    onChange={handleChange}
-                                />
-                                <div className="relative w-full">
-                                    <label htmlFor="accountantLocation" className="block text-sm font-medium text-gray-700 mb-1">
-                                        Preferred Location <span className="text-red-500">*</span>
-                                    </label>
-                                    <select
-                                        id="accountantLocation"
-                                        name="accountantLocation"
-                                        value={formData.accountantLocation}
-                                        onChange={handleSelectChange}
-                                        className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 transition-colors appearance-none"
-                                        style={{
-                                            backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
-                                            backgroundPosition: 'right 0.5rem center',
-                                            backgroundRepeat: 'no-repeat',
-                                            backgroundSize: '1.5em 1.5em',
-                                            paddingRight: '2.5rem'
-                                        }}
-                                    >
-                                        <option value="runcorn">RUNCORN (Aman Nagpal)</option>
-                                        <option value="logan">LOGAN (MR Behzad Ahmad)</option>
-                                        <option value="beenleigh">Beenleigh (Navpreet Kaur)</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <h3 className="text-lg font-medium text-gray-900 mt-8">Authorized Person Details</h3>
-                            <div className="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-2">
-                                <CustomInput
-                                    name="firstName"
-                                    label="First Name"
-                                    type="text"
-                                    placeholder="John"
-                                    value={formData.firstName}
-                                    errors={errors.firstName || ''}
-                                    onChange={handleChange}
-                                />
-                                <CustomInput
-                                    name="lastName"
-                                    label="Last Name"
-                                    type="text"
-                                    placeholder="Doe"
-                                    value={formData.lastName}
-                                    errors={errors.lastName || ''}
-                                    onChange={handleChange}
-                                />
-                                <CustomInput
-                                    name="email"
-                                    label="Email"
-                                    type="email"
-                                    placeholder="john@example.com"
-                                    value={formData.email}
-                                    errors={errors.email || ''}
-                                    onChange={handleChange}
-                                />
-                                <div className="relative w-full">
-                                    <label htmlFor="mobileNumber" className="block text-sm font-medium text-gray-700 mb-1">
-                                        Phone Number <span className="text-red-500">*</span>
-                                    </label>
-                                    <PhoneInput
-                                        international
-                                        defaultCountry="AU"
-                                        id="mobileNumber"
-                                        value={formData.mobileNumber}
-                                        onChange={(value) => handlePhoneChange(value, 'mobileNumber')}
-                                        className={`w-full px-4 py-3 rounded-lg border ${errors.mobileNumber ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'}`}
-                                    />
-                                    {errors.mobileNumber && (
-                                        <motion.p className="mt-1 text-sm text-red-600">
-                                            {errors.mobileNumber}
-                                        </motion.p>
-                                    )}
-                                </div>
-                                <CustomInput
-                                    name="dateOfBirth"
-                                    label="Date of Birth"
                                     type="date"
-                                    value={formData.dateOfBirth}
-                                    errors={errors.dateOfBirth || ''}
+                                    icon={<Calendar className="h-5 w-5 text-gray-400" />}
+                                    required={true}
+                                />
+                                
+                                <div className="md:col-span-2">
+                                    <CustomInput
+                                        label="Registered Address"
+                                        name="registeredAddress"
+                                        value={formData.registeredAddress}
+                                        onChange={handleChange}
+                                        errors={errors.registeredAddress || ''}
+                                        placeholder="Enter registered address"
+                                        icon={<MapPin className="h-5 w-5 text-gray-400" />}
+                                        required={true}
+                                    />
+                                </div>
+                                
+                                <div className="md:col-span-2">
+                                    <CustomInput
+                                        label="Postal Address"
+                                        name="postalAddress"
+                                        value={formData.postalAddress}
+                                        onChange={handleChange}
+                                        errors={errors.postalAddress || ''}
+                                        placeholder="Enter postal address"
+                                        icon={<MapPin className="h-5 w-5 text-gray-400" />}
+                                        required={true}
+                                    />
+                                </div>
+                                
+                                <CustomInput
+                                    label="Postal Code"
+                                    name="postalCode"
+                                    value={formData.postalCode}
                                     onChange={handleChange}
+                                    errors={errors.postalCode || ''}
+                                    placeholder="Enter postal code"
+                                    maxLength={4}
+                                    required={true}
+                                />
+                                
+                                <CustomInput
+                                    label="City"
+                                    name="city"
+                                    value={formData.city}
+                                    onChange={handleChange}
+                                    errors={errors.city || ''}
+                                    placeholder="Enter city"
+                                    required={true}
                                 />
                             </div>
-
-                            <h3 className="text-lg font-medium text-gray-900 mt-8">Previous Accountant Details (Optional)</h3>
-                            <div className="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-2">
-                                <CustomInput
-                                    name="previousAccountantName"
-                                    label="Full Name"
-                                    type="text"
-                                    placeholder="Previous Accountant Name"
-                                    value={formData.previousAccountantName}
-                                    errors={errors.previousAccountantName || ''}
-                                    onChange={handleChange}
-                                />
-                                <CustomInput
-                                    name="previousAccountantEmail"
-                                    label="Email"
-                                    type="email"
-                                    placeholder="accountant@email.com"
-                                    value={formData.previousAccountantEmail}
-                                    errors={errors.previousAccountantEmail || ''}
-                                    onChange={handleChange}
-                                />
-                                <div className="relative w-full">
-                                    <label htmlFor="previousAccountantPhone" className="block text-sm font-medium text-gray-700 mb-1">
-                                        Phone Number <span className="text-red-500">*</span>
-                                    </label>
-                                    <PhoneInput
-                                        international
-                                        defaultCountry="AU"
-                                        id="previousAccountantPhone"
-                                        value={formData.previousAccountantPhone}
-                                        onChange={(value) => handlePhoneChange(value, 'previousAccountantPhone')}
-                                        className={`w-full px-4 py-3 rounded-lg border ${errors.previousAccountantPhone ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'}`}
+                            
+                            {/* Previous Accountant Section */}
+                            <div className="mt-6 border-t border-gray-200 pt-4">
+                                <h4 className="text-md font-medium text-gray-800 mb-3">Previous Accountant (Optional)</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                                    <CustomInput
+                                        label="Name"
+                                        name="previousAccountantName"
+                                        value={formData.previousAccountantName}
+                                        onChange={handleChange}
+                                        errors={errors.previousAccountantName || ''}
+                                        placeholder="Enter previous accountant's name"
+                                        required={false}
                                     />
-                                    {errors.previousAccountantPhone && (
-                                        <motion.p className="mt-1 text-sm text-red-600">
-                                            {errors.previousAccountantPhone}
-                                        </motion.p>
-                                    )}
+                                    <CustomInput
+                                        label="Email"
+                                        name="previousAccountantEmail"
+                                        value={formData.previousAccountantEmail}
+                                        onChange={handleChange}
+                                        errors={errors.previousAccountantEmail || ''}
+                                        placeholder="Enter previous accountant's email"
+                                        type="email"
+                                        required={false}
+                                    />
+                                    <div className="relative w-full">
+                                        <label htmlFor="previousAccountantPhone" className="block text-sm font-medium text-gray-700 mb-1">
+                                            Phone
+                                        </label>
+                                        <PhoneInput
+                                            international
+                                            defaultCountry="AU"
+                                            id="previousAccountantPhone"
+                                            value={formData.previousAccountantPhone}
+                                            onChange={(value) => handlePhoneChange(value, 'previousAccountantPhone')}
+                                            className={`w-full px-4 py-3 rounded-lg border ${errors.previousAccountantPhone ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'} focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 transition-colors`}
+                                        />
+                                        {errors.previousAccountantPhone && (
+                                            <motion.p
+                                                initial={{ opacity: 0, y: -5 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ duration: 0.3 }}
+                                                className="mt-1 text-sm text-red-600"
+                                            >
+                                                {errors.previousAccountantPhone}
+                                            </motion.p>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
-
-                        <div className="mt-8 space-y-6 border-t border-gray-100 pt-8">
-                        <h3 className="text-lg font-medium text-gray-900">Company Documents</h3>
-                        <div className="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-2">
-                            <div className="relative w-full">
-                                <label htmlFor="idDocuments" className="block text-sm font-medium text-gray-700 mb-1">
-                                    Company Registration Documents
-                                </label>
-                                <div className={`w-full px-4 py-3 rounded-lg border ${errors.idDocuments ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'} focus-within:ring-1 focus-within:ring-sky-500 focus-within:border-sky-500 transition-colors`}>
-                                    <div className="flex items-center justify-center">
-                                        <label htmlFor="idDocuments" className="cursor-pointer w-full">
-                                            <div className="flex flex-col items-center justify-center py-2">
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                                </svg>
-                                                <p className="text-sm text-gray-500">
-                                                    {formData.idDocuments
-                                                        ? `${formData.idDocuments.length} file(s) selected`
-                                                        : 'Drag & drop or click to upload'}
-                                                </p>
-                                                <p className="text-xs text-gray-400 mt-1">
-                                                    Maximum file size: 5MB per file. Accepted formats: Images, PDF, DOC
-                                                </p>
-                                            </div>
-                                            <input
-                                                id="idDocuments"
-                                                name="idDocuments"
-                                                type="file"
-                                                className="hidden"
-                                                onChange={(e) => handleFileChange(e, 'idDocuments')}
-                                                accept="image/*,.pdf,.doc,.docx"
-                                                multiple={true}
-                                                max-size="5242880"
-                                            />
-                                        </label>
-                                    </div>
+                    )}
+                    
+                    {/* ID Documents Upload Section */}
+                    <div className="bg-white rounded-lg p-4 border border-gray-200">
+                        <h3 className="text-lg font-medium text-gray-800 mb-3">ID Documents</h3>
+                        <div className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                            errors.idDocuments 
+                                ? 'border-red-300 bg-red-50' 
+                                : formData.idDocuments && formData.idDocuments.length > 0
+                                    ? 'border-green-300 bg-green-50'
+                                    : 'border-gray-300 hover:border-sky-500 hover:bg-sky-50'
+                        }`}>
+                            <input
+                                type="file"
+                                id="idDocuments"
+                                name="idDocuments"
+                                onChange={(e) => handleFileChange(e, 'idDocuments')}
+                                className="hidden"
+                                multiple
+                            />
+                            <label htmlFor="idDocuments" className="cursor-pointer">
+                                <UploadIcon className={`h-8 w-8 mx-auto mb-2 ${
+                                    errors.idDocuments 
+                                        ? 'text-red-400' 
+                                        : formData.idDocuments && formData.idDocuments.length > 0
+                                            ? 'text-green-500'
+                                            : 'text-gray-400'
+                                }`} />
+                                <p className="text-sm text-gray-600 font-medium">
+                                    {formData.idDocuments && formData.idDocuments.length > 0
+                                        ? `${formData.idDocuments.length} file(s) selected`
+                                        : 'Upload ID Documents'}
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Drag & drop files or <span className="text-sky-500">browse</span>
+                                </p>
+                                <p className="text-xs text-gray-400 mt-1">
+                                    Supported formats: PDF, JPG, PNG (Max: 5MB per file)
+                                </p>
+                            </label>
+                            {formData.idDocuments && formData.idDocuments.length > 0 && (
+                                <div className="mt-3 text-left">
+                                    <ul className="text-xs text-gray-600 max-h-20 overflow-y-auto">
+                                        {Array.from(formData.idDocuments).map((file, index) => (
+                                            <li key={index} className="truncate py-1 border-b border-gray-100 last:border-0">
+                                                {file.name} <span className="text-gray-400">({(file.size / 1024).toFixed(1)} KB)</span>
+                                            </li>
+                                        ))}
+                                    </ul>
                                 </div>
-                                {errors.idDocuments && (
-                                    <motion.p
-                                        initial={{ opacity: 0, y: -5 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ duration: 0.3 }}
-                                        className="mt-1 text-sm text-red-600"
-                                    >
-                                        {errors.idDocuments}
-                                    </motion.p>
-                                )}
-                            </div>
-                            <div className="relative w-full">
-                                <label htmlFor="otherDocuments" className="block text-sm font-medium text-gray-700 mb-1">
-                                    Other Documents
-                                </label>
-                                <div className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus-within:ring-1 focus-within:ring-sky-500 focus-within:border-sky-500 transition-colors">
-                                    <div className="flex items-center justify-center">
-                                        <label htmlFor="otherDocuments" className="cursor-pointer w-full">
-                                            <div className="flex flex-col items-center justify-center py-2">
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                                </svg>
-                                                <p className="text-sm text-gray-500">
-                                                    {formData.otherDocuments
-                                                        ? `${formData.otherDocuments.length} file(s) selected`
-                                                        : 'Drag & drop or click to upload'}
-                                                </p>
-                                                <p className="text-xs text-gray-400 mt-1">
-                                                    Maximum file size: 5MB per file. Accepted formats: Images, PDF, DOC
-                                                </p>
-                                            </div>
-                                            <input
-                                                id="otherDocuments"
-                                                name="otherDocuments"
-                                                type="file"
-                                                className="hidden"
-                                                onChange={(e) => handleFileChange(e, 'otherDocuments')}
-                                                accept="image/*,.pdf,.doc,.docx"
-                                                multiple={true}
-                                            />
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
+                            )}
+                            {errors.idDocuments && (
+                                <p className="mt-2 text-xs text-red-600">{errors.idDocuments}</p>
+                            )}
                         </div>
                     </div>
-                    </Tabs.Content>
-
-                    {/* Declaration */}
-                    <div className="mt-8 space-y-6 border-t border-gray-100 pt-8">
-                        <div className="flex items-start">
-                            <div className="flex h-5 items-center">
-                                <input
-                                    id="declaration"
-                                    name="declaration"
-                                    type="checkbox"
-                                    checked={formData.declaration}
-                                    onChange={handleChange}
-                                    className="h-5 w-5 rounded border-gray-300 text-sky-600 focus:ring-sky-500"
-                                />
-                            </div>
-                            <div className="ml-3 text-sm">
-                                <label htmlFor="declaration" className="font-medium text-gray-700">
-                                    Declaration <span className="text-red-500">*</span>
-                                </label>
-                                <p className="text-gray-500">
-                                    I hereby authorise Proven Associated Server Pty Ltd & Mr Aman Nagma T/A Proven Accountants to act as my tax agent and represent me in all dealings with the Australian Taxation Office.
+                    
+                    {/* Other Documents Upload Section */}
+                    <div className="bg-white rounded-lg p-4 border border-gray-200">
+                        <h3 className="text-lg font-medium text-gray-800 mb-3">Other Documents (Optional)</h3>
+                        <div className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                            errors.otherDocuments 
+                                ? 'border-red-300 bg-red-50' 
+                                : formData.otherDocuments && formData.otherDocuments.length > 0
+                                    ? 'border-green-300 bg-green-50'
+                                    : 'border-gray-300 hover:border-sky-500 hover:bg-sky-50'
+                        }`}>
+                            <input
+                                type="file"
+                                id="otherDocuments"
+                                name="otherDocuments"
+                                onChange={(e) => handleFileChange(e, 'otherDocuments')}
+                                className="hidden"
+                                multiple
+                            />
+                            <label htmlFor="otherDocuments" className="cursor-pointer">
+                                <UploadIcon className={`h-8 w-8 mx-auto mb-2 ${
+                                    errors.otherDocuments 
+                                        ? 'text-red-400' 
+                                        : formData.otherDocuments && formData.otherDocuments.length > 0
+                                            ? 'text-green-500'
+                                            : 'text-gray-400'
+                                }`} />
+                                <p className="text-sm text-gray-600 font-medium">
+                                    {formData.otherDocuments && formData.otherDocuments.length > 0
+                                        ? `${formData.otherDocuments.length} file(s) selected`
+                                        : 'Upload Other Documents'}
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Drag & drop files or <span className="text-sky-500">browse</span>
+                                </p>
+                                <p className="text-xs text-gray-400 mt-1">
+                                    Supported formats: PDF, JPG, PNG (Max: 5MB per file)
+                                </p>
+                            </label>
+                            {formData.otherDocuments && formData.otherDocuments.length > 0 && (
+                                <div className="mt-3 text-left">
+                                    <ul className="text-xs text-gray-600 max-h-20 overflow-y-auto">
+                                        {Array.from(formData.otherDocuments).map((file, index) => (
+                                            <li key={index} className="truncate py-1 border-b border-gray-100 last:border-0">
+                                                {file.name} <span className="text-gray-400">({(file.size / 1024).toFixed(1)} KB)</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                            {errors.otherDocuments && (
+                                <p className="mt-2 text-xs text-red-600">{errors.otherDocuments}</p>
+                            )}
+                        </div>
+                    </div>
+                    
+                    {/* Declaration Section - Improved */}
+                    <div className="bg-white rounded-lg p-4 border border-gray-200">
+                        <div className="">
+                            <CustomCheckbox
+                                label="Declaration"
+                                name="declaration"
+                                checked={formData.declaration}
+                                onChange={(e) => {
+                                    setErrors({...errors, declaration: ''})
+                                    setFormData({...formData, declaration: e.target.checked})
+                                }}
+                            />
+            
+                            <div className="ml-3">
+                                <p className="text-sm text-gray-500 mt-1">
+                                    I confirm that all information provided is accurate and complete. I understand that providing false information may result in rejection of my application.
                                 </p>
                                 {errors.declaration && (
-                                    <motion.p
-                                        initial={{ opacity: 0, y: -5 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ duration: 0.3 }}
-                                        className="mt-1 text-sm text-red-600"
-                                    >
-                                        {errors.declaration}
-                                    </motion.p>
+                                    <p className="mt-1 text-sm text-red-600">{errors.declaration}</p>
                                 )}
                             </div>
                         </div>
                     </div>
-
-                    <div className="mt-8 flex justify-end space-x-4">
-                        <Dialog.Close asChild>
-                            <button
-                                type="button"
-                                className="rounded-md border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 transition-colors"
+                    
+                    {/* Form Error Message */}
+                    {errors.form && (
+                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                            <motion.p 
+                                initial={{ opacity: 0, y: -5 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.3 }}
+                                className="text-sm"
                             >
-                                Cancel
-                            </button>
-                        </Dialog.Close>
-                        <button
+                                {errors.form}
+                            </motion.p>
+                        </div>
+                    )}
+                    
+                    {/* Submit Button */}
+                    <div className="mt-6 flex justify-end">
+                    <motion.button
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ duration: 0.3 }}
                             type="submit"
                             disabled={isSubmitting}
                             className={`inline-flex items-center rounded-md border border-transparent ${isSubmitting ? 'bg-sky-400' : 'bg-sky-600 hover:bg-sky-700'} px-4 py-2.5 text-sm font-medium text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 transition-colors`}
@@ -1058,12 +1032,12 @@ const IntroductionModal = ({ isOpen = false, setIsOpen, userData, setIsIntroduct
                                     Processing...
                                 </>
                             ) : 'Register'}
-                        </button>
+                        </motion.button>
                     </div>
-                </Form.Root>
-            </Tabs.Root>
+                </form>
+            </div>
         </Modal>
-    )
-}
+    );
+};
 
-export default IntroductionModal
+export default IntroductionModal;
