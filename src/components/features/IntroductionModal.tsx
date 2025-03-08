@@ -616,6 +616,7 @@ const IntroductionModal = ({ isOpen = false, setIsOpen, userData, setIsIntroduct
                                     onChange={handleChange}
                                     errors={errors.taxFileNumber || ''}
                                     placeholder="Enter your TFN"
+                                    type="number"
                                     maxLength={9}
                                     icon={<Hash className="h-5 w-5 text-gray-400" />}
                                     required={true}

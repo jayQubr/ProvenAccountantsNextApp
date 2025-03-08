@@ -16,9 +16,9 @@ const AppointmentsPage = () => {
   const [selectedLocation, setSelectedLocation] = useState(null);
   const router = useRouter();
 
-  const handleLocationSelect = (locationId:any) => {
+  const handleLocationSelect = (locationId:any, link:any) => {
     setSelectedLocation(locationId);
-    router.push(`/appointments/${locationId}`);
+    router.push(link);
   };
 
   return (
@@ -114,7 +114,7 @@ const AppointmentsPage = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.1 }}
-              onClick={() => handleLocationSelect(location.id)}
+              onClick={() => handleLocationSelect(location.id, location.calendarLink)}
             >
               <div className="p-5">
                 <div className="flex items-center gap-3 mb-4">
@@ -132,7 +132,7 @@ const AppointmentsPage = () => {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleLocationSelect(location.id);
+                    handleLocationSelect(location.id, location.calendarLink);
                   }}
                   className="w-full mt-2 inline-flex items-center justify-center px-4 py-3 border border-amber-300 text-sm font-medium rounded-md bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors"
                 >
