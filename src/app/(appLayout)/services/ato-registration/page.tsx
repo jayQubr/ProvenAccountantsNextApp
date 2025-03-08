@@ -163,13 +163,6 @@ const ATORegistrationPage = () => {
       newErrors.agreeToDeclaration = 'You must agree to the declaration';
     }
 
-    // const { selected, ...data } = formData.fuelTaxCredit;
-    // const hasSelected = Object.values(data).some(value => value === true);
-
-    // if (!hasSelected) {
-    //   newErrors.fuelTaxCredit = 'You must select at least one option';
-    // }
-
     if (!formData.abn.selected && !formData.gst.selected && !formData.fuelTaxCredit.selected) {
       newErrors.registrationType = 'You must select at least one registration type';
     }
@@ -348,7 +341,7 @@ const ATORegistrationPage = () => {
               />
               <CustomInput
                 label="Postal Code"
-                type="text"
+                type="number"
                 name="postalCode"
                 value={formData.postalCode}
                 onChange={handleChange}
@@ -477,6 +470,7 @@ const ATORegistrationPage = () => {
                   <CustomInput
                     label="Approximate Annual Income/Sales (AUD)"
                     name="gst.annualIncome"
+                    type="number"
                     value={formData.gst.annualIncome}
                     onChange={handleChange}
                     errors={errors['gst.annualIncome']}

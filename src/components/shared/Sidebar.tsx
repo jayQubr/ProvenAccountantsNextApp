@@ -2,7 +2,7 @@
 
 import { Fragment, useEffect, useState } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
-import { CalendarIcon, Cog6ToothIcon, DocumentDuplicateIcon, FolderIcon, HomeIcon, UsersIcon, XMarkIcon, UserCircleIcon, CalendarDateRangeIcon } from '@heroicons/react/24/outline'
+import { Cog6ToothIcon, FolderIcon, HomeIcon, UsersIcon, XMarkIcon, UserCircleIcon, CalendarDateRangeIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { auth } from '@/lib/firebaseConfig'
@@ -18,10 +18,8 @@ const navigation = [
     { name: 'Dashboard', href: '/', icon: HomeIcon },
     { name: 'Services', href: '/services', icon: UsersIcon },
     { name: 'My Requests', href: '/my-requests', icon: FolderIcon },
-    { name: 'Appointments', href: '/appointments', icon: CalendarIcon },
-    { name: 'Schedule Appointment', href: '/appointments/schedule', icon: CalendarDateRangeIcon },
+    { name: 'Schedule Appointment', href: '/appointments', icon: CalendarDateRangeIcon },
     { name: 'My Profile', href: '/my-profile', icon: UserCircleIcon },
-    // { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
 ]
 
 const Sidebar = ({ sidebarOpen, setSidebarOpen }: any) => {

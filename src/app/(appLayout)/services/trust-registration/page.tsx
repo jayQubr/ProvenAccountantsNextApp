@@ -3,7 +3,7 @@
 import { useState, useEffect, ChangeEvent, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { ArrowLeftIcon, PlusIcon, MinusIcon, UserPlusIcon, ChevronDownIcon, UserGroupIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { ArrowLeftIcon, PlusIcon, UserPlusIcon, ChevronDownIcon, UserGroupIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { IdentificationIcon } from '@heroicons/react/24/outline'
 import { Disclosure } from '@headlessui/react'
 import { toast, Toaster } from 'sonner'
@@ -11,7 +11,6 @@ import useStore from '@/utils/useStore'
 import CustomInput from '@/components/ui/CustomInput'
 import CustomCheckbox from '@/components/ui/CustomCheckbox'
 import PersonalInformation from '@/components/features/PersonaInformation'
-import LoadingSpinner from '@/components/features/LoadingSpinner'
 import SubmitButton from '@/components/features/SubmitButton'
 import RegistrationStatusBanner from '@/components/features/RegistrationStatusBanner'
 import {
@@ -173,6 +172,8 @@ const TrustRegistration = () => {
 
     if (!trustData.taxFileNumber.trim()) {
       newErrors.taxFileNumber = 'Tax file number is required'
+    } else if (!/^\d{9}$/.test(trustData.taxFileNumber)) {
+      newErrors.taxFileNumber = 'Tax file number must be 9 digits'
     }
 
     if (!trustData.agreeToDeclaration) {
@@ -374,8 +375,9 @@ const TrustRegistration = () => {
               />
               <CustomInput
                 label="Postal Code"
-                type="text"
+                type="number"
                 name="postalCode"
+                maxLength={4}
                 value={trustData.postalCode}
                 onChange={handleChange}
                 errors={errors.postalCode}
@@ -384,8 +386,9 @@ const TrustRegistration = () => {
               />
               <CustomInput
                 label="Tax File Number"
-                type="text"
+                type="number"
                 name="taxFileNumber"
+                maxLength={9}
                 value={trustData.taxFileNumber}
                 onChange={handleChange}
                 errors={errors.taxFileNumber}
@@ -489,7 +492,7 @@ const TrustRegistration = () => {
 
                             <CustomInput
                               label="Postal Code"
-                              type="text"
+                              type="number"
                               name="postalCode"
                               value={person.postalCode}
                               onChange={(e:any) => handlePersonChange(e, index)}
@@ -501,8 +504,9 @@ const TrustRegistration = () => {
 
                             <CustomInput
                               label="Tax File Number"
-                              type="text"
+                              type="number"
                               name="taxFileNumber"
+                              maxLength={9}
                               value={person.taxFileNumber}
                               onChange={(e:any) => handlePersonChange(e, index)}
                               errors={errors[`authorizedPersons.${index}.taxFileNumber`]}
@@ -613,7 +617,6 @@ const TrustRegistration = () => {
               validateForm={validateForm}
               onConfirm={handleConfirmSubmit}
               completedText="Already Submitted"
-
             />
           )}
         </div>

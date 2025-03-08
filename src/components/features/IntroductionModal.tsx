@@ -80,12 +80,6 @@ const IntroductionModal = ({ isOpen = false, setIsOpen, userData, setIsIntroduct
     // const [open, setOpen] = useState(isOpen)
     const [isSubmitting, setIsSubmitting] = useState(false)
 
-    // useEffect(() => {
-    //     if (isOpen !== undefined) {
-    //         setOpen(isOpen);
-    //     }
-    // }, [isOpen]);
-
     useEffect(() => {
         // Pre-fill form with user data if available
         if (userData) {
@@ -186,14 +180,6 @@ const IntroductionModal = ({ isOpen = false, setIsOpen, userData, setIsIntroduct
                 })
             }
         }
-    }
-
-    const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const { name, value } = e.target
-        setFormData({
-            ...formData,
-            [name]: value
-        })
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -651,6 +637,7 @@ const IntroductionModal = ({ isOpen = false, setIsOpen, userData, setIsIntroduct
                                 <CustomInput
                                     label="Postal Code"
                                     name="postalCode"
+                                    type="number"
                                     value={formData.postalCode}
                                     onChange={handleChange}
                                     errors={errors.postalCode || ''}

@@ -122,6 +122,8 @@ const BusinessRegistrationPage = () => {
 
     if (!formData.businessPostalCode) {
       newErrors.businessPostalCode = 'Business postal code is required';
+    }else if (!/^\d{4}$/.test(formData.businessPostalCode)) {
+      newErrors.businessPostalCode = 'Business postal code must be 4 digits';
     }
 
     setErrors(newErrors);
@@ -291,7 +293,7 @@ const BusinessRegistrationPage = () => {
               />
               <CustomInput
                 label="Postal Code"
-                type="text"
+                type="number"
                 name="postalCode"
                 value={formData.postalCode}
                 onChange={handleChange}

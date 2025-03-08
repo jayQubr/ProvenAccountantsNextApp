@@ -7,8 +7,7 @@ import { motion } from 'framer-motion'
 import { 
   CalendarIcon, 
   DocumentTextIcon, 
-  ArrowRightIcon, 
-  ClockIcon, 
+  ArrowRightIcon,
   UserCircleIcon,
   BriefcaseIcon,
   DocumentDuplicateIcon,
@@ -301,7 +300,7 @@ const Dashboard = () => {
           <div className="p-4 space-y-3">
             <motion.div variants={itemVariants}>
               <Link 
-                href="/appointments/schedule" 
+                href="/appointments" 
                 className="flex items-center p-3 rounded-lg border border-gray-200 hover:border-sky-200 hover:bg-sky-50 transition-all"
               >
                 <div className="p-2 rounded-lg bg-blue-50 text-blue-700 mr-3">
@@ -335,17 +334,7 @@ const Dashboard = () => {
               </Link>
             </motion.div>
             
-            <motion.div variants={itemVariants}>
-              <Link 
-                href="/appointments" 
-                className="flex items-center p-3 rounded-lg border border-gray-200 hover:border-sky-200 hover:bg-sky-50 transition-all"
-              >
-                <div className="p-2 rounded-lg bg-green-50 text-green-700 mr-3">
-                  <ClockIcon className="h-5 w-5" />
-                </div>
-                <span className="text-sm font-medium text-gray-800">My Appointments</span>
-              </Link>
-            </motion.div>
+     
             
             <motion.div variants={itemVariants}>
               <a 

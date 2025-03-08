@@ -260,7 +260,10 @@ const CompanyRegistration = () => {
 
       if (!person.taxFileNumber.trim()) {
         newErrors[`authorizedPersons.${index}.taxFileNumber`] = 'Tax file number is required'
+      }else if (!/^\d{9}$/.test(person.taxFileNumber)) {
+        newErrors[`authorizedPersons.${index}.taxFileNumber`] = 'Tax file number must be 9 digits'
       }
+
       if (!person.isDirector && !person.isShareholder) {
         newErrors[`authorizedPersons.${index}.position`] = 'At least one position must be selected'
       }
@@ -465,8 +468,9 @@ const CompanyRegistration = () => {
               />
               <CustomInput
                 label="Postal Code"
-                type="text"
+                type="number"
                 name="postalCode"
+                maxLength={4}
                 value={companyData.postalCode}
                 onChange={handleChange}
                 errors={errors.postalCode}
@@ -475,7 +479,8 @@ const CompanyRegistration = () => {
               />
               <CustomInput
                 label="Tax File Number"
-                type="text"
+                type="number"
+                maxLength={9}
                 name="taxFileNumber"
                 value={companyData.taxFileNumber}
                 onChange={handleChange}
@@ -628,19 +633,20 @@ const CompanyRegistration = () => {
 
                             <CustomInput
                               label="Postal Code"
-                              type="text"
+                              type="number"
+                              maxLength={4}
                               name="postalCode"
                               value={person.postalCode}
                               onChange={(e: any) => handlePersonChange(e, index)}
                               errors={errors[`authorizedPersons.${index}.postalCode`]}
                               placeholder="Enter postal code"
-                              maxLength={4}
                               disabled={existingRegistration?.status === 'completed' || existingRegistration?.status === 'in-progress'}
                             />
 
                             <CustomInput
                               label="Tax File Number"
-                              type="text"
+                              type="number"
+                              maxLength={9}
                               name="taxFileNumber"
                               value={person.taxFileNumber}
                               onChange={(e: any) => handlePersonChange(e, index)}

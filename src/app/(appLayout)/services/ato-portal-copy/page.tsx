@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ArrowLeftIcon, IdentificationIcon } from '@heroicons/react/24/outline';
-import { Toaster, toast } from 'sonner';
+import { toast } from 'sonner';
 import CustomInput from '@/components/ui/CustomInput';
 import SubmitButton from '@/components/features/SubmitButton';
 import { checkExistingATOPortal } from '@/lib/atoPortalService';

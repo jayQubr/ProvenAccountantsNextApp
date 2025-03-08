@@ -36,6 +36,17 @@ const CustomInput = ({
     rightElement,
     disabled = false
 }: CustomInputProps) => {
+    
+    // Handle number input with maxLength
+    const handleNumberInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (type === "number" && maxLength) {
+            if (e.target.value.length > maxLength) {
+                e.target.value = e.target.value.slice(0, maxLength);
+            }
+        }
+        onChange(e);
+    };
+
     return (
         <div className="relative w-full">
             <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">
@@ -65,10 +76,10 @@ const CustomInput = ({
                         id={name}
                         name={name}
                         value={value}
-                        onChange={onChange}
+                        onChange={type === "number" && maxLength ? handleNumberInput : onChange}
                         className={`w-full ${icon ? 'pl-10' : 'px-4'} py-3 rounded-lg border ${errors ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'} focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 transition-colors`}
                         placeholder={placeholder}
-                        maxLength={maxLength ?? undefined}
+                        maxLength={type !== "number" ? (maxLength ?? undefined) : undefined}
                         autoComplete={autoComplete}
                         disabled={disabled}
                         {...(errors ? shakeAnimation : {})}
